@@ -24,12 +24,12 @@ ENV DATABASE_URL=sqlite:db/db.db
 RUN cargo install sqlx-cli
 RUN sqlx database create
 RUN sqlx migrate run --source db/migrations
-RUN rm ./target/release/deps/basic_site*
+RUN rm ./target/release/deps/ember*
 RUN cargo build --release
 
 # Stage 2: Preparing the final image
 FROM debian:bookworm-slim
 
-COPY --from=builder /basic_site/target/release/basic_site .
+COPY --from=builder /ember/target/release/ember .
 
-CMD ["./basic_site"]
+CMD ["./ember"]

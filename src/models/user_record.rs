@@ -6,7 +6,7 @@ pub struct UserRecord {
     pub id: u32,
     pub username: String,
     pub password_hash: String,
-    pub created_at: i64,
+    pub create_time: i64,
 }
 
 pub async fn get_user_by_id(db: &SqlitePool, id: u32) -> Result<UserRecord, sqlx::Error> {
@@ -17,7 +17,7 @@ pub async fn get_user_by_id(db: &SqlitePool, id: u32) -> Result<UserRecord, sqlx
             id as "id: u32",
             username,
             password_hash,
-            created_at
+            create_time
         FROM 'user'
         WHERE id = ?
         "#,
@@ -38,7 +38,7 @@ pub async fn get_user_by_username(
             id as "id: u32",
             username,
             password_hash,
-            created_at
+            create_time
         FROM 'user'
         WHERE username = ?
         "#,
@@ -52,16 +52,16 @@ pub async fn insert(
     db: &SqlitePool,
     username: &str,
     password_hash: &str,
-    created_at: Timestamp,
+    create_time: Timestamp,
 ) -> Result<u32, sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO user (username, password_hash, created_at)
+        INSERT INTO user (username, password_hash, create_time)
         VALUES (?, ?, ?)
         "#,
         username,
         password_hash,
-        created_at
+        create_time
     )
     .execute(db)
     .await

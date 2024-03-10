@@ -1,5 +1,5 @@
 benburk.ca {
-  reverse_proxy basic_site:3000
+  reverse_proxy ember:3000
 }
 
 www.benburk.ca {

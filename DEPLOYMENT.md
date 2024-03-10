@@ -11,7 +11,6 @@
 ```shell
 gcloud compute instances list
 NAME        ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
-basic-site  us-central1-c  e2-micro                   10.128.0.3   35.232.196.146  RUNNING
 gcloud compute ssh <username>@<NAME>
 gcloud compute scp test.txt <username>@<NAME>:~/
 ```
@@ -37,15 +36,15 @@ sudo usermod -aG docker $USER
 
 ```shell
 # build the image
-docker build -t basic_site .
-docker save -o basic_site_app.tar basic_site:latest
-gcloud compute scp basic_site_app.tar Caddyfile docker-compose.yml implygate@basic-site:~/
-gcloud compute scp db/db.db implygate@basic-site:~/db/db.db
-gcloud compute scp .env implygate@basic-site:~/.env
+docker build -t ember .
+docker save -o ember_app.tar ember:latest
+gcloud compute scp ember_app.tar Caddyfile docker-compose.yml <username>@<NAME>:~/
+gcloud compute scp db/db.db <username>@<NAME>:~/db/db.db
+gcloud compute scp .env <username>@<NAME>:~/.env
 
 # ssh into VM
 gcloud compute ssh <username>@<NAME>
-docker load -i basic_site_app.tar
+docker load -i ember_app.tar
 docker compose up -d
 ```
 

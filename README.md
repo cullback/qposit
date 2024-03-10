@@ -1,6 +1,6 @@
-# Basic Site
+# Ember
 
-An example website with a simple tech stack.
+Prediction market.
 
 - Rust
 - Axum for web server
