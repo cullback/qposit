@@ -1,11 +1,14 @@
 use askama::Template;
 
+use crate::models::market::Market;
+
 #[derive(Template)]
 #[template(path = "home.html")]
 pub struct Component<'a> {
-    name: &'a str,
+    markets: &'a [Market],
 }
 
-pub fn build(name: &str) -> String {
-    Component { name }.render().unwrap()
+pub fn build(name: &str, markets: &[Market]) -> String {
+    Component { markets }.render().unwrap()
 }
+

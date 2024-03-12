@@ -1,43 +1,32 @@
 <h1>Markets</h1>
+
 <form role="search">
     <input name="search" type="search" placeholder="Search" />
     <input type="submit" value="Search" />
 </form>
 
-<article>
-    <h3><a href="./market.html" class="secondary">Who will win the 2024 US election?</a></h3>
-    <table>
-        <tbody>
-            <tr>
-                <th scope="row">Donald Trump</th>
-                <td>53.0</td>
-                <td class="pico-color-green-350">+4.56%</td>
-                <td>$234</td>
-            </tr>
-            <tr>
-                <th scope="row">Joe Biden</th>
-                <td>31.0</td>
-                <td class="pico-color-red-350">-1.00%</td>
-                <td>$10,321</td>
-            </tr>
-            <tr>
-                <th scope="row">10 more...</th>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-    </table>
-</article>
 
+{% for market in markets %}
 <article>
-    <h3><a href="./market.html" class="secondary">Will Sweden join NATO?</a></h3>
+    <h3><a href="./market.html" class="secondary">{{market.title}}</a></h3>
     <table>
         <tbody>
             <tr>
-                <th scope="row">Yes</th>
-                <td>53.0</td>
-                <td class="pico-color-green-350">+4.56%</td>
-                <td>$234</td>
+                <td>Donald Trump</td>
+                <td style="display: flex; justify-content: flex-end">
+                    <kbd>53.00</kbd>&nbsp;<kbd class="pico-background-green-350">&nbsp;+4.56%</kbd>
+                </td>
+            </tr>
+            <tr>
+                <td>Joe Biden</td>
+                <td style="display: flex; justify-content: flex-end">
+                    <kbd>15.50</kbd>&nbsp;<kbd class="pico-background-red-350">-14.56%</kbd>
+                </td>
+            </tr>
+            <tr>
+                <td>8 more options...</td>
+                <td></td>
             </tr>
     </table>
 </article>
+{% endfor %}

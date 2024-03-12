@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS session(
 
 
 CREATE TABLE IF NOT EXISTS market(
-    id          TEXT NOT NULL PRIMARY KEY,
+    id          INTEGER NOT NULL PRIMARY KEY,
     title       TEXT NOT NULL CHECK (length(title) <= 50),
     description TEXT NOT NULL,
     status      TEXT NOT NULL CHECK(status IN ('active', 'resolved')),
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS market(
 
 
 CREATE TABLE IF NOT EXISTS book(
-    id          INTEGER PRIMARY KEY autoincrement,
+    id          INTEGER NOT NULL PRIMARY KEY autoincrement,
     market_id   TEXT not null,
     name        TEXT not null,
     status      TEXT not null check(status IN ('active', 'resolved')),
@@ -55,8 +55,9 @@ CREATE TABLE IF NOT EXISTS "order"(
 
 
 CREATE TABLE IF NOT EXISTS trade(
-    id          INTEGER PRIMARY KEY autoincrement,
+    id          INTEGER NOT NULL PRIMARY KEY autoincrement,
     create_time INTEGER NOT NULL,
+    tick        INTEGER NOT NULL,
     book_id     INTEGER NOT NULL,
     taker_id    INTEGER NOT NULL,
     maker_id    INTEGER NOT NULL,
@@ -77,6 +78,3 @@ CREATE TABLE IF NOT EXISTS position(
     FOREIGN KEY (user_id) REFERENCES user(id),
     PRIMARY KEY (book_id, user_id)
 );
-
-
-
