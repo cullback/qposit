@@ -5,7 +5,9 @@ use axum_extra::extract::{
     CookieJar,
 };
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use tokio::sync::mpsc;
 
+use crate::actors::matcher::MatcherRequest;
 use crate::models::{
     session_record::{self, get_session_by_id},
     user_record::{self, get_user_by_id, UserRecord},
@@ -16,6 +18,7 @@ pub type Timestamp = i64;
 #[derive(Clone)]
 pub struct AppState {
     pub database: Pool<Sqlite>,
+    pub matcher: mpsc::Sender<MatcherRequest>,
 }
 
 /// Returns the current time in microseconds.
@@ -36,9 +39,9 @@ async fn connect_db() -> Pool<Sqlite> {
 }
 
 impl AppState {
-    pub async fn build() -> Self {
+    pub async fn build(matcher: mpsc::Sender<MatcherRequest>) -> Self {
         let database = connect_db().await;
-        Self { database }
+        Self { database, matcher }
     }
 
     pub async fn authenticate(&self, jar: CookieJar) -> Option<UserRecord> {

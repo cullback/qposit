@@ -11,8 +11,9 @@ axum-extra = { version = "0.9.2", features = ["typed-header", "cookie"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 askama = "0.12.1"
 
-sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite", "macros"]}
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite", "macros"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
 dotenvy = "0.15.7"
 rand = "0.8.5"
 time = "0.3.34"
@@ -20,3 +21,10 @@ time = "0.3.34"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 argon2 = "0.5.3"
+orderbook = { path = "/Users/lookaside/repos/matcher/orderbook" }
+exchange = { path = "/Users/lookaside/repos/matcher/exchange" }
+
+utoipa = { version = "4", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "*", features = ["axum"] }
+utoipa-redoc = { version = "*", features = ["axum"] }
+utoipa-rapidoc = { version = "*", features = ["axum"] }
