@@ -1,30 +1,10 @@
-use exchange::{BookEvent, BookId, Exchange, OrderRequest, RejectReason, UserId};
-use orderbook::OrderId;
-use tokio::sync::{broadcast, mpsc, oneshot};
+use exchange::{BookEvent, Exchange};
+use tokio::sync::{broadcast, mpsc};
 use tracing::info;
 
-use crate::app_state::timestamp_micros;
+use crate::app_state::current_time_micros;
 
-/// A request to the database engine.
-/// These messages are used to communicate from the endpoints to the matching engine service.
-#[derive(Debug)]
-pub enum MatcherRequest {
-    SubmitOrder {
-        user: UserId,
-        order: OrderRequest,
-        /// Response to the client
-        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
-    },
-    CancelOrder {
-        user: UserId,
-        order: OrderId,
-        /// Response to the client
-        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
-    },
-    AddBook {
-        book_id: BookId,
-    },
-}
+use super::matcher_request::MatcherRequest;
 
 /// Runs the exchange service.
 pub async fn run_market(
@@ -35,7 +15,7 @@ pub async fn run_market(
     info!("Starting matching engine...");
 
     while let Some(msg) = recv.recv().await {
-        let timestamp = timestamp_micros();
+        let timestamp = current_time_micros();
 
         match msg {
             MatcherRequest::SubmitOrder {
@@ -43,7 +23,10 @@ pub async fn run_market(
                 order,
                 response,
             } => {
-                info!("REQUEST: {timestamp} add user_id={user} {:?}", order);
+                info!(
+                    "REQUEST: {timestamp} submit order user_id={user} {:?}",
+                    order
+                );
                 let res = exchange
                     .submit_order(timestamp, user, order.into())
                     .map(|x| x.into());

@@ -2,14 +2,23 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
+    Extension, Json,
 };
-use axum_extra::{headers::{authorization::{Basic, Bearer}, Authorization}, TypedHeader};
+use axum_extra::{
+    headers::{
+        authorization::{Basic, Bearer},
+        Authorization,
+    },
+    TypedHeader,
+};
 use serde::Deserialize;
 use serde_json::json;
+use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
-use crate::app_state::AppState;
+use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, auth::BearerExtractor};
+
+use crate::api::book_event::BookEvent;
 
 /// The time in force of an order.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
@@ -67,32 +76,29 @@ impl From<OrderRequest> for exchange::OrderRequest {
     }
 }
 
-// /// Handles an order POST request.
-// #[utoipa::path(
-//     post,
-//     path = "/orders",
-//     responses(
-//         (status = 200, description = "Post an order", body = [OrderRequest])
-//     )
-// )]
-// pub async fn post(
-//     State(state): State<AppState>,
-//     TypedHeader(auth): TypedHeader<Bearer>,
-//     Json(payload): Json<OrderRequest>,
-// ) -> Response {
-//     let Some(user_id) = state.authenticate(&auth).await else {
-//         return StatusCode::UNAUTHORIZED.into_response();
-//     };
+/// Handles an order POST request.
+#[utoipa::path(
+    post,
+    path = "/orders",
+    responses(
+        (status = 200, description = "Post an order", body = [OrderRequest])
+    )
+)]
+pub async fn post(
+    State(state): State<AppState>,
+    BearerExtractor(user): BearerExtractor,
+    Json(order): Json<OrderRequest>,
+    Extension(db): Extension<SqlitePool>,
+) -> Response {
+    let (req, recv) = MatcherRequest::submit(user.id, order.into());
+    state.matcher.send(req).await.expect("Receiver dropped");
+    let response = recv.await.expect("Sender dropped");
 
-//     let (req, recv) = EngineRequest::submit(user_id, payload);
-//     state.matcher.send(req).await.expect("Receiver dropped");
-//     let response = recv.await.expect("Sender dropped");
-
-//     match response {
-//         Ok(event) => Json(event).into_response(),
-//         Err(err) => Json(json!({"error": format!("{err:?}")})).into_response(),
-//     }
-// }
+    match response {
+        Ok(event) => Json(BookEvent::from(event)).into_response(),
+        Err(err) => Json(json!({"error": format!("{err:?}")})).into_response(),
+    }
+}
 
 #[utoipa::path(
     get,
@@ -105,7 +111,6 @@ pub async fn get(
     State(state): State<AppState>,
     // TypedHeader(auth): TypedHeader<Bearer>,
     TypedHeader(auth): TypedHeader<Authorization<Basic>>,
-
 ) -> Response {
     return StatusCode::UNAUTHORIZED.into_response();
 }

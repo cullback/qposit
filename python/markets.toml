@@ -1,0 +1,20 @@
+[[markets]]
+slug = "2024-us-presidential-election"
+title = "US presidential election"
+description = """
+# Resolution criteria
+
+Resolves to the person who wins the majority of votes for US President in the
+Electoral College, or selected by Congress following the contingency procedure
+in the Twelfth Amendment.
+
+Resolves early if both the Associated Press projects a winner and the losing major party candidate concedes.
+"""
+create_time = 1697838953000000
+expire_time = 1730764800000000
+books = ["Donald Trump", "Joe Biden", "Nikki Haley", "Ron DeSantis", "Kamala Harris"]
+
+[[markets]]
+slug = "2024-us-republican-nominee"
+title = "US Republican nominee"
+
