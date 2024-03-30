@@ -7,7 +7,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum_extra::extract::{cookie::Cookie, cookie::SameSite, CookieJar};
-use axum_extra::headers::authorization::Bearer;
+use axum_extra::headers::authorization::{Basic, Bearer};
 use axum_extra::headers::{Authorization, UserAgent};
 use axum_extra::TypedHeader;
 use sqlx::SqlitePool;
@@ -54,6 +54,19 @@ pub async fn create_session(
     build_session_cookie(&id)
 }
 
+async fn check_login(db: &SqlitePool, username: &str, password: &str) -> Option<User> {
+    User::get_by_username(db, username)
+        .await
+        .ok()
+        .and_then(|user| {
+            let parsed_hash = PasswordHash::new(&user.password_hash).expect("Failed to parsh hash");
+            Argon2::default()
+                .verify_password(password.as_bytes(), &parsed_hash)
+                .ok()
+                .map(|_| user)
+        })
+}
+
 /// Authenticate user and create a new session id.
 pub async fn login(
     db: &SqlitePool,
@@ -63,17 +76,10 @@ pub async fn login(
     ip_address: String,
     user_agent: UserAgent,
 ) -> Option<Cookie<'static>> {
-    match User::get_by_username(db, username).await {
-        Ok(user) => {
-            let parsed_hash = PasswordHash::new(&user.password_hash).unwrap();
-            Argon2::default()
-                .verify_password(password.as_bytes(), &parsed_hash)
-                .ok()?;
-            let cookie = create_session(db, user.id, time, ip_address, user_agent).await;
-            Some(cookie)
-        }
-        Err(_) => None,
-    }
+    let user = check_login(db, username, password).await?;
+
+    let cookie = create_session(db, user.id, time, ip_address, user_agent).await;
+    Some(cookie)
 }
 
 pub struct UserExtractor(pub Option<User>);
@@ -107,10 +113,10 @@ where
     }
 }
 
-pub struct BearerExtractor(pub User);
+pub struct BasicAuthExtractor(pub User);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for BearerExtractor
+impl<S> FromRequestParts<S> for BasicAuthExtractor
 where
     S: Send + Sync,
 {
@@ -118,24 +124,15 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let Ok(TypedHeader(Authorization(x))) =
-            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state).await
+            TypedHeader::<Authorization<Basic>>::from_request_parts(parts, state).await
         else {
             return Err(StatusCode::UNAUTHORIZED.into_response());
         };
-        let session_id = x.token();
+        // let session_id = x.username();
         let pool: &SqlitePool = parts.extensions.get().unwrap();
-
-        let session = match Session::get_by_id(pool, session_id).await {
-            Ok(Some(session)) => session,
-            Ok(None) => return Err(StatusCode::UNAUTHORIZED.into_response()),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
-        };
-        let user = match User::get_by_id(pool, session.user_id).await {
-            Ok(Some(user)) => user,
-            Ok(None) => return Err(StatusCode::UNAUTHORIZED.into_response()),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
-        };
-
-        Ok(Self(user))
+        match check_login(pool, x.username(), x.password()).await {
+            Some(user) => Ok(Self(user)),
+            None => Err(StatusCode::UNAUTHORIZED.into_response()),
+        }
     }
 }

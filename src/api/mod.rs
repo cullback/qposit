@@ -19,9 +19,6 @@ mod trades;
 
 use utoipa::{Modify, OpenApi};
 
-// #[derive(ToSchema)]
-// pub type Timestamp = i64;
-
 #[derive(OpenApi)]
 #[openapi(
     paths(

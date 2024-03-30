@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS book(
     name        TEXT not null,
     status      TEXT not null CHECK (status IN ('active', 'resolved')),
     value       INTEGER,
-    FOREIGN KEY (market_id) REFERENCES market(id)
+    FOREIGN KEY (market_id) REFERENCES market(id) ON DELETE CASCADE
 );
 
 

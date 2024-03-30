@@ -10,11 +10,19 @@ in the Twelfth Amendment.
 
 Resolves early if both the Associated Press projects a winner and the losing major party candidate concedes.
 """
-create_time = 1697838953000000
-expire_time = 1730764800000000
+created_at = 1697838953000000
+expires_at = 1730764800000000
 books = ["Donald Trump", "Joe Biden", "Nikki Haley", "Ron DeSantis", "Kamala Harris"]
 
 [[markets]]
 slug = "2024-us-republican-nominee"
 title = "US Republican nominee"
+description = """
+# Resolution criteria
 
+Resolve to the person who is nominated by the Republican Party to run for US
+President in the 2024 election.
+"""
+created_at = 1697838953000000
+expires_at = 1730764800000000
+books = ["Donald Trump", "Nikki Haley", "Ron DeSantis"]

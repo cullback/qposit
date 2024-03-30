@@ -4,16 +4,15 @@ use axum::{
     response::IntoResponse,
     Extension, Json,
 };
-use exchange::{BookId, Timestamp};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
-    app_state::{current_time_micros, AppState},
-    auth::BearerExtractor,
-    models,
+    app_state::AppState,
+    auth::BasicAuthExtractor,
+    models::{self, book::Book},
 };
 
 #[derive(Deserialize, ToSchema)]
@@ -36,16 +35,15 @@ pub struct Market {
 )]
 pub async fn post(
     State(state): State<AppState>,
-    BearerExtractor(user): BearerExtractor,
+    BasicAuthExtractor(user): BasicAuthExtractor,
     Path(slug): Path<String>,
     Extension(db): Extension<SqlitePool>,
     Json(market): Json<Market>,
 ) -> impl IntoResponse {
-    if user.username != "admin" {
+    if user.username != "testaccount" {
+        // TODO
         return StatusCode::FORBIDDEN.into_response();
     }
-
-    let timestamp = current_time_micros();
 
     let record = models::market::Market {
         id: 0,
@@ -53,35 +51,30 @@ pub async fn post(
         title: market.title,
         description: market.description,
         status: "active".to_owned(),
-        created_at: timestamp,
-        expires_at: 0,
+        created_at: market.created_at,
+        expires_at: market.expires_at,
     };
-    match record.insert(&db).await {
-        Ok(_) => {}
+
+    let market_id = match record.insert(&db).await {
+        Ok(row_id) => row_id,
         Err(sqlx::Error::Database(x)) if x.is_unique_violation() => {
             return Json(json!({"error": "Market already exists"})).into_response();
         }
-        Err(err) => {
-            return Json(json!({"error": format!("{err:?}")})).into_response();
+        Err(_) => {
+            return Json(json!({"error": "internal server error"})).into_response();
         }
-    }
+    };
 
     for book in market.books {
-        let row = sqlx::query!(
-            "INSERT INTO book (market_id, name, status) VALUES (?, ?, 'active')",
-            slug,
-            book
-        )
-        .execute(&db)
-        .await
-        .unwrap();
-
-        let book_id = row.last_insert_rowid() as BookId;
-        // state
-        //     .engine
-        //     .send(EngineRequest::AddBook { book_id })
-        //     .await
-        //     .expect("Engine receiver dropped");
+        let book = Book {
+            id: 0,
+            market_id,
+            name: book,
+            status: "active".to_owned(),
+            value: None,
+            last_trade_price: None,
+        };
+        let book_id = book.insert(&db).await.unwrap();
     }
 
     StatusCode::CREATED.into_response()

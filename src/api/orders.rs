@@ -16,7 +16,9 @@ use serde_json::json;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
-use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, auth::BearerExtractor};
+use crate::{
+    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor,
+};
 
 use crate::api::book_event::BookEvent;
 
@@ -86,7 +88,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
 )]
 pub async fn post(
     State(state): State<AppState>,
-    BearerExtractor(user): BearerExtractor,
+    BasicAuthExtractor(user): BasicAuthExtractor,
     Json(order): Json<OrderRequest>,
     Extension(db): Extension<SqlitePool>,
 ) -> Response {

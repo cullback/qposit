@@ -2,7 +2,7 @@ use exchange::Timestamp;
 use exchange::UserId;
 use sqlx::SqlitePool;
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct User {
     pub id: UserId,
     pub username: String,

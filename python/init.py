@@ -5,8 +5,8 @@ import datetime as dt
 import pathlib
 
 URL = "http://localhost:3000"
-AUTH = requests.auth.HTTPBasicAuth("admin", "pass123")
-BOB = requests.auth.HTTPBasicAuth("bob", "pass123")
+AUTH = requests.auth.HTTPBasicAuth("testaccount", "password123")
+# BOB = requests.auth.HTTPBasicAuth("bob", "pass123")
 
 def post_markets():
     print("####### Posting markets #######")
@@ -33,27 +33,27 @@ def query_books():
     ]
     '''
 
-def post_order():
-    print("####### Posting order #######")
-    data = {
-        "book": 1,
-        "size": 50,
-        "price": 10,
-        "is_buy": True,
-    }
-    response = requests.post(f"{URL}/orders", json=data, auth=BOB)
-    print(response.status_code, response.text)
+# def post_order():
+#     print("####### Posting order #######")
+#     data = {
+#         "book": 1,
+#         "size": 50,
+#         "price": 10,
+#         "is_buy": True,
+#     }
+#     response = requests.post(f"{URL}/orders", json=data, auth=BOB)
+#     print(response.status_code, response.text)
 
-    resp = response.json()
-    print(resp)
-    order_id = resp["id"]
-    return order_id
+#     resp = response.json()
+#     print(resp)
+#     order_id = resp["id"]
+#     return order_id
 
 def main():
     post_markets()
 
-    query_books()
-    order_id = post_order()
+    # query_books()
+    # order_id = post_order()
 
     # print('-----')
     # response = requests.get(f"{URL}/orders", auth=BOB)
