@@ -1,11 +1,51 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if username.len() == 0 %}
-<h1>Hello, world!</h1>
-{% else %}
-<h1>Hello, {{ username }}!</h1>
-{% endif %}
 
-This is a basic website.
+<h1>Markets</h1>
+<form role="search">
+    <input name="search" type="search" placeholder="Search" />
+    <input type="submit" value="Search" />
+</form>
+
+
+<details>
+    <summary role="button" class="outline secondary">Filters</summary>
+    <fieldset>
+        <legend>Sort by</legend>
+        <label>
+            <input type="radio" name="language" checked />
+            Volume
+        </label>
+        <label>
+            <input type="radio" name="language" />
+            Newest
+        </label>
+        <label>
+            <input type="radio" name="language" />
+            Volatility
+        </label>
+    </fieldset>
+</details>
+
+{% for (market, books) in markets %}
+
+<article>
+    <h3><a href="./market.html">{{market.title}}</a></h3>
+    <table>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{{book.title}}</td>
+                <td style="display: flex; justify-content: flex-end">
+                    <kbd>{{book.last_trade_price.unwrap_or(0)}}</kbd>&nbsp;<kbd class="pico-background-green-350">&nbsp;+4.56%</kbd>
+                </td>
+            </tr>
+            {% endfor %}
+    </table>
+    <p>volume: 23,000</p>
+</article>
+
+{% endfor %}
+
 {% endblock %}

@@ -69,7 +69,7 @@ pub async fn post(
         let book = Book {
             id: 0,
             market_id,
-            name: book,
+            title: book,
             status: "active".to_owned(),
             value: None,
             last_trade_price: None,

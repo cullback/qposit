@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS market(
 
 CREATE TABLE IF NOT EXISTS book(
     id          INTEGER NOT NULL PRIMARY KEY autoincrement,
-    market_id   TEXT not null,
-    name        TEXT not null,
-    status      TEXT not null CHECK (status IN ('active', 'resolved')),
+    market_id   INTEGER NOT NULL,
+    title       TEXT NOT NULL,
+    status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
     value       INTEGER,
     FOREIGN KEY (market_id) REFERENCES market(id) ON DELETE CASCADE
 );

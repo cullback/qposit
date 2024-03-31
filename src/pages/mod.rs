@@ -1,10 +1,7 @@
 mod home;
 mod not_found;
-mod templates;
 
 use axum::{http::header, response::IntoResponse, routing::get, Router};
-
-use crate::app_state::AppState;
 
 async fn get_pico_css() -> impl IntoResponse {
     (
