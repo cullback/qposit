@@ -1,0 +1,17 @@
+<nav class="container-fluid">
+    <ul>
+        <li>
+            <h1><a href="/">QPosit</a></h1>
+        </li>
+    </ul>
+    <ul>
+        <li><a href="/about">About</a></li>
+        {% if username.len() == 0 %}
+        <li><a href="/login">Log in</a></li>
+        <li><a href="/signup">Sign up</a></li>
+        {% else %}
+        <li><a href="/profile">Profile</a></li>
+        <li><a href="/" hx-delete="/login" hx-trigger="click" hx-swap="none" class="secondary">Logout</a></li>
+        {% endif %}
+    </ul>
+</nav>

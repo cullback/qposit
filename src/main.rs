@@ -5,6 +5,7 @@ mod app_state;
 mod auth;
 mod bootstrap;
 mod models;
+mod pages;
 
 use app_state::AppState;
 use axum::{Extension, Router};
@@ -39,8 +40,8 @@ async fn main() {
 
     let db = connect_db().await;
 
-    let app = Router::new()
-        .nest("/", api::router(state))
+    let app = pages::router()
+        .merge(api::router(state))
         .layer(Extension(db));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

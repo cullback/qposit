@@ -29,19 +29,25 @@ use utoipa::{Modify, OpenApi};
         schemas(orders::OrderRequest, orders::TimeInForce, markets::Market),
     ),
     tags(
-        (name = "exchange", description = "exchange thing")
-    )
+        (name = "QPosit", description = "Prediction market.")
+    ),
+    info(
+        title = "QPosit API",
+        version = "0.1.0",    
+    ),
 )]
+
 pub struct ApiDoc;
 
 pub fn router(state: AppState) -> Router {
-    Router::new()
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
-        // via SwaggerUi instead we only make rapidoc to point to the existing doc.
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
+    let apiv1 = Router::new()
         .route("/orders", get(orders::get))
-        .route("/markets/:slug", post(markets::post))
+        .route("/markets/:slug", post(markets::post));
+
+    Router::new()
+        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
+        .nest("/api/v1", apiv1)
         .with_state(state)
 }

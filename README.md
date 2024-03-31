@@ -1,6 +1,6 @@
-# Ember
+# QPosit
 
-Prediction market.
+A prediction market.
 
 - Rust
 - Axum for web server

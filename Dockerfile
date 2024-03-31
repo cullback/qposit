@@ -24,12 +24,12 @@ ENV DATABASE_URL=sqlite:db/db.db
 RUN cargo install sqlx-cli
 RUN sqlx database create
 RUN sqlx migrate run --source db/migrations
-RUN rm ./target/release/deps/ember*
+RUN rm ./target/release/deps/qposit*
 RUN cargo build --release
 
 # Stage 2: Preparing the final image
 FROM debian:bookworm-slim
 
-COPY --from=builder /ember/target/release/ember .
+COPY --from=builder /qposit/target/release/qposit .
 
-CMD ["./ember"]
+CMD ["./qposit"]

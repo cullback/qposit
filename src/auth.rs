@@ -82,10 +82,10 @@ pub async fn login(
     Some(cookie)
 }
 
-pub struct UserExtractor(pub Option<User>);
+pub struct SessionExtractor(pub Option<User>);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for UserExtractor
+impl<S> FromRequestParts<S> for SessionExtractor
 where
     S: Send + Sync,
 {
