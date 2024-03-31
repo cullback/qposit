@@ -24,6 +24,7 @@ use utoipa::{Modify, OpenApi};
     paths(
         orders::post,
         markets::post,
+        book_event::ws_handler,
     ),
     components(
         schemas(orders::OrderRequest, orders::TimeInForce, markets::Market),
@@ -31,18 +32,15 @@ use utoipa::{Modify, OpenApi};
     tags(
         (name = "QPosit", description = "Prediction market.")
     ),
-    info(
-        title = "QPosit API",
-        version = "0.1.0",    
-    ),
 )]
 
 pub struct ApiDoc;
 
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
-        .route("/orders", get(orders::get))
-        .route("/markets/:slug", post(markets::post));
+        .route("/orders", get(orders::get).post(orders::post))
+        .route("/markets/:slug", post(markets::post))
+        .route("/ws", get(book_event::ws_handler));
 
     Router::new()
         .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))

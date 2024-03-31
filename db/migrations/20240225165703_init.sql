@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS user(
     id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     username        TEXT NOT NULL UNIQUE CHECK (length(username) >= 5 AND length(username) <= 20),
     password_hash   TEXT NOT NULL,
-    created_at      INTEGER NOT NULL
+    created_at      INTEGER NOT NULL,
+    balance         INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0)
 );
 
 
@@ -32,7 +33,7 @@ CREATE TABLE IF NOT EXISTS book(
     id          INTEGER NOT NULL PRIMARY KEY autoincrement,
     market_id   INTEGER NOT NULL,
     title       TEXT NOT NULL,
-    status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
+    -- status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
     value       INTEGER,
     FOREIGN KEY (market_id) REFERENCES market(id) ON DELETE CASCADE
 );

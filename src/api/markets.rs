@@ -70,7 +70,6 @@ pub async fn post(
             id: 0,
             market_id,
             title: book,
-            status: "active".to_owned(),
             value: None,
             last_trade_price: None,
         };

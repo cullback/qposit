@@ -66,7 +66,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
     fn from(req: OrderRequest) -> Self {
         Self {
             book: req.book,
-            size: req.size,
+            quantity: req.size,
             price: req.price,
             is_buy: req.is_buy,
             tif: match req.tif {
@@ -90,10 +90,9 @@ pub async fn post(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
     Json(order): Json<OrderRequest>,
-    Extension(db): Extension<SqlitePool>,
 ) -> Response {
     let (req, recv) = MatcherRequest::submit(user.id, order.into());
-    state.matcher.send(req).await.expect("Receiver dropped");
+    state.cmd_send.send(req).await.expect("Receiver dropped");
     let response = recv.await.expect("Sender dropped");
 
     match response {

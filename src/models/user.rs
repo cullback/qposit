@@ -8,6 +8,7 @@ pub struct User {
     pub username: String,
     pub password_hash: String,
     pub created_at: Timestamp,
+    pub balance: i64,
 }
 
 impl User {
@@ -38,5 +39,18 @@ impl User {
         .execute(db)
         .await
         .map(|row| UserId::try_from(row.last_insert_rowid()).unwrap())
+    }
+
+    pub async fn get_with_nonzero_balances(
+        db: &SqlitePool,
+    ) -> Result<Vec<User>, sqlx::Error> {
+        sqlx::query_as::<_, User>(
+            r#"
+            SELECT * FROM user
+            WHERE balance != 0
+            "#,
+        )
+        .fetch_all(db)
+        .await
     }
 }

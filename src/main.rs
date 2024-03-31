@@ -7,11 +7,16 @@ mod bootstrap;
 mod models;
 mod pages;
 
+use crate::actors::matcher;
 use app_state::AppState;
 use axum::{Extension, Router};
+use exchange::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
-use tokio::{net::TcpListener, sync::mpsc};
+use tokio::{
+    net::TcpListener,
+    sync::{broadcast, mpsc},
+};
 use tracing::info;
 
 /// Connects to the database using the `DATABASE_URL` environment variable.
@@ -27,18 +32,17 @@ async fn connect_db() -> SqlitePool {
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    // let (md_producer, feed) = tokio::sync::broadcast::channel::<BookEvent>(32);
-    let (cmd_producer, cmd_receiver) = mpsc::channel(32);
-
-    let state = AppState::build(cmd_producer).await;
-
-    // let engine = bootstrap::bootstrap_exchange(&state.database).await;
-
-    // tokio::spawn(async move {
-    //     matcher::run_market(engine, cmd_receiver, md_producer).await;
-    // });
-
     let db = connect_db().await;
+
+    // let (md_producer, feed) = tokio::sync::broadcast::channel::<BookEvent>(32);
+    let (cmd_send, cmd_receive) = mpsc::channel(32);
+    let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
+    let state = AppState::build(cmd_send, feed_receive).await;
+    let engine = bootstrap::bootstrap_exchange(&db).await;
+
+    tokio::spawn(async move {
+        matcher::run_matcher(engine, cmd_receive, feed_send).await;
+    });
 
     let app = pages::router()
         .merge(api::router(state))

@@ -22,7 +22,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
     fn from(req: OrderRequest) -> Self {
         Self {
             book: req.book,
-            size: req.size,
+            quantity: req.size,
             price: req.price,
             is_buy: req.is_buy,
             tif: match req.tif {

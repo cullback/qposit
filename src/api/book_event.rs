@@ -1,7 +1,15 @@
 //! Wrapper json / api type.
-use orderbook::{OrderId, Price, Size};
+use axum::{
+    extract::{
+        ws::{Message, WebSocket},
+        State, WebSocketUpgrade,
+    },
+    response::Response,
+};
 use serde::Serialize;
 use utoipa::ToSchema;
+
+use crate::app_state::AppState;
 
 /// Book update event.
 #[derive(Debug, Clone, PartialEq, Serialize, ToSchema)]
@@ -21,13 +29,13 @@ pub struct BookEvent {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Action {
     Add {
-        id: u64,
-        size: u32,
+        id: i64,
+        quantity: u32,
         price: u16,
         is_buy: bool,
     },
     Remove {
-        id: u64,
+        id: i64,
     },
 }
 
@@ -41,17 +49,38 @@ impl From<exchange::BookEvent> for BookEvent {
             action: match event.action {
                 exchange::Action::Add {
                     id,
-                    size,
+                    quantity,
                     price,
                     is_buy,
                 } => Action::Add {
                     id,
-                    size,
+                    quantity,
                     price,
                     is_buy,
                 },
                 exchange::Action::Remove { id } => Action::Remove { id },
             },
         }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/ws",
+    responses(
+        (status = 200, description = "Subscribe to market data feed")
+    )
+)]
+pub async fn ws_handler(State(state): State<AppState>, ws: WebSocketUpgrade) -> Response {
+    ws.on_upgrade(|socket| handle_socket(state, socket))
+}
+
+async fn handle_socket(mut state: AppState, mut socket: WebSocket) {
+    println!("new websocket connection");
+    loop {
+        let event = state.feed_receive.recv().await.expect("Sender dropped");
+        let event = BookEvent::from(event);
+        let text = serde_json::to_string(&event).expect("failed to serialize");
+        socket.send(Message::Text(text)).await.unwrap();
     }
 }

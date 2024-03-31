@@ -7,7 +7,7 @@ use crate::app_state::current_time_micros;
 use super::matcher_request::MatcherRequest;
 
 /// Runs the exchange service.
-pub async fn run_market(
+pub async fn run_matcher(
     mut exchange: Exchange,
     mut recv: mpsc::Receiver<MatcherRequest>,
     market_data: broadcast::Sender<BookEvent>,

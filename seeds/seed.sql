@@ -1,8 +1,11 @@
 INSERT INTO
-    user(username, password_hash, created_at)
-VALUES
-    -- password=password123
-    ('testaccount', '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', 1710007894419934);
+    user(username, password_hash, created_at, balance)
+VALUES (
+    'testaccount',
+    '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', -- password123
+    1710007894419934,
+    10000 * 100
+);
 
 
 INSERT INTO
@@ -11,10 +14,10 @@ VALUES
     (1, '2024-us-presidential-election', 'US presidential election', 'Who will win?', 'active', 1710007894419934, 1710008894419934);
 
 INSERT INTO
-    book(id, market_id, title, status, value)
+    book(id, market_id, title)
 VALUES
-    (1, 1, 'Joe Biden', 'active', null),
-    (2, 1, 'Donald Trump', 'active', null);
+    (1, 1, 'Joe Biden'),
+    (2, 1, 'Donald Trump');
 
 
 INSERT INTO
