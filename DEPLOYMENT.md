@@ -36,15 +36,15 @@ sudo usermod -aG docker $USER
 
 ```shell
 # build the image
-docker build -t ember .
-docker save -o ember_app.tar ember:latest
-gcloud compute scp ember_app.tar Caddyfile docker-compose.yml <username>@<NAME>:~/
+docker build -t qposit .
+docker save -o qposit_app.tar qposit:latest
+gcloud compute scp qposit_app.tar Caddyfile docker-compose.yml <username>@<NAME>:~/
 gcloud compute scp db/db.db <username>@<NAME>:~/db/db.db
 gcloud compute scp .env <username>@<NAME>:~/.env
 
 # ssh into VM
 gcloud compute ssh <username>@<NAME>
-docker load -i ember_app.tar
+docker load -i qposit_app.tar
 docker compose up -d
 ```
 

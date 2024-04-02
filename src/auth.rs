@@ -7,10 +7,11 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum_extra::extract::{cookie::Cookie, cookie::SameSite, CookieJar};
-use axum_extra::headers::authorization::{Basic, Bearer};
+use axum_extra::headers::authorization::Basic;
 use axum_extra::headers::{Authorization, UserAgent};
 use axum_extra::TypedHeader;
 use sqlx::SqlitePool;
+use tracing::{info, warn};
 
 use crate::models::session::Session;
 use crate::models::user::User;
@@ -26,7 +27,7 @@ fn build_session_cookie(session_id: &str) -> Cookie<'static> {
     Cookie::build(("session_id", session_id))
         .path("/")
         .same_site(SameSite::Strict)
-        .secure(true)
+        // .secure(true) // TODO
         .http_only(true)
         .max_age(time::Duration::WEEK)
         .build()
@@ -101,12 +102,18 @@ where
         let session = match Session::get_by_id(pool, session_id).await {
             Ok(Some(session)) => session,
             Ok(None) => return Ok(Self(None)),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+            Err(err) => {
+                warn!(err = ?err, "Failed to get session");
+                return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+            }
         };
         let user = match User::get_by_id(pool, session.user_id).await {
             Ok(Some(user)) => user,
             Ok(None) => return Ok(Self(None)),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+            Err(err) => {
+                warn!(err = ?err, "Failed to get user");
+                return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+            }
         };
 
         Ok(Self(Some(user)))

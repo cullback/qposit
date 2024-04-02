@@ -42,13 +42,8 @@ impl User {
     }
 
     pub async fn get_with_nonzero_balances(db: &SqlitePool) -> Result<Vec<User>, sqlx::Error> {
-        sqlx::query_as::<_, User>(
-            r#"
-            SELECT * FROM user
-            WHERE balance != 0
-            "#,
-        )
-        .fetch_all(db)
-        .await
+        sqlx::query_as::<_, User>("SELECT * FROM user WHERE balance != 0")
+            .fetch_all(db)
+            .await
     }
 }

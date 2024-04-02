@@ -2,22 +2,19 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
+    Extension, Json,
 };
-use axum_extra::{
-    headers::{authorization::Basic, Authorization},
-    TypedHeader,
-};
-use exchange::BookId;
-use serde::Deserialize;
+use exchange::Action;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor,
+    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor, models,
 };
 
-use crate::api::book_event::BookEvent;
+use super::book_event::BookEvent;
 
 /// The time in force of an order.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
@@ -80,7 +77,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
     post,
     path = "/orders",
     responses(
-        (status = 200, description = "Post an order", body = [OrderRequest])
+        (status = 200, description = "Order successfully submitted", body = [OrderRequest])
     )
 )]
 pub async fn post(
@@ -98,6 +95,33 @@ pub async fn post(
     }
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct OrderResponse {
+    id: i64,
+    created_at: i64,
+    book: u32,
+    user: u32,
+    quantity: u32,
+    remaining: u32,
+    price: u16,
+    is_buy: bool,
+}
+
+impl From<models::order::Order> for OrderResponse {
+    fn from(value: models::order::Order) -> Self {
+        Self {
+            id: value.id,
+            created_at: value.created_at,
+            book: value.book_id,
+            user: value.user_id,
+            quantity: value.quantity,
+            remaining: value.remaining,
+            price: value.price,
+            is_buy: value.is_buy,
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     path = "/orders",
@@ -106,9 +130,53 @@ pub async fn post(
     )
 )]
 pub async fn get(
+    BasicAuthExtractor(user): BasicAuthExtractor,
+    Extension(db): Extension<SqlitePool>,
+) -> Response {
+    let Ok(orders) = models::order::Order::get_for_user(&db, user.id).await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+
+    let resp = orders
+        .into_iter()
+        .map(OrderResponse::from)
+        .collect::<Vec<_>>();
+    Json(resp).into_response()
+}
+
+#[utoipa::path(
+    delete,
+    path = "/orders",
+    responses(
+        (status = 200, description = "Deleted all orders")
+    )
+)]
+pub async fn delete(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
-    TypedHeader(auth): TypedHeader<Authorization<Basic>>,
-) -> Response {
-    return StatusCode::UNAUTHORIZED.into_response();
+    Extension(db): Extension<SqlitePool>,
+) -> impl IntoResponse {
+    let Ok(orders) = models::order::Order::get_for_user(&db, user.id).await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+
+    let mut deleted = vec![];
+
+    for order in orders {
+        let (req, recv) = MatcherRequest::cancel(user.id, order.id);
+        state.cmd_send.send(req).await.expect("Receiver dropped");
+        let resp = recv.await.expect("Sender dropped");
+        match resp {
+            Ok(exchange::BookEvent {
+                time: _,
+                tick: _,
+                book: _,
+                user: _,
+                action: Action::Remove { id },
+            }) => deleted.push(id),
+            _ => {}
+        }
+    }
+
+    Json(json!({"deleted": deleted})).into_response()
 }

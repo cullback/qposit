@@ -50,8 +50,8 @@ pub async fn get(Extension(db): Extension<SqlitePool>) -> impl IntoResponse {
 pub struct Market {
     title: String,
     description: String,
-    created_at: Timestamp,
-    expires_at: Timestamp,
+    created_at: i64,
+    expires_at: i64,
     books: Vec<String>,
 }
 

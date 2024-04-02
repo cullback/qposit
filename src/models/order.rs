@@ -57,4 +57,16 @@ impl Order {
         .fetch_all(db)
         .await
     }
+
+    pub async fn get_for_user(db: &SqlitePool, user: UserId) -> Result<Vec<Order>, sqlx::Error> {
+        sqlx::query_as::<_, Order>(
+            r#"
+        SELECT * FROM 'order' WHERE status = 'open' and user_id = ?
+        ORDER BY price ASC, created_at ASC
+        "#,
+        )
+        .bind(user)
+        .fetch_all(db)
+        .await
+    }
 }

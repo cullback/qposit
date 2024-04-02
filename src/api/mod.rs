@@ -2,7 +2,6 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use exchange::Timestamp;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;
 use utoipa_redoc::Servable;
@@ -17,17 +16,18 @@ mod order_request;
 mod orders;
 mod trades;
 
-use utoipa::{Modify, OpenApi};
+use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
         orders::post,
+        orders::get,
         markets::post,
         book_event::ws_handler,
     ),
     components(
-        schemas(orders::OrderRequest, orders::TimeInForce, markets::Market),
+        schemas(orders::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market),
     ),
     tags(
         (name = "QPosit", description = "Prediction market.")
@@ -38,7 +38,10 @@ pub struct ApiDoc;
 
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
-        .route("/orders", get(orders::get).post(orders::post))
+        .route(
+            "/orders",
+            get(orders::get).post(orders::post).delete(orders::delete),
+        )
         .route("/markets/:slug", post(markets::post))
         .route("/markets", get(markets::get))
         .route("/ws", get(book_event::ws_handler));
