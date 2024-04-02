@@ -29,6 +29,13 @@ def post_order():
     order_id = resp["id"]
     return order_id
 
+def get_open_orders():
+    response = requests.get(f"{URL}/orders", auth=AUTH)
+    print(response.status_code, response.text)
+
+def delete_orders():
+    response = requests.delete(f"{URL}/orders", auth=AUTH)
+    print(response.status_code, response.text)
 
 def main():
     
@@ -44,8 +51,9 @@ def main():
 
     # query_markets()
 
-    post_order()
-
+    # post_order()
+    get_open_orders()
+    delete_orders()
 
 if __name__ == "__main__":
     main()
