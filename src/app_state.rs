@@ -20,7 +20,7 @@ impl Clone for AppState {
 }
 
 impl AppState {
-    pub async fn build(
+    pub fn build(
         cmd_send: mpsc::Sender<MatcherRequest>,
         feed_receive: broadcast::Receiver<BookEvent>,
     ) -> Self {

@@ -34,15 +34,21 @@ async fn main() {
 
     let db = connect_db().await;
 
-    // let (md_producer, feed) = tokio::sync::broadcast::channel::<BookEvent>(32);
     let (cmd_send, cmd_receive) = mpsc::channel(32);
     let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
-    let state = AppState::build(cmd_send, feed_receive).await;
+
     let engine = bootstrap::bootstrap_exchange(&db).await;
 
+    tokio::spawn({
+        let db = db.clone();
+        let feed_receive = feed_receive.resubscribe();
+        async move { actors::writer::run_persistor(db, feed_receive).await }
+    });
     tokio::spawn(async move {
         matcher::run_matcher(engine, cmd_receive, feed_send).await;
     });
+
+    let state = AppState::build(cmd_send, feed_receive);
 
     let app = pages::router()
         .merge(api::router(state))

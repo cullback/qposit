@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS "order"(
     book_id     INTEGER NOT NULL,
     user_id     INTEGER NOT NULL,
     quantity    INTEGER NOT NULL CHECK (quantity > 0),
-    filled_qty  INTEGER NOT NULL DEFAULT 0,
+    remaining   INTEGER NOT NULL,
     price       INTEGER NOT NULL CHECK (price > 0),
     is_buy      INTEGER NOT NULL CHECK (is_buy IN (0, 1)),
     status      TEXT NOT NULL CHECK(

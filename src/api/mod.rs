@@ -40,6 +40,7 @@ pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
         .route("/orders", get(orders::get).post(orders::post))
         .route("/markets/:slug", post(markets::post))
+        .route("/markets", get(markets::get))
         .route("/ws", get(book_event::ws_handler));
 
     Router::new()

@@ -23,10 +23,13 @@ pub struct BookEvent {
     /// The user that caused the event. 0 implies unknown.
     pub user: u32,
     /// The type of action that ocurred.
+    #[serde(flatten)]
     pub action: Action,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(tag = "type")]
+#[serde(rename_all = "lowercase")]
 pub enum Action {
     Add {
         id: i64,

@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     Extension, Json,
 };
+use exchange::Timestamp;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqlitePool;
@@ -15,12 +16,42 @@ use crate::{
     models::{self, book::Book},
 };
 
+#[utoipa::path(
+    get,
+    path = "/markets",
+    responses(
+        (status = 200, description = "Market successfully created")
+    )
+)]
+pub async fn get(Extension(db): Extension<SqlitePool>) -> impl IntoResponse {
+    let markets = models::market::Market::get_active_markets(&db)
+        .await
+        .unwrap();
+    let mut resp = vec![];
+    for market in markets {
+        let books = Book::get_all_for_market(&db, market.id).await.unwrap();
+        resp.push(json!({
+            "title": market.title,
+            "description": market.description,
+            "created_at": market.created_at,
+            "expires_at": market.expires_at,
+            "books": books.iter().map(|b| json!({
+                "id": b.id.to_string(),
+                "title": b.title,
+                "value": b.value,
+                "last_trade_price": b.last_trade_price,
+            })).collect::<Vec<_>>(),
+        }));
+    }
+    Json(resp).into_response()
+}
+
 #[derive(Deserialize, ToSchema)]
 pub struct Market {
     title: String,
     description: String,
-    created_at: i64,
-    expires_at: i64,
+    created_at: Timestamp,
+    expires_at: Timestamp,
     books: Vec<String>,
 }
 
@@ -30,7 +61,7 @@ pub struct Market {
     post,
     path = "/markets",
     responses(
-        (status = 200, description = "Market successfully created", body = [OrderRequest])
+        (status = 200, description = "Market successfully created", body = [Market])
     )
 )]
 pub async fn post(

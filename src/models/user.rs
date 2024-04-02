@@ -41,9 +41,7 @@ impl User {
         .map(|row| UserId::try_from(row.last_insert_rowid()).unwrap())
     }
 
-    pub async fn get_with_nonzero_balances(
-        db: &SqlitePool,
-    ) -> Result<Vec<User>, sqlx::Error> {
+    pub async fn get_with_nonzero_balances(db: &SqlitePool) -> Result<Vec<User>, sqlx::Error> {
         sqlx::query_as::<_, User>(
             r#"
             SELECT * FROM user

@@ -34,14 +34,14 @@ impl Book {
                 book.id,
                 book.market_id,
                 book.title,
-                book.value as "value?: u16",
+                book.value,
                 (
                     SELECT trade.price
                     FROM trade
                     WHERE trade.book_id = book.id
                     ORDER BY trade.tick DESC
                     LIMIT 1
-                ) AS "last_trade_price: u16"
+                ) AS last_trade_price
             FROM book
             WHERE book.market_id = ?;
             "#,
@@ -73,4 +73,3 @@ impl Book {
         .await
     }
 }
-

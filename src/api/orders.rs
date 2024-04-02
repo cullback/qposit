@@ -2,18 +2,15 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Extension, Json,
+    Json,
 };
 use axum_extra::{
-    headers::{
-        authorization::{Basic, Bearer},
-        Authorization,
-    },
+    headers::{authorization::Basic, Authorization},
     TypedHeader,
 };
+use exchange::BookId;
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
@@ -110,7 +107,7 @@ pub async fn post(
 )]
 pub async fn get(
     State(state): State<AppState>,
-    // TypedHeader(auth): TypedHeader<Bearer>,
+    BasicAuthExtractor(user): BasicAuthExtractor,
     TypedHeader(auth): TypedHeader<Authorization<Basic>>,
 ) -> Response {
     return StatusCode::UNAUTHORIZED.into_response();
