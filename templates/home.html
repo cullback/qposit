@@ -31,7 +31,7 @@
 {% for (market, books) in markets %}
 
 <article>
-    <h3><a href="./market.html">{{market.title}}</a></h3>
+    <h3><a href="/market/{{market.slug}}">{{market.title}}</a></h3>
     <table>
         <tbody>
             {% for book in books %}

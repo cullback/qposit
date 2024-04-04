@@ -69,4 +69,19 @@ impl Order {
         .fetch_all(db)
         .await
     }
+
+    pub async fn get_open_for_book(
+        db: &SqlitePool,
+        book: BookId,
+    ) -> Result<Vec<Order>, sqlx::Error> {
+        sqlx::query_as::<_, Order>(
+            r#"
+        SELECT * FROM 'order' WHERE status = 'open' and book_id = ?
+        ORDER BY price ASC, created_at ASC
+        "#,
+        )
+        .bind(book)
+        .fetch_all(db)
+        .await
+    }
 }

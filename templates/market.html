@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<h1>{{market.title}}</h1>
+
+Closes Nov 5, 2024
+
+<hr>
+
+{% for (book, orderbook) in books.iter().zip(orderbooks) %}
+
+<article>
+    <details>
+        <summary>
+            <div class="grid">
+                <strong>{{book.title}}</strong>
+                <div style="display: flex; justify-content: flex-end">
+                    <kbd>{{book.last_trade_price.unwrap_or(0)}}</kbd>&nbsp;<kbd
+                        class="pico-background-green-350">&nbsp;+1.56%</kbd>
+                </div>
+            </div>
+            <small>$7,669,592 Bet</small>
+        </summary>
+
+        Order book
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Price</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for (price, quantity, value) in orderbook.asks.iter().rev() %}
+                <tr>
+                    <td class="pico-color-red-350">{{price}}¢</td>
+                    <td>{{quantity}}</td>
+                    <td>${{value}}</td>
+                </tr>
+                {% endfor %}
+                {% for (price, quantity, value) in orderbook.bids %}
+                <tr>
+                    <td class="pico-color-green-350">{{price}}¢</td>
+                    <td>{{quantity}}</td>
+                    <td>${{value}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <form>
+            <fieldset>
+                <div class="grid">
+                    <label>Quantity
+                        <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" />
+                    </label>
+                    <label>Price
+                        <input type="number" name="price" placeholder="Price" aria-label="Number" />
+                    </label>
+                    <div>
+                        <legend>Order type</legend>
+                        <input type="radio" id="market" name="order_type" />
+                        <label htmlFor="market">Market</label>
+                        <input type="radio" id="POST" name="order_type" checked />
+                        <label htmlFor="POST">POST</label>
+                        <input type="radio" id="IOC" name="order_type" />
+                        <label htmlFor="IOC">IOC</label>
+                    </div>
+                </div>
+                <div class="grid">
+                    <input type="submit" value="Buy" class="pico-background-green-450">
+                    <input type="submit" value="Sell" class="pico-background-red-450">
+                </div>
+            </fieldset>
+        </form>
+    </details>
+</article>
+
+{% endfor %}
+
+{{market.description|markdown}}
+
+{% endblock %}

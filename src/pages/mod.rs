@@ -1,6 +1,7 @@
 mod about;
 mod home;
 mod login;
+mod market;
 mod not_found;
 mod profile;
 mod signup;
@@ -46,5 +47,6 @@ pub fn router() -> Router {
         )
         .route("/login/:session_id", delete(login::delete_by_id))
         .route("/signup", get(signup::get).post(signup::post))
+        .route("/market/:slug", get(market::get))
         .fallback(not_found::get)
 }
