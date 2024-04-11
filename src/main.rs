@@ -39,11 +39,11 @@ async fn main() {
 
     let engine = bootstrap::bootstrap_exchange(&db).await;
 
-    tokio::spawn({
-        let db = db.clone();
-        let feed_receive = feed_receive.resubscribe();
-        async move { actors::writer::run_persistor(db, feed_receive).await }
-    });
+    // tokio::spawn({
+    //     let db = db.clone();
+    //     let feed_receive = feed_receive.resubscribe();
+    //     async move { actors::writer::run_persistor(db, feed_receive).await }
+    // });
     tokio::spawn(async move {
         matcher::run_matcher(engine, cmd_receive, feed_send).await;
     });

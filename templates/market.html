@@ -54,10 +54,10 @@ Closes Nov 5, 2024
             <fieldset>
                 <div>
                     <legend>Order type</legend>
-                    <label><input type="radio" id="market" name="order_type" />Market</label>
-                    <label><input type="radio" id="GTC" name="order_type" />GTC</label>
-                    <label><input type="radio" id="IOC" name="order_type" />IOC</label>
-                    <label><input type="radio" id="POST" name="order_type" checked />POST</label>
+                    <label><input type="radio" name="order_type" value="Market" />Market</label>
+                    <label><input type="radio" name="order_type" value="GTC" checked />GTC</label>
+                    <label><input type="radio" name="order_type" value="IOC" />IOC</label>
+                    <label><input type="radio" name="order_type" value="POST" />POST</label>
                 </div>
                 <div class="grid">
                     <label>Quantity
@@ -68,13 +68,14 @@ Closes Nov 5, 2024
                     </label>
                 </div>
                 <div class="grid">
-                    <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book.id}}}' hx-post="/order"
-                        class="pico-background-green-450">
-                    <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book.id}}}' hx-post="/order"
-                        class="pico-background-red-450">
+                    <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book.id}}}' hx-swap="innerHTML"
+                        hx-target="#responseContainer" hx-post="/order" class="pico-background-green-450">
+                    <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book.id}}}' hx-swap="innerHTML"
+                        hx-target="#responseContainer" hx-post="/order" class="pico-background-red-450">
                 </div>
             </fieldset>
         </form>
+        <div id="responseContainer"></div>
     </details>
 </article>
 
