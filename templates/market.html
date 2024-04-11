@@ -52,6 +52,13 @@ Closes Nov 5, 2024
         </table>
         <form>
             <fieldset>
+                <div>
+                    <legend>Order type</legend>
+                    <label><input type="radio" id="market" name="order_type" />Market</label>
+                    <label><input type="radio" id="GTC" name="order_type" />GTC</label>
+                    <label><input type="radio" id="IOC" name="order_type" />IOC</label>
+                    <label><input type="radio" id="POST" name="order_type" checked />POST</label>
+                </div>
                 <div class="grid">
                     <label>Quantity
                         <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" />
@@ -59,19 +66,12 @@ Closes Nov 5, 2024
                     <label>Price
                         <input type="number" name="price" placeholder="Price" aria-label="Number" />
                     </label>
-                    <div>
-                        <legend>Order type</legend>
-                        <input type="radio" id="market" name="order_type" />
-                        <label htmlFor="market">Market</label>
-                        <input type="radio" id="POST" name="order_type" checked />
-                        <label htmlFor="POST">POST</label>
-                        <input type="radio" id="IOC" name="order_type" />
-                        <label htmlFor="IOC">IOC</label>
-                    </div>
                 </div>
                 <div class="grid">
-                    <input type="submit" value="Buy" class="pico-background-green-450">
-                    <input type="submit" value="Sell" class="pico-background-red-450">
+                    <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book.id}}}' hx-post="/order"
+                        class="pico-background-green-450">
+                    <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book.id}}}' hx-post="/order"
+                        class="pico-background-red-450">
                 </div>
             </fieldset>
         </form>

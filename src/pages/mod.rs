@@ -3,6 +3,7 @@ mod home;
 mod login;
 mod market;
 mod not_found;
+mod order;
 mod profile;
 mod signup;
 mod templates;
@@ -10,9 +11,11 @@ mod templates;
 use axum::{
     http::header,
     response::IntoResponse,
-    routing::{delete, get},
+    routing::{delete, get, post},
     Router,
 };
+
+use crate::app_state::AppState;
 
 async fn get_pico_css() -> impl IntoResponse {
     (
@@ -33,7 +36,7 @@ async fn get_htmx() -> impl IntoResponse {
     )
 }
 
-pub fn router() -> Router {
+pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/pico.min.css", get(get_pico_css))
         .route("/pico.colors.min.css", get(get_pico_colors))
@@ -48,5 +51,7 @@ pub fn router() -> Router {
         .route("/login/:session_id", delete(login::delete_by_id))
         .route("/signup", get(signup::get).post(signup::post))
         .route("/market/:slug", get(market::get))
+        .route("/order", post(order::post))
+        .with_state(state)
         .fallback(not_found::get)
 }

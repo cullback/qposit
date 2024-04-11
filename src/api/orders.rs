@@ -40,13 +40,13 @@ impl TimeInForce {
 }
 
 /// Request for a new order.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct OrderRequest {
     /// The id of the book to submit the order to.
     pub book: u32,
     /// The number of contracts to buy or sell.
     #[schema(minimum = 1)]
-    pub size: u32,
+    pub quantity: u32,
     /// The price to buy or sell at. If not present, order will be a market order.
     #[schema(minimum = 1, maximum = 99)]
     pub price: u16,
@@ -60,7 +60,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
     fn from(req: OrderRequest) -> Self {
         Self {
             book: req.book,
-            quantity: req.size,
+            quantity: req.quantity,
             price: req.price,
             is_buy: req.is_buy,
             tif: match req.tif {

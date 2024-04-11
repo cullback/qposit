@@ -50,7 +50,7 @@ async fn main() {
 
     let state = AppState::build(cmd_send, feed_receive);
 
-    let app = pages::router()
+    let app = pages::router(state.clone())
         .merge(api::router(state))
         .layer(Extension(db));
 
