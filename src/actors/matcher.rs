@@ -31,6 +31,7 @@ pub async fn run_matcher(
                     .submit_order(timestamp, user, order.into())
                     .map(|x| x.into());
                 if let Ok(event) = res.clone() {
+                    info!(?event, "EVENT");
                     market_data.send(event).expect("Receiver dropped");
                 }
                 response.send(res).expect("Receiver dropped");

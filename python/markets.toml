@@ -14,6 +14,7 @@ created_at = 1697838953000000
 expires_at = 1730764800000000
 books = ["Donald Trump", "Joe Biden", "Nikki Haley", "Ron DeSantis", "Kamala Harris"]
 
+
 [[markets]]
 slug = "2024-us-republican-nominee"
 title = "US Republican nominee"
@@ -26,3 +27,17 @@ President in the 2024 election.
 created_at = 1697838953000000
 expires_at = 1730764800000000
 books = ["Donald Trump", "Nikki Haley", "Ron DeSantis"]
+
+
+[[markets]]
+slug = "2024-nhl-week-3"
+title = "NHL April 11"
+description = """
+# Resolution criteria
+
+Resolves to the team with the most points in the NHL standings at the end of
+"""
+books = [
+    "Washington vs. Buffalo",
+    
+]

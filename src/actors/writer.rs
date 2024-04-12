@@ -1,4 +1,4 @@
-use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Timestamp, UserId};
+use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
 use orderbook::{Book, DefaultBook};
 use orderbook::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
@@ -10,6 +10,7 @@ use crate::models;
 
 struct Trade {
     timestamp: Timestamp,
+    tick: Tick,
     book_id: BookId,
     taker_id: UserId,
     maker_id: UserId,
@@ -55,25 +56,25 @@ impl State {
 
         sqlx::query!(
             "
-        UPDATE user SET balance = balance - ? WHERE id = ?;
-        UPDATE user SET balance = balance - ? WHERE id = ?;
-
-        UPDATE position SET position = position + ? WHERE user_id = ? AND book_id = ?;
-        UPDATE position SET position = position - ? WHERE user_id = ? AND book_id = ?;
-
-        INSERT INTO trade (created_at, book_id, taker_id, maker_id, quantity, price, is_buy)
-        VALUES (?, ?, ?, ?, ?, ?, ?);
-
-        UPDATE 'order'
-        SET remaining = remaining - ?,
-        status = CASE WHEN remaining = 0 THEN 'filled' ELSE 'open' END
-        WHERE id = ?;
-
-        UPDATE 'order'
-        SET remaining = remaining - ?,
-        status = CASE WHEN remaining = 0 THEN 'filled' ELSE 'open' END
-        WHERE id = ?;
-        ",
+            UPDATE user SET balance = balance - ? WHERE id = ?;
+            UPDATE user SET balance = balance - ? WHERE id = ?;
+            
+            UPDATE position SET position = position + ? WHERE user_id = ? AND book_id = ?;
+            UPDATE position SET position = position - ? WHERE user_id = ? AND book_id = ?;
+            
+            INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, quantity, price, is_buy)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            
+            UPDATE 'order'
+            SET remaining = remaining - ?,
+            status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
+            WHERE id = ?;
+            
+            UPDATE 'order'
+            SET remaining = remaining - ?,
+            status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
+            WHERE id = ?;
+            ",
             // update taker balance params
             buyer_cost,
             trade.taker_id,
@@ -90,16 +91,19 @@ impl State {
             trade.book_id,
             // trade
             trade.timestamp,
+            trade.tick,
             trade.book_id,
-            trade.taker_id,
-            trade.maker_id,
+            trade.taker_oid,
+            trade.maker_oid,
             trade.quantity,
             trade.price,
             trade.is_buy,
             // update taker order
             trade.quantity,
+            trade.quantity,
             trade.taker_oid,
             // update maker order
+            trade.quantity,
             trade.quantity,
             trade.maker_oid,
         )
@@ -144,6 +148,7 @@ impl State {
                 for fill in fills {
                     let trade = Trade {
                         timestamp: event.time,
+                        tick: event.tick,
                         book_id: event.book,
                         taker_id: event.user,
                         maker_id: self.order_owner[&fill.id],
@@ -190,6 +195,7 @@ impl State {
                     order.price,
                 );
             }
+            self.order_owner.insert(order.id, order.user_id);
         }
 
         for position in models::position::Position::get_non_zero(&self.db)
@@ -204,11 +210,12 @@ impl State {
 
 /// Runs the exchange service
 pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
-    info!("Starting persistor...");
     let mut state = State::new(db);
     state.initialize().await;
-
+    info!("Starting persistor...");
+    
     while let Ok(event) = feed.recv().await {
+        info!("Received event: {:?}", event);
         state.on_event(event).await;
     }
 }
