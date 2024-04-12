@@ -13,10 +13,23 @@ use orderbook::{Price, Quantity};
 use sqlx::SqlitePool;
 use tracing::info;
 
-fn build_price_levels(
-    orders: impl Iterator<Item = models::order::Order>,
-) -> Vec<(Price, Quantity, Quantity)> {
-    let mut price_levels: Vec<(Price, Quantity, Quantity)> = Vec::new();
+type PriceLevel = (Price, Quantity, Quantity);
+
+fn price_level_to_string(pl: PriceLevel) -> (String, String, String) {
+    let (price, quantity, value) = pl;
+
+    let mut price_str = price.to_string();
+    price_str.insert(price_str.len() - 2, '.');
+
+    let mut value_str = value.to_string();
+    value_str.insert(value_str.len() - 4, '.');
+    value_str.pop();
+    value_str.pop();
+    (price_str, quantity.to_string(), value_str)
+}
+
+fn build_price_levels(orders: impl Iterator<Item = models::order::Order>) -> Vec<PriceLevel> {
+    let mut price_levels: Vec<PriceLevel> = Vec::new();
     let mut current_price: Option<Price> = None;
     let mut total_quantity = 0;
     let mut cumulative_value = 0;
@@ -42,8 +55,8 @@ fn build_price_levels(
 }
 
 pub struct OrderBook {
-    pub bids: Vec<(Price, Quantity, u32)>,
-    pub asks: Vec<(Price, Quantity, u32)>,
+    pub bids: Vec<(String, String, String)>,
+    pub asks: Vec<(String, String, String)>,
 }
 
 impl OrderBook {
@@ -51,8 +64,15 @@ impl OrderBook {
         let (bids, asks): (Vec<_>, Vec<_>) = orders.into_iter().partition(|order| order.is_buy);
 
         Self {
-            bids: build_price_levels(bids.into_iter().rev()),
-            asks: build_price_levels(asks.into_iter()),
+            bids: build_price_levels(bids.into_iter().rev())
+                .into_iter()
+                .map(price_level_to_string)
+                .collect(),
+            asks: build_price_levels(asks.into_iter())
+                .into_iter()
+                .rev()
+                .map(price_level_to_string)
+                .collect(),
         }
     }
 }

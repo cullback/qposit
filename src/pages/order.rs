@@ -1,4 +1,9 @@
-use axum::{extract::State, http::StatusCode, response::{Html, IntoResponse}, Extension, Form};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::{Html, IntoResponse},
+    Extension, Form,
+};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tracing::info;

@@ -24,7 +24,7 @@ Closes Nov 5, 2024
             <small>$7,669,592 Bet</small>
         </summary>
 
-        Order book
+        <p>Order book</p>
         <table>
             <thead>
                 <tr>
@@ -34,7 +34,7 @@ Closes Nov 5, 2024
                 </tr>
             </thead>
             <tbody>
-                {% for (price, quantity, value) in orderbook.asks.iter().rev() %}
+                {% for (price, quantity, value) in orderbook.asks.iter() %}
                 <tr>
                     <td class="pico-color-red-350">{{price}}¢</td>
                     <td>{{quantity}}</td>

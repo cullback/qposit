@@ -1,3 +1,7 @@
+//! The writer actor subscribes to the market data feed and records
+//! all events to the database.
+//! This could be split into a separate microservice, or be duplicated
+//! for redundancy.
 use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
 use orderbook::{Book, DefaultBook};
 use orderbook::{OrderId, Price, Quantity};
@@ -58,18 +62,18 @@ impl State {
             "
             UPDATE user SET balance = balance - ? WHERE id = ?;
             UPDATE user SET balance = balance - ? WHERE id = ?;
-            
+
             UPDATE position SET position = position + ? WHERE user_id = ? AND book_id = ?;
             UPDATE position SET position = position - ? WHERE user_id = ? AND book_id = ?;
-            
+
             INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-            
+
             UPDATE 'order'
             SET remaining = remaining - ?,
             status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
             WHERE id = ?;
-            
+
             UPDATE 'order'
             SET remaining = remaining - ?,
             status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
@@ -210,12 +214,11 @@ impl State {
 
 /// Runs the exchange service
 pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
+    info!("Starting persistor...");
     let mut state = State::new(db);
     state.initialize().await;
-    info!("Starting persistor...");
-    
+
     while let Ok(event) = feed.recv().await {
-        info!("Received event: {:?}", event);
         state.on_event(event).await;
     }
 }
