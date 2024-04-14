@@ -69,17 +69,16 @@ impl From<exchange::BookEvent> for BookEvent {
 
 #[utoipa::path(
     get,
-    path = "/ws",
+    path = "/feed",
     responses(
         (status = 200, description = "Subscribe to market data feed")
     )
 )]
-pub async fn ws_handler(State(state): State<AppState>, ws: WebSocketUpgrade) -> Response {
+pub async fn get(State(state): State<AppState>, ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(|socket| handle_socket(state, socket))
 }
 
 async fn handle_socket(mut state: AppState, mut socket: WebSocket) {
-    println!("new websocket connection");
     loop {
         let event = state.feed_receive.recv().await.expect("Sender dropped");
         let event = BookEvent::from(event);

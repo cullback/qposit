@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS market(
     description TEXT NOT NULL,
     status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
     created_at  INTEGER NOT NULL,
-    expires_at INTEGER NOT NULL
+    expires_at  INTEGER NOT NULL
 );
 
 
@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS trade(
     book_id     INTEGER NOT NULL,
     taker_id    INTEGER NOT NULL,
     maker_id    INTEGER NOT NULL,
+    taker_oid   INTEGER NOT NULL,
+    maker_oid   INTEGER NOT NULL,
     quantity    INTEGER NOT NULL,
     price       INTEGER NOT NULL,
     is_buy      INTEGER NOT NULL CHECK (is_buy IN (0, 1)),

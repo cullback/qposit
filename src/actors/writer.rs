@@ -66,8 +66,8 @@ impl State {
             UPDATE position SET position = position + ? WHERE user_id = ? AND book_id = ?;
             UPDATE position SET position = position - ? WHERE user_id = ? AND book_id = ?;
 
-            INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, quantity, price, is_buy)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
             UPDATE 'order'
             SET remaining = remaining - ?,
@@ -97,6 +97,8 @@ impl State {
             trade.timestamp,
             trade.tick,
             trade.book_id,
+            trade.taker_id,
+            trade.maker_id,
             trade.taker_oid,
             trade.maker_oid,
             trade.quantity,

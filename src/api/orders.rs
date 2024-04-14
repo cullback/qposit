@@ -14,7 +14,7 @@ use crate::{
     actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor, models,
 };
 
-use super::book_event::BookEvent;
+use super::feed::BookEvent;
 
 /// The time in force of an order.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]

@@ -1,6 +1,6 @@
 use axum::{
     routing::{get, post},
-    Router,
+    Json, Router,
 };
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;
@@ -9,8 +9,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::app_state::AppState;
 
-mod book_event;
-mod books;
+mod feed;
 mod markets;
 mod order_request;
 mod orders;
@@ -24,13 +23,14 @@ use utoipa::OpenApi;
         orders::post,
         orders::get,
         markets::post,
-        book_event::ws_handler,
+        feed::get,
+        trades::get,
     ),
     components(
         schemas(orders::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market),
     ),
     tags(
-        (name = "QPosit", description = "Prediction market.")
+        (name = "QPosit", description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS).")
     ),
 )]
 
@@ -44,7 +44,8 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/markets/:slug", post(markets::post))
         .route("/markets", get(markets::get))
-        .route("/ws", get(book_event::ws_handler));
+        .route("/trades", get(trades::get))
+        .route("/feed", get(feed::get));
 
     Router::new()
         .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))

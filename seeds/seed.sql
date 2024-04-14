@@ -5,7 +5,14 @@ VALUES (
     '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', -- password123
     1710007894419934,
     10000 * 100
-);
+),
+(
+    'strategy',
+    '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', -- password123
+    1710007894419934,
+    10000 * 100
+)
+;
 
 
 INSERT INTO
@@ -30,21 +37,21 @@ resolve as No for all listed options, and options may be added later.',
 INSERT INTO
     book(id, market_id, title)
 VALUES
-    (1, 1, 'Joe Biden'),
-    (2, 1, 'Donald Trump');
+    (1, 1, 'Donald Trump'),
+    (2, 1, 'Joe Biden');
 
 
 INSERT INTO
-    trade(id, created_at, tick, book_id, taker_id, maker_id, quantity, price, is_buy)
+    trade(id, created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
 VALUES
-    (123, 1710007894419934, 456, 1, 0, 0, 20, 10, 1),
-    (124, 1710007894419934, 234, 2, 0, 0, 25, 15, 1);
+    (123, 1710007894419934, 456, 1, 0, 0, 0, 0, 20, 1000, 1),
+    (124, 1710007894419934, 234, 2, 0, 0, 0, 0, 25, 1500, 1);
 
-INSERT INTO
-    'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)
-VALUES
-    (1, 1710007894419934, 1, 0, 20, 20, 5600, 0, 'open'),
-    (2, 1710007894419935, 1, 0, 20, 19, 5800, 0, 'open'),
-    (3, 1710007894419934, 1, 0, 25, 25, 2300, 1, 'open'),
-    (4, 1710007894419935, 1, 0, 20, 20, 2200, 1, 'open'),
-    (5, 1710007894419935, 1, 0, 30, 21, 2200, 1, 'open');
+-- INSERT INTO
+--     'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)
+-- VALUES
+--     (1, 1710007894419934, 1, 0, 20, 20, 5600, 0, 'open'),
+--     (2, 1710007894419935, 1, 0, 20, 19, 5800, 0, 'open'),
+--     (3, 1710007894419934, 1, 0, 25, 25, 2300, 1, 'open'),
+--     (4, 1710007894419935, 1, 0, 20, 20, 2200, 1, 'open'),
+--     (5, 1710007894419935, 1, 0, 30, 21, 2200, 1, 'open');

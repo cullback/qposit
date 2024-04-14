@@ -39,7 +39,10 @@ DATABASE_PATH=db/db.db
 DATABASE_URL=sqlite:${DATABASE_PATH}
 ```
 
-## Further reading
+## Strategy
 
-- https://joeymckenzie.tech/blog/templates-with-rust-axum-htmx-askama
-- https://www.bitswired.com/en/blog/post/rustgpt-journey-rust-htmx-web-dev
+```shell
+python3 -m venv ~/envs/default
+source ~/envs/default/bin/activate
+python3 -m pip install requests
+```
