@@ -63,8 +63,11 @@ impl State {
             UPDATE user SET balance = balance - ? WHERE id = ?;
             UPDATE user SET balance = balance - ? WHERE id = ?;
 
-            UPDATE position SET position = position + ? WHERE user_id = ? AND book_id = ?;
-            UPDATE position SET position = position - ? WHERE user_id = ? AND book_id = ?;
+            INSERT INTO position (user_id, book_id, position)
+            VALUES (?, ?, ?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position + ?;
+
+            INSERT INTO position (user_id, book_id, position)
+            VALUES (?, ?, -?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position - ?;
 
             INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -86,13 +89,15 @@ impl State {
             seller_cost,
             trade.maker_id,
             // update taker position params
-            trade.quantity,
             user_a,
             trade.book_id,
-            // update maker position params
             trade.quantity,
+            trade.quantity,
+            // update maker position params
             user_b,
             trade.book_id,
+            trade.quantity,
+            trade.quantity,
             // trade
             trade.timestamp,
             trade.tick,

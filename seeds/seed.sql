@@ -41,11 +41,11 @@ VALUES
     (2, 1, 'Joe Biden');
 
 
-INSERT INTO
-    trade(id, created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
-VALUES
-    (123, 1710007894419934, 456, 1, 0, 0, 0, 0, 20, 1000, 1),
-    (124, 1710007894419934, 234, 2, 0, 0, 0, 0, 25, 1500, 1);
+-- INSERT INTO
+--     trade(id, created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
+-- VALUES
+--     (123, 1710007894419934, 456, 1, 0, 0, 0, 0, 20, 1000, 1),
+--     (124, 1710007894419934, 234, 2, 0, 0, 0, 0, 25, 1500, 1);
 
 -- INSERT INTO
 --     'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)
