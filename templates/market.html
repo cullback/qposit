@@ -69,9 +69,9 @@ Closes Nov 5, 2024
                 </div>
                 <div class="grid">
                     <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book.id}}}' hx-swap="innerHTML"
-                        hx-target="#responseContainer" hx-post="/order" class="pico-background-green-450">
+                        hx-target="#responseContainer" hx-post="/orders" class="pico-background-green-450">
                     <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book.id}}}' hx-swap="innerHTML"
-                        hx-target="#responseContainer" hx-post="/order" class="pico-background-red-450">
+                        hx-target="#responseContainer" hx-post="/orders" class="pico-background-red-450">
                 </div>
             </fieldset>
         </form>

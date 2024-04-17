@@ -1,13 +1,10 @@
-use crate::{auth::BasicAuthExtractor, models};
 use axum::response::IntoResponse;
 use axum::Json;
 use axum::{extract::Query, http::StatusCode, response::Response, Extension};
-use exchange::Timestamp;
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
-use sqlx::Execute;
 use sqlx::{QueryBuilder, SqlitePool};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, ToSchema, FromRow)]
@@ -24,24 +21,6 @@ struct Trade {
     pub price: u16,
     pub is_buy: bool,
 }
-
-// impl From<models::trade::Trade> for Trade {
-//     fn from(value: models::trade::Trade) -> Self {
-//         Self {
-//             id: value.id,
-//             created_at: value.created_at,
-//             tick: value.tick,
-//             book_id: value.book_id,
-//             taker_id: value.taker_id,
-//             maker_id: value.maker_id,
-//             taker_oid: value.taker_oid,
-//             maker_oid: value.maker_oid,
-//             quantity: value.quantity,
-//             price: value.price,
-//             is_buy: value.is_buy,
-//         }
-//     }
-// }
 
 fn default_limit() -> u32 {
     100

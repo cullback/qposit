@@ -124,6 +124,7 @@ impl State {
     }
 
     async fn on_event(&mut self, event: BookEvent) {
+        info!(?event);
         let book = self.books.get_mut(&event.book).unwrap();
 
         let mut transaction = self.db.begin().await.unwrap();

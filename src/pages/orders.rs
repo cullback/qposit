@@ -1,9 +1,11 @@
 use axum::{
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Extension, Form,
 };
+use exchange::Action;
+use orderbook::OrderId;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tracing::info;
@@ -65,4 +67,29 @@ pub async fn post(
         Ok(event) => Html::from(format!("<p>success: {event:?}</p>")).into_response(),
         Err(err) => Html::from(format!("<p>error: {err:?}</p>")).into_response(),
     }
+}
+
+pub async fn delete_by_id(
+    State(state): State<AppState>,
+    Path(order_id): Path<OrderId>,
+    SessionExtractor(user): SessionExtractor,
+) -> impl IntoResponse {
+    let Some(user) = user else {
+        return StatusCode::UNAUTHORIZED.into_response();
+    };
+    let mut deleted = vec![];
+    let (req, recv) = MatcherRequest::cancel(user.id, order_id);
+    state.cmd_send.send(req).await.expect("Receiver dropped");
+    let resp = recv.await.expect("Sender dropped");
+    match resp {
+        Ok(exchange::BookEvent {
+            time: _,
+            tick: _,
+            book: _,
+            user: _,
+            action: Action::Remove { id },
+        }) => deleted.push(id),
+        _ => {}
+    }
+    Html("").into_response()
 }

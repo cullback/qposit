@@ -1,9 +1,9 @@
 mod about;
 mod home;
 mod login;
-mod market;
+mod markets;
 mod not_found;
-mod order;
+mod orders;
 mod profile;
 mod signup;
 mod templates;
@@ -50,8 +50,9 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/login/:session_id", delete(login::delete_by_id))
         .route("/signup", get(signup::get).post(signup::post))
-        .route("/market/:slug", get(market::get))
-        .route("/order", post(order::post))
+        .route("/markets/:slug", get(markets::get))
+        .route("/orders", post(orders::post))
+        .route("/orders/:order_id", delete(orders::delete_by_id))
         .with_state(state)
-        .fallback(not_found::get)
+    // .fallback(not_found::get)
 }

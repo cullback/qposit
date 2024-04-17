@@ -1,11 +1,11 @@
+use super::templates::{open_orders, positions};
+use crate::auth::SessionExtractor;
 use askama::Template;
 use axum::{
     response::{Html, IntoResponse, Redirect},
     Extension,
 };
 use sqlx::SqlitePool;
-use crate::auth::SessionExtractor;
-use super::templates::{open_orders, positions};
 
 #[derive(Template)]
 #[template(path = "profile.html")]

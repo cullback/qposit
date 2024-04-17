@@ -10,7 +10,7 @@
             <th scope="col"></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
         {% for order in orders %}
         <tr>
             <td>{{ order.book_id }}</td>
@@ -18,7 +18,7 @@
             <td>{{ order.price }}</td>
             <td>{{ order.is_buy }}</td>
             <td>{{ order.status }}</td>
-            <td><a hx-delete="/api/v1/orders/{{order.id}}">Cancel</a></td>
+            <td><a hx-delete="/orders/{{order.id}}">Cancel</a></td>
         </tr>
         {% endfor %}
     </tbody>

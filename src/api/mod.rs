@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Json, Router,
 };
 use utoipa_rapidoc::RapiDoc;
@@ -42,6 +42,7 @@ pub fn router(state: AppState) -> Router {
             "/orders",
             get(orders::get).post(orders::post).delete(orders::delete),
         )
+        .route("/orders/:id", delete(orders::delete_by_id))
         .route("/markets/:slug", post(markets::post))
         .route("/markets", get(markets::get))
         .route("/trades", get(trades::get))

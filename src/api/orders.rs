@@ -1,10 +1,11 @@
 use axum::{
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     Extension, Json,
 };
 use exchange::Action;
+use orderbook::OrderId;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::SqlitePool;
@@ -176,6 +177,37 @@ pub async fn delete(
             }) => deleted.push(id),
             _ => {}
         }
+    }
+
+    Json(json!({"deleted": deleted})).into_response()
+}
+
+#[utoipa::path(
+    delete,
+    path = "/orders/:order_id",
+    responses(
+        (status = 200, description = "Deleted all orders")
+    )
+)]
+pub async fn delete_by_id(
+    State(state): State<AppState>,
+    BasicAuthExtractor(user): BasicAuthExtractor,
+    Path(order_id): Path<OrderId>,
+) -> impl IntoResponse {
+    let mut deleted = vec![];
+
+    let (req, recv) = MatcherRequest::cancel(user.id, order_id);
+    state.cmd_send.send(req).await.expect("Receiver dropped");
+    let resp = recv.await.expect("Sender dropped");
+    match resp {
+        Ok(exchange::BookEvent {
+            time: _,
+            tick: _,
+            book: _,
+            user: _,
+            action: Action::Remove { id },
+        }) => deleted.push(id),
+        _ => {}
     }
 
     Json(json!({"deleted": deleted})).into_response()

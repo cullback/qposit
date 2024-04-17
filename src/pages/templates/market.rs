@@ -2,7 +2,7 @@ use askama::Template;
 
 use crate::{
     models::{book::Book, market::Market},
-    pages::market::OrderBook,
+    pages::markets::OrderBook,
 };
 
 #[derive(Template)]
