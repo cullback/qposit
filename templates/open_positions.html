@@ -1,0 +1,26 @@
+<h3>Open positions</h3>
+
+<div class="overflow-auto">
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Market</th>
+                <th scope="col">Book</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Market value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+            <tr>
+                <td>{{ position.market_title }}</td>
+                <td>{{ position.book_title }}</td>
+                <td>{{ position.position }}</td>
+                <td>{{ "{:.2}"|format(position.last_price / 100.0) }}¢</td>
+                <td>${{ "{:.2}"|format(position.market_value / 10000.0) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

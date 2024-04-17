@@ -3,32 +3,10 @@
 {% block content %}
 <h1>{{ username }}</h1>
 
-<h3>Open positions</h3>
+<p>Balance: ${{ "{:.2}"|format(balance / 1000.0) }}</p>
 
-<div class="overflow-auto">
-    <table>
-        <thead>
-            <tr>
-                <th scope="col">Market</th>
-                <th scope="col">Book</th>
-                <th scope="col">Quantity</th>
-                <th scope="col">Price</th>
-                <th scope="col">Market value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for position in positions %}
-            <tr>
-                <td>{{ position.market_title }}</td>
-                <td>{{ position.book_title }}</td>
-                <td>{{ position.position }}</td>
-                <td>{{ position.last_price }}</td>
-                <td>{{ position.market_value }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+{{ positions|safe }}
 
+{{ open_orders|safe }}
 
 {% endblock %}
