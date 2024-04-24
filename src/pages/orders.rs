@@ -2,12 +2,11 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
-    Extension, Form,
+    Form,
 };
 use exchange::Action;
 use orderbook::OrderId;
 use serde::Deserialize;
-use sqlx::SqlitePool;
 use tracing::info;
 
 use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor};
@@ -49,7 +48,6 @@ impl From<PostOrder> for exchange::OrderRequest {
 pub async fn post(
     State(state): State<AppState>,
     SessionExtractor(user): SessionExtractor,
-    Extension(db): Extension<SqlitePool>,
     Form(form): Form<PostOrder>,
 ) -> impl IntoResponse {
     let Some(user) = user else {

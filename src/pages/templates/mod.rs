@@ -4,6 +4,7 @@ pub mod login;
 pub mod login_form;
 pub mod market;
 pub mod open_orders;
+pub mod orderbook;
 pub mod positions;
 pub mod signup;
 pub mod signup_form;

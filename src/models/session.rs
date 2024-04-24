@@ -30,16 +30,6 @@ impl Session {
             .map(|row| row.rows_affected())
     }
 
-    pub async fn get_all_for_user(
-        db: &SqlitePool,
-        user_id: UserId,
-    ) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as::<_, Self>("SELECT * FROM 'session' WHERE user_id = ?")
-            .bind(user_id)
-            .fetch_all(db)
-            .await
-    }
-
     pub async fn insert(&self, db: &SqlitePool) -> Result<i64, sqlx::Error> {
         sqlx::query!(
             "INSERT INTO session (id, user_id, ip_address, user_agent, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",

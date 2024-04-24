@@ -21,12 +21,6 @@ pub enum MatcherRequest {
     AddBook {
         book_id: BookId,
     },
-    // Deposit {
-
-    // }
-    // Withdraw {
-
-    // }
 }
 
 impl MatcherRequest {

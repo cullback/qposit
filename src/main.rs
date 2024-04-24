@@ -3,13 +3,12 @@ mod actors;
 mod api;
 mod app_state;
 mod auth;
-mod bootstrap;
 mod models;
 mod pages;
 
 use crate::actors::matcher;
 use app_state::AppState;
-use axum::{Extension, Router};
+use axum::Extension;
 use exchange::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
@@ -37,15 +36,16 @@ async fn main() {
     let (cmd_send, cmd_receive) = mpsc::channel(32);
     let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
 
-    let engine = bootstrap::bootstrap_exchange(&db).await;
-
     tokio::spawn({
         let db = db.clone();
         let feed_receive = feed_receive.resubscribe();
         async move { actors::writer::run_persistor(db, feed_receive).await }
     });
-    tokio::spawn(async move {
-        matcher::run_matcher(engine, cmd_receive, feed_send).await;
+    tokio::spawn({
+        let db = db.clone();
+        async move {
+            matcher::run_matcher(db, cmd_receive, feed_send).await;
+        }
     });
 
     let state = AppState::build(cmd_send, feed_receive);

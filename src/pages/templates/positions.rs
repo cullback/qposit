@@ -1,6 +1,5 @@
 use askama::Template;
-use exchange::{BookId, UserId};
-use orderbook::{OrderId, Price, Quantity};
+use exchange::UserId;
 use sqlx::SqlitePool;
 
 #[derive(sqlx::FromRow, Debug)]

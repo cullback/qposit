@@ -11,7 +11,6 @@ use axum::{
 };
 use orderbook::{Price, Quantity};
 use sqlx::SqlitePool;
-use tracing::info;
 
 type PriceLevel = (Price, Quantity, Quantity);
 

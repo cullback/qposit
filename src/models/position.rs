@@ -10,16 +10,6 @@ pub struct Position {
 }
 
 impl Position {
-    pub async fn get_by_user_id(
-        pool: &SqlitePool,
-        user_id: UserId,
-    ) -> Result<Vec<Position>, sqlx::Error> {
-        sqlx::query_as::<_, Position>("SELECT * FROM positions WHERE user_id = ?")
-            .bind(user_id)
-            .fetch_all(pool)
-            .await
-    }
-
     pub async fn get_non_zero(pool: &SqlitePool) -> Result<Vec<Position>, sqlx::Error> {
         sqlx::query_as::<_, Position>("SELECT * FROM position WHERE position != 0")
             .fetch_all(pool)

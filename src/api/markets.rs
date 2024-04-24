@@ -4,13 +4,14 @@ use axum::{
     response::IntoResponse,
     Extension, Json,
 };
-use exchange::Timestamp;
+use exchange::BookId;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
+    actors::matcher_request::MatcherRequest,
     app_state::AppState,
     auth::BasicAuthExtractor,
     models::{self, book::Book},
@@ -65,8 +66,8 @@ pub struct Market {
     )
 )]
 pub async fn post(
-    State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
+    State(state): State<AppState>,
     Path(slug): Path<String>,
     Extension(db): Extension<SqlitePool>,
     Json(market): Json<Market>,
@@ -104,7 +105,9 @@ pub async fn post(
             value: None,
             last_trade_price: None,
         };
-        let book_id = book.insert(&db).await.unwrap();
+        let book_id = book.insert(&db).await.unwrap() as BookId;
+        let req = MatcherRequest::AddBook { book_id };
+        state.cmd_send.send(req).await.unwrap();
     }
 
     StatusCode::CREATED.into_response()

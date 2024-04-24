@@ -1,6 +1,6 @@
 use axum::{
     routing::{delete, get, post},
-    Json, Router,
+    Router,
 };
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::Redoc;

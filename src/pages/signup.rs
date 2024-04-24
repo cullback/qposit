@@ -1,5 +1,4 @@
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
-use askama::Template;
 use axum::extract::ConnectInfo;
 use axum::Extension;
 use axum::{

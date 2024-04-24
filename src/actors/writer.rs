@@ -8,10 +8,11 @@ use orderbook::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::models;
 
+#[derive(Debug)]
 struct Trade {
     timestamp: Timestamp,
     tick: Tick,
@@ -33,19 +34,42 @@ struct State {
 }
 
 impl State {
-    pub fn new(db: SqlitePool) -> Self {
+    pub async fn new(db: SqlitePool) -> Self {
+        let mut books = HashMap::new();
+        let mut positions = HashMap::new();
+        let mut order_owner = HashMap::new();
+
+        for book in models::book::Book::get_active(&db).await.unwrap() {
+            books.insert(book.id, DefaultBook::default());
+        }
+
+        for order in models::order::Order::get_open_orders(&db).await.unwrap() {
+            let book = books.get_mut(&order.book_id).unwrap();
+            if order.is_buy {
+                book.buy(order.id, order.remaining, order.price);
+            } else {
+                book.sell(order.id, order.remaining, order.price);
+            }
+            order_owner.insert(order.id, order.user_id);
+        }
+
+        for position in models::position::Position::get_non_zero(&db).await.unwrap() {
+            positions.insert((position.user_id, position.book_id), position.position);
+        }
+
         Self {
             db,
-            books: HashMap::new(),
-            positions: HashMap::new(),
-            order_owner: HashMap::new(),
+            books,
+            positions,
+            order_owner,
         }
     }
 
-    async fn on_trade<'c, E>(&mut self, executor: E, trade: Trade)
+    async fn on_trade<E>(&self, executor: &mut E, trade: Trade)
     where
-        E: Executor<'c, Database = Sqlite>,
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
+        // https://stackoverflow.com/questions/76394665/how-to-pass-sqlx-connection-a-mut-trait-as-a-fn-parameter-in-rust
         let (user_a, user_b) = if trade.is_buy {
             (trade.taker_id, trade.maker_id)
         } else {
@@ -58,17 +82,46 @@ impl State {
         let buyer_cost = buyer_cost(pos_a, trade.quantity, trade.price);
         let seller_cost = seller_cost(pos_b, trade.quantity, trade.price);
 
+        println!("trade: {:?}", trade);
+
+        if trade.taker_id != trade.maker_id {
+            sqlx::query!(
+                "
+                UPDATE user SET balance = balance - ? WHERE id = ?;
+                UPDATE user SET balance = balance - ? WHERE id = ?;
+    
+                INSERT INTO position (user_id, book_id, position)
+                VALUES (?, ?, ?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position + ?;
+    
+                INSERT INTO position (user_id, book_id, position)
+                VALUES (?, ?, -?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position - ?;
+                ",
+                // update taker balance params
+                buyer_cost,
+                trade.taker_id,
+                // update maker balance params
+                seller_cost,
+                trade.maker_id,
+                // update taker position params
+                user_a,
+                trade.book_id,
+                trade.quantity,
+                trade.quantity,
+                // update maker position params
+                user_b,
+                trade.book_id,
+                trade.quantity,
+                trade.quantity,
+            )
+            .execute(&mut *executor)
+            .await
+            .unwrap();
+        } else {
+            warn!(?trade, "self trade, not updating balance or position");
+        }
+
         sqlx::query!(
             "
-            UPDATE user SET balance = balance - ? WHERE id = ?;
-            UPDATE user SET balance = balance - ? WHERE id = ?;
-
-            INSERT INTO position (user_id, book_id, position)
-            VALUES (?, ?, ?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position + ?;
-
-            INSERT INTO position (user_id, book_id, position)
-            VALUES (?, ?, -?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position - ?;
-
             INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
@@ -82,22 +135,6 @@ impl State {
             status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
             WHERE id = ?;
             ",
-            // update taker balance params
-            buyer_cost,
-            trade.taker_id,
-            // update maker balance params
-            seller_cost,
-            trade.maker_id,
-            // update taker position params
-            user_a,
-            trade.book_id,
-            trade.quantity,
-            trade.quantity,
-            // update maker position params
-            user_b,
-            trade.book_id,
-            trade.quantity,
-            trade.quantity,
             // trade
             trade.timestamp,
             trade.tick,
@@ -118,7 +155,7 @@ impl State {
             trade.quantity,
             trade.maker_oid,
         )
-        .execute(executor)
+        .execute(&mut *executor)
         .await
         .unwrap();
     }
@@ -175,6 +212,7 @@ impl State {
             }
             Action::Remove { id } => {
                 assert!(book.remove(id));
+                self.order_owner.remove(&id);
 
                 sqlx::query!("UPDATE 'order' SET status = 'cancelled' WHERE id = ?", id)
                     .execute(&mut *transaction)
@@ -184,47 +222,12 @@ impl State {
         }
         transaction.commit().await.unwrap();
     }
-
-    async fn initialize(&mut self) {
-        for book in models::book::Book::get_active(&self.db).await.unwrap() {
-            self.books.insert(book.id, DefaultBook::default());
-        }
-
-        for order in models::order::Order::get_open_orders(&self.db)
-            .await
-            .unwrap()
-        {
-            if order.is_buy {
-                self.books.get_mut(&order.book_id).unwrap().buy(
-                    order.id,
-                    order.remaining,
-                    order.price,
-                );
-            } else {
-                self.books.get_mut(&order.book_id).unwrap().sell(
-                    order.id,
-                    order.remaining,
-                    order.price,
-                );
-            }
-            self.order_owner.insert(order.id, order.user_id);
-        }
-
-        for position in models::position::Position::get_non_zero(&self.db)
-            .await
-            .unwrap()
-        {
-            self.positions
-                .insert((position.user_id, position.book_id), position.position);
-        }
-    }
 }
 
 /// Runs the exchange service
 pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
     info!("Starting persistor...");
-    let mut state = State::new(db);
-    state.initialize().await;
+    let mut state = State::new(db).await;
 
     while let Ok(event) = feed.recv().await {
         state.on_event(event).await;
