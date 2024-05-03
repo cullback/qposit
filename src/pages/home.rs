@@ -1,10 +1,7 @@
-use super::templates::home;
+use super::templates::home_page;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};
-use axum::{
-    response::{Html, IntoResponse},
-    Extension,
-};
+use axum::{response::IntoResponse, Extension};
 use sqlx::SqlitePool;
 
 pub async fn get(
@@ -20,7 +17,7 @@ pub async fn get(
     }
 
     match user {
-        Some(user) => Html(home::build(&user.username, blah)).into_response(),
-        None => Html(home::build("", blah)).into_response(),
+        Some(user) => home_page::HomePage::new(user.username, blah),
+        None => home_page::HomePage::new(String::new(), blah),
     }
 }

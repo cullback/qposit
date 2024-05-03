@@ -1,4 +1,4 @@
-use super::templates::market;
+use super::templates::market_page::MarketPage;
 use super::templates::order_form::OrderForm;
 use crate::models;
 use crate::models::market::Market;
@@ -6,10 +6,7 @@ use crate::{auth::SessionExtractor, models::book::Book};
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::Redirect;
-use axum::{
-    response::{Html, IntoResponse},
-    Extension,
-};
+use axum::{response::IntoResponse, Extension};
 use exchange::BookId;
 use orderbook::{Price, Quantity};
 use sqlx::SqlitePool;
@@ -95,7 +92,7 @@ pub async fn get(
 
     let books = Book::get_all_for_market(&db, market.id).await.unwrap();
     let mut orderbooks = Vec::new();
-    for book in books.iter() {
+    for book in &books {
         let orders = models::order::Order::get_open_for_book(&db, book.id)
             .await
             .unwrap();
@@ -103,9 +100,7 @@ pub async fn get(
     }
 
     match user {
-        Some(user) => {
-            Html(market::build(&user.username, market, books, orderbooks)).into_response()
-        }
-        None => Html(market::build("", market, books, orderbooks)).into_response(),
+        Some(user) => MarketPage::new(user.username, market, books, orderbooks).into_response(),
+        None => MarketPage::new(String::new(), market, books, orderbooks).into_response(),
     }
 }

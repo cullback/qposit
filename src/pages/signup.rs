@@ -45,8 +45,8 @@ pub async fn post(
     let username_message = validate_username(&form.username);
     let password_message = validate_password(&form.password);
     if !username_message.is_empty() || !password_message.is_empty() {
-        return signup_form::build_with_error_message(
-            &form.username,
+        return signup_form::SignupForm::build_with_error_message(
+            form.username,
             username_message,
             password_message,
         )
@@ -74,8 +74,12 @@ pub async fn post(
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
-            signup_form::build_with_error_message(&form.username, "Username already taken", "")
-                .into_response()
+            signup_form::SignupForm::build_with_error_message(
+                form.username,
+                "Username already taken".to_string(),
+                String::new(),
+            )
+            .into_response()
         }
         Err(err) => {
             warn!("internal server error {err}");
@@ -84,18 +88,20 @@ pub async fn post(
     }
 }
 
-fn validate_username(username: &str) -> &'static str {
+fn validate_username(username: &str) -> String {
     if username.len() < 5 || username.len() > 20 || !username.chars().all(char::is_alphanumeric) {
         "Username must be between 5 and 20 characters, and only contain letters / numbers."
     } else {
         ""
     }
+    .to_string()
 }
 
-const fn validate_password(password: &str) -> &'static str {
-    if password.len() < 8 || password.len() > 40 || !password.is_ascii() {
-        "Password must be between 8 and 40 characters and only contain ascii characters."
+fn validate_password(password: &str) -> String {
+    if password.len() < 8 || password.len() > 60 || !password.is_ascii() {
+        "Password must be between 8 and 60 characters and only contain ascii characters."
     } else {
         ""
     }
+    .to_string()
 }

@@ -20,12 +20,12 @@ use crate::{
     models::session::Session,
 };
 
-use super::templates::{login, login_form};
+use super::templates::{login_form, login_page};
 
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
         Some(_) => Redirect::to("/").into_response(),
-        None => Html(login::build()).into_response(),
+        None => login_page::LoginPage::new(String::new(), String::new()).into_response(),
     }
 }
 
@@ -58,7 +58,8 @@ pub async fn post(
             info!("User {} logged in", form.username);
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
-        None => login_form::build("Incorrect username / password combination").into_response(),
+        None => login_form::LoginForm::new("Incorrect username / password combination".to_string())
+            .into_response(),
     }
 }
 

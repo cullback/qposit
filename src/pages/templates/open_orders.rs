@@ -39,6 +39,6 @@ impl OpenOrders {
         .await
         .unwrap();
 
-        OpenOrders { orders }
+        Self { orders }
     }
 }

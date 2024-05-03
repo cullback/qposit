@@ -14,13 +14,13 @@ pub struct OrderForm {
 
 impl OrderForm {
     pub fn new(book_id: BookId) -> Self {
-        OrderForm {
+        Self {
             book_id,
-            quantity: "".to_string(),
-            price: "".to_string(),
-            quantity_message: "".to_string(),
-            price_message: "".to_string(),
-            message: "".to_string(),
+            quantity: String::new(),
+            price: String::new(),
+            quantity_message: String::new(),
+            price_message: String::new(),
+            message: String::new(),
         }
     }
     pub fn with_messages(
@@ -31,7 +31,7 @@ impl OrderForm {
         price_message: String,
         message: String,
     ) -> Self {
-        OrderForm {
+        Self {
             book_id,
             quantity,
             price,

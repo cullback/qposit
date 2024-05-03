@@ -1,8 +1,8 @@
-pub mod about;
-pub mod home;
-pub mod login;
+pub mod about_page;
+pub mod home_page;
 pub mod login_form;
-pub mod market;
+pub mod login_page;
+pub mod market_page;
 pub mod open_orders;
 pub mod order_form;
 pub mod orderbook;

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{FromRequest, Path, State},
+    extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Form,
@@ -42,17 +42,18 @@ pub async fn post(
             form.book,
             form.quantity,
             form.price,
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
             "Error: must be logged in to place order.".to_string(),
         );
     };
 
     let quantity = form.quantity.parse::<Quantity>().ok();
-    let price = form.price.parse::<f32>().ok();
-    let price = price
-        .map(|p| if p < 0.0 { None } else { Some(p) })
-        .flatten()
+    let price = form
+        .price
+        .parse::<f32>()
+        .ok()
+        .and_then(|p| if p < 0.0 { None } else { Some(p) })
         .map(|p| (p * 100.0).round() as Price);
 
     let quantity_msg = if quantity.is_some() {
@@ -63,7 +64,10 @@ pub async fn post(
     let price_msg = if price.is_some() { "" } else { "invalid price" };
 
     let (Some(quantity), Some(price)) = (quantity, price) else {
-        println!("AHHH {}, {}, {}, {}", form.quantity, form.price, quantity_msg, price_msg);
+        println!(
+            "AHHH {}, {}, {}, {}",
+            form.quantity, form.price, quantity_msg, price_msg
+        );
         return OrderForm::with_messages(
             form.book,
             form.quantity,
@@ -101,8 +105,8 @@ pub async fn post(
         book,
         form.quantity,
         form.price,
-        "".to_string(),
-        "".to_string(),
+        String::new(),
+        String::new(),
         message,
     )
 }
@@ -115,19 +119,8 @@ pub async fn delete_by_id(
     let Some(user) = user else {
         return StatusCode::UNAUTHORIZED.into_response();
     };
-    let mut deleted = vec![];
     let (req, recv) = MatcherRequest::cancel(user.id, order_id);
     state.cmd_send.send(req).await.expect("Receiver dropped");
-    let resp = recv.await.expect("Sender dropped");
-    match resp {
-        Ok(exchange::BookEvent {
-            time: _,
-            tick: _,
-            book: _,
-            user: _,
-            action: Action::Remove { id },
-        }) => deleted.push(id),
-        _ => {}
-    }
+    let _ = recv.await.expect("Sender dropped");
     Html("").into_response()
 }
