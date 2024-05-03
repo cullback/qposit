@@ -1,4 +1,5 @@
 use super::templates::market;
+use super::templates::order_form::OrderForm;
 use crate::models;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};
@@ -9,6 +10,7 @@ use axum::{
     response::{Html, IntoResponse},
     Extension,
 };
+use exchange::BookId;
 use orderbook::{Price, Quantity};
 use sqlx::SqlitePool;
 
@@ -56,10 +58,11 @@ fn build_price_levels(orders: impl Iterator<Item = models::order::Order>) -> Vec
 pub struct OrderBook {
     pub bids: Vec<(String, String, String)>,
     pub asks: Vec<(String, String, String)>,
+    pub order_form: OrderForm,
 }
 
 impl OrderBook {
-    pub fn from_orders(orders: Vec<models::order::Order>) -> Self {
+    pub fn from_orders(book_id: BookId, orders: Vec<models::order::Order>) -> Self {
         let (bids, asks): (Vec<_>, Vec<_>) = orders.into_iter().partition(|order| order.is_buy);
 
         Self {
@@ -72,6 +75,7 @@ impl OrderBook {
                 .rev()
                 .map(price_level_to_string)
                 .collect(),
+            order_form: OrderForm::new(book_id),
         }
     }
 }
@@ -95,7 +99,7 @@ pub async fn get(
         let orders = models::order::Order::get_open_for_book(&db, book.id)
             .await
             .unwrap();
-        orderbooks.push(OrderBook::from_orders(orders));
+        orderbooks.push(OrderBook::from_orders(book.id, orders));
     }
 
     match user {

@@ -1,15 +1,18 @@
 use axum::{
-    extract::{Path, State},
+    extract::{FromRequest, Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Form,
 };
-use exchange::Action;
-use orderbook::OrderId;
+use exchange::{Action, BookId};
+use orderbook::{OrderId, Price, Quantity};
 use serde::Deserialize;
 use tracing::info;
 
-use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor};
+use crate::{
+    actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor,
+    pages::templates::order_form::OrderForm,
+};
 
 #[derive(Debug, Deserialize)]
 pub enum OrderType {
@@ -21,28 +24,11 @@ pub enum OrderType {
 
 #[derive(Debug, Deserialize)]
 pub struct PostOrder {
-    book: u32,
-    quantity: u32,
-    price: u16,
+    book: BookId,
+    quantity: String,
+    price: String,
     is_buy: bool,
     order_type: OrderType,
-}
-
-impl From<PostOrder> for exchange::OrderRequest {
-    fn from(req: PostOrder) -> Self {
-        Self {
-            book: req.book,
-            quantity: req.quantity,
-            price: req.price,
-            is_buy: req.is_buy,
-            tif: match req.order_type {
-                OrderType::Market => exchange::TimeInForce::GTC,
-                OrderType::GTC => exchange::TimeInForce::GTC,
-                OrderType::IOC => exchange::TimeInForce::IOC,
-                OrderType::POST => exchange::TimeInForce::POST,
-            },
-        }
-    }
 }
 
 pub async fn post(
@@ -50,21 +36,75 @@ pub async fn post(
     SessionExtractor(user): SessionExtractor,
     Form(form): Form<PostOrder>,
 ) -> impl IntoResponse {
+    let book = form.book;
     let Some(user) = user else {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return OrderForm::with_messages(
+            form.book,
+            form.quantity,
+            form.price,
+            "".to_string(),
+            "".to_string(),
+            "Error: must be logged in to place order.".to_string(),
+        );
     };
-    info!("User {} is trying to post an order {:?}", user.id, form);
 
-    let (req, recv) = MatcherRequest::submit(user.id, form.into());
-    state.cmd_send.send(req).await.expect("Receiver dropped");
+    let quantity = form.quantity.parse::<Quantity>().ok();
+    let price = form.price.parse::<f32>().ok();
+    let price = price
+        .map(|p| if p < 0.0 { None } else { Some(p) })
+        .flatten()
+        .map(|p| (p * 100.0).round() as Price);
+
+    let quantity_msg = if quantity.is_some() {
+        ""
+    } else {
+        "invalid quantity"
+    };
+    let price_msg = if price.is_some() { "" } else { "invalid price" };
+
+    let (Some(quantity), Some(price)) = (quantity, price) else {
+        println!("AHHH {}, {}, {}, {}", form.quantity, form.price, quantity_msg, price_msg);
+        return OrderForm::with_messages(
+            form.book,
+            form.quantity,
+            form.price,
+            quantity_msg.to_owned(),
+            price_msg.to_owned(),
+            "error".to_owned(),
+        );
+    };
+
+    let req = exchange::OrderRequest {
+        book: form.book,
+        quantity,
+        price,
+        is_buy: form.is_buy,
+        tif: match form.order_type {
+            OrderType::Market => exchange::TimeInForce::GTC,
+            OrderType::GTC => exchange::TimeInForce::GTC,
+            OrderType::IOC => exchange::TimeInForce::IOC,
+            OrderType::POST => exchange::TimeInForce::POST,
+        },
+    };
+
+    let (req, recv) = MatcherRequest::submit(user.id, req);
+    state.cmd_send.send(req).await.unwrap();
     let response = recv.await.expect("Sender dropped");
 
     info!("User {} posted an order {:?}", user.id, response);
 
-    match response {
-        Ok(event) => Html::from(format!("<p>success: {event:?}</p>")).into_response(),
-        Err(err) => Html::from(format!("<p>error: {err:?}</p>")).into_response(),
-    }
+    let message = match response {
+        Ok(event) => format!("success: {event:?}"),
+        Err(err) => format!("error: {err:?}"),
+    };
+    OrderForm::with_messages(
+        book,
+        form.quantity,
+        form.price,
+        "".to_string(),
+        "".to_string(),
+        message,
+    )
 }
 
 pub async fn delete_by_id(

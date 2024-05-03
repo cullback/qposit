@@ -1,12 +1,14 @@
-use axum::response::{Html, IntoResponse};
-
+use super::templates::about::AboutPage;
 use crate::auth::SessionExtractor;
-
-use super::templates::about;
+use axum::response::IntoResponse;
 
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
-        Some(user) => Html(about::build(&user.username)),
-        None => Html(about::build("")),
+        Some(user) => AboutPage {
+            username: user.username,
+        },
+        None => AboutPage {
+            username: "".to_string(),
+        },
     }
 }

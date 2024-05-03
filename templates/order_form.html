@@ -1,0 +1,40 @@
+<div id="order_form{{book_id}}">
+    <form>
+        <fieldset>
+            <div>
+                <legend>Order type</legend>
+                <label><input type="radio" name="order_type" value="GTC" checked />GTC</label>
+                <label><input type="radio" name="order_type" value="IOC" />IOC</label>
+                <label><input type="radio" name="order_type" value="POST" />POST</label>
+                <label><input type="radio" name="order_type" value="Market" />Market</label>
+            </div>
+            <div class="grid">
+                <label>Quantity
+                    {% if quantity_message.len() == 0 %}
+                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}" required />
+                    {% else %}
+                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}" required aria-invalid="true"/>
+                    <small>{{quantity_message}}</small>
+                    {% endif %}
+                </label>
+                <label>Price
+                    {% if price_message.len() == 0 %}
+                    <input type="number" name="price" placeholder="Price" aria-label="Number" value="{{price}}" required />
+                    {% else %}
+                    <input type="number" name="price" placeholder="Price" aria-label="Number" value="{{price}}" required aria-invalid="true"/>
+                    <small>{{price_message}}</small>
+                    {% endif %}
+                </label>
+            </div>
+            <div class="grid">
+                <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book_id}}}' hx-swap="innerHTML"
+                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-green-450">
+                <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book_id}}}' hx-swap="innerHTML"
+                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-red-450">
+            </div>
+        </fieldset>
+    </form>
+    {% if message.len() != 0 %}
+    <p>{{message}}</p>
+    {% endif %}
+</div>

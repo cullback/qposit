@@ -38,7 +38,7 @@ Closes Nov 5, 2024
                 </tr>
             </thead>
             <tbody>
-                {% for (price, quantity, value) in orderbook.asks.iter() %}
+                {% for (price, quantity, value) in orderbook.asks %}
                 <tr>
                     <td class="pico-color-red-350">{{price}}¢</td>
                     <td>{{quantity}}</td>
@@ -54,32 +54,7 @@ Closes Nov 5, 2024
                 {% endfor %}
             </tbody>
         </table>
-        <form>
-            <fieldset>
-                <div>
-                    <legend>Order type</legend>
-                    <label><input type="radio" name="order_type" value="Market" />Market</label>
-                    <label><input type="radio" name="order_type" value="GTC" checked />GTC</label>
-                    <label><input type="radio" name="order_type" value="IOC" />IOC</label>
-                    <label><input type="radio" name="order_type" value="POST" />POST</label>
-                </div>
-                <div class="grid">
-                    <label>Quantity
-                        <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" />
-                    </label>
-                    <label>Price
-                        <input type="number" name="price" placeholder="Price" aria-label="Number" />
-                    </label>
-                </div>
-                <div class="grid">
-                    <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book.id}}}' hx-swap="innerHTML"
-                        hx-target="#responseContainer" hx-post="/orders" class="pico-background-green-450">
-                    <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book.id}}}' hx-swap="innerHTML"
-                        hx-target="#responseContainer" hx-post="/orders" class="pico-background-red-450">
-                </div>
-            </fieldset>
-        </form>
-        <div id="responseContainer"></div>
+        {{orderbook.order_form|safe}}
     </details>
 </article>
 
