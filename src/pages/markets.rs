@@ -16,14 +16,11 @@ type PriceLevel = (Price, Quantity, Quantity);
 fn price_level_to_string(pl: PriceLevel) -> (String, String, String) {
     let (price, quantity, value) = pl;
 
-    let mut price_str = price.to_string();
-    price_str.insert(price_str.len() - 2, '.');
+    let price_str = format!("{:.2}", f32::from(price) / 100.0);
+    let quantity_str = quantity.to_string();
+    let value_str = format!("{:.2}", f64::from(value) / 10000.0);
 
-    let mut value_str = value.to_string();
-    value_str.insert(value_str.len() - 4, '.');
-    value_str.pop();
-    value_str.pop();
-    (price_str, quantity.to_string(), value_str)
+    (price_str, quantity_str, value_str)
 }
 
 fn build_price_levels(orders: impl Iterator<Item = models::order::Order>) -> Vec<PriceLevel> {
