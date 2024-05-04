@@ -3,25 +3,33 @@
         <fieldset>
             <div>
                 <legend>Order type</legend>
-                <label><input type="radio" name="order_type" value="GTC" checked />GTC</label>
-                <label><input type="radio" name="order_type" value="IOC" />IOC</label>
-                <label><input type="radio" name="order_type" value="POST" />POST</label>
-                <label><input type="radio" name="order_type" value="Market" />Market</label>
+                <label><input type="radio" name="order_type" value="GTC" checked
+                        onclick="document.getElementById('price_field').disabled = false" />GTC</label>
+                <label><input type="radio" name="order_type" value="IOC"
+                        onclick="document.getElementById('price_field').disabled = false" />IOC</label>
+                <label><input type="radio" name="order_type" value="POST"
+                        onclick="document.getElementById('price_field').disabled = false" />POST</label>
+                <label><input type="radio" name="order_type" value="Market"
+                        onclick="document.getElementById('price_field').disabled = true" />Market</label>
             </div>
             <div class="grid">
                 <label>Quantity
                     {% if quantity_message.len() == 0 %}
-                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}" required />
+                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}"
+                        required />
                     {% else %}
-                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}" required aria-invalid="true"/>
+                    <input type="number" name="quantity" placeholder="Quantity" aria-label="Number" value="{{quantity}}"
+                        required aria-invalid="true" />
                     <small>{{quantity_message}}</small>
                     {% endif %}
                 </label>
                 <label>Price
                     {% if price_message.len() == 0 %}
-                    <input type="number" name="price" placeholder="Price" aria-label="Number" value="{{price}}" required />
+                    <input type="number" id="price_field" name="price" placeholder="Price" aria-label="Number"
+                        value="{{price}}" required />
                     {% else %}
-                    <input type="number" name="price" placeholder="Price" aria-label="Number" value="{{price}}" required aria-invalid="true"/>
+                    <input type="number" id="price_field" name="price" placeholder="Price" aria-label="Number"
+                        value="{{price}}" required aria-invalid="true" />
                     <small>{{price_message}}</small>
                     {% endif %}
                 </label>
