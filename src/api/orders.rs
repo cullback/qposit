@@ -2,13 +2,12 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Extension, Json,
+    Json,
 };
 use exchange::Action;
 use orderbook::OrderId;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
@@ -132,9 +131,9 @@ impl From<models::order::Order> for OrderResponse {
 )]
 pub async fn get(
     BasicAuthExtractor(user): BasicAuthExtractor,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
 ) -> Response {
-    let Ok(orders) = models::order::Order::get_for_user(&db, user.id).await else {
+    let Ok(orders) = models::order::Order::get_for_user(&state.db, user.id).await else {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 
@@ -155,9 +154,8 @@ pub async fn get(
 pub async fn delete(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
-    Extension(db): Extension<SqlitePool>,
 ) -> impl IntoResponse {
-    let Ok(orders) = models::order::Order::get_for_user(&db, user.id).await else {
+    let Ok(orders) = models::order::Order::get_for_user(&state.db, user.id).await else {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 

@@ -4,7 +4,7 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use exchange::{Action, BookId};
+use exchange::BookId;
 use orderbook::{OrderId, Price, Quantity};
 use serde::Deserialize;
 use tracing::info;

@@ -8,7 +8,6 @@ mod pages;
 
 use crate::actors::matcher;
 use app_state::AppState;
-use axum::Extension;
 use exchange::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
@@ -48,11 +47,9 @@ async fn main() {
         }
     });
 
-    let state = AppState::build(cmd_send, feed_receive);
+    let state = AppState::new(db, cmd_send, feed_receive);
 
-    let app = pages::router(state.clone())
-        .merge(api::router(state))
-        .layer(Extension(db));
+    let app = pages::router(state.clone()).merge(api::router(state));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = TcpListener::bind(addr)

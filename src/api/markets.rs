@@ -2,12 +2,11 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Extension, Json,
+    Json,
 };
 use exchange::BookId;
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::{
@@ -24,13 +23,15 @@ use crate::{
         (status = 200, description = "Market successfully created")
     )
 )]
-pub async fn get(Extension(db): Extension<SqlitePool>) -> impl IntoResponse {
-    let markets = models::market::Market::get_active_markets(&db)
+pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
+    let markets = models::market::Market::get_active_markets(&state.db)
         .await
         .unwrap();
     let mut resp = vec![];
     for market in markets {
-        let books = Book::get_all_for_market(&db, market.id).await.unwrap();
+        let books = Book::get_all_for_market(&state.db, market.id)
+            .await
+            .unwrap();
         resp.push(json!({
             "title": market.title,
             "description": market.description,
@@ -69,7 +70,6 @@ pub async fn post(
     BasicAuthExtractor(user): BasicAuthExtractor,
     State(state): State<AppState>,
     Path(slug): Path<String>,
-    Extension(db): Extension<SqlitePool>,
     Json(market): Json<Market>,
 ) -> impl IntoResponse {
     if user.username != "testaccount" {
@@ -87,7 +87,7 @@ pub async fn post(
         expires_at: market.expires_at,
     };
 
-    let market_id = match record.insert(&db).await {
+    let market_id = match record.insert(&state.db).await {
         Ok(row_id) => row_id,
         Err(sqlx::Error::Database(x)) if x.is_unique_violation() => {
             return Json(json!({"error": "Market already exists"})).into_response();
@@ -105,7 +105,7 @@ pub async fn post(
             value: None,
             last_trade_price: None,
         };
-        let book_id = book.insert(&db).await.unwrap() as BookId;
+        let book_id = book.insert(&state.db).await.unwrap() as BookId;
         let req = MatcherRequest::AddBook { book_id };
         state.cmd_send.send(req).await.unwrap();
     }

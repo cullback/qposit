@@ -1,11 +1,10 @@
 use super::templates::{open_orders, positions};
-use crate::auth::SessionExtractor;
+use crate::{app_state::AppState, auth::SessionExtractor};
 use askama::Template;
 use axum::{
+    extract::State,
     response::{Html, IntoResponse, Redirect},
-    Extension,
 };
-use sqlx::SqlitePool;
 
 #[derive(Template)]
 #[template(path = "profile.html")]
@@ -18,7 +17,7 @@ pub struct Component<'a> {
 
 pub async fn get(
     SessionExtractor(user): SessionExtractor,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
     let Some(user) = user else {
         return Redirect::to("/").into_response();
@@ -27,8 +26,8 @@ pub async fn get(
     let page = Component {
         username: &user.username,
         balance: user.balance as f32,
-        positions: positions::Positions::build(&db, user.id).await,
-        open_orders: open_orders::OpenOrders::build(&db, user.id).await,
+        positions: positions::Positions::build(&state.db, user.id).await,
+        open_orders: open_orders::OpenOrders::build(&state.db, user.id).await,
     }
     .render()
     .unwrap();

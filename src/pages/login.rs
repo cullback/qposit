@@ -1,9 +1,9 @@
 use std::net::SocketAddr;
 
 use axum::{
-    extract::{ConnectInfo, Path},
+    extract::{ConnectInfo, Path, State},
     response::{Html, IntoResponse, Redirect},
-    Extension, Form,
+    Form,
 };
 use axum_extra::{
     extract::{cookie::Cookie, CookieJar},
@@ -11,11 +11,10 @@ use axum_extra::{
     TypedHeader,
 };
 use serde::Deserialize;
-use sqlx::SqlitePool;
 use tracing::info;
 
 use crate::{
-    app_state::current_time_micros,
+    app_state::{current_time_micros, AppState},
     auth::{self, SessionExtractor},
     models::session::Session,
 };
@@ -39,13 +38,13 @@ pub async fn post(
     jar: CookieJar,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
     Form(form): Form<Credentials>,
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
 
     match auth::login(
-        &db,
+        &state.db,
         &form.username,
         &form.password,
         timestamp,
@@ -63,10 +62,10 @@ pub async fn post(
     }
 }
 
-pub async fn delete(jar: CookieJar, db: Extension<SqlitePool>) -> impl IntoResponse {
+pub async fn delete(jar: CookieJar, State(state): State<AppState>) -> impl IntoResponse {
     info!("DELETE /login");
     if let Some(cookie) = jar.get("session_id") {
-        Session::delete_by_id(&db, cookie.value())
+        Session::delete_by_id(&state.db, cookie.value())
             .await
             .expect("failed to delete session id from database");
     }
@@ -79,8 +78,8 @@ pub async fn delete(jar: CookieJar, db: Extension<SqlitePool>) -> impl IntoRespo
 
 pub async fn delete_by_id(
     Path(session_id): Path<String>,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
-    Session::delete_by_id(&db, &session_id).await.unwrap();
+    Session::delete_by_id(&state.db, &session_id).await.unwrap();
     Html("").into_response()
 }

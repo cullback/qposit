@@ -13,6 +13,7 @@ use axum_extra::TypedHeader;
 use sqlx::SqlitePool;
 use tracing::warn;
 
+use crate::app_state::AppState;
 use crate::models::session::Session;
 use crate::models::user::User;
 use exchange::Timestamp;
@@ -86,20 +87,19 @@ pub async fn login(
 pub struct SessionExtractor(pub Option<User>);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for SessionExtractor
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<AppState> for SessionExtractor {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let jar = CookieJar::from_request_parts(parts, state).await.unwrap();
-        let pool: &SqlitePool = parts.extensions.get().unwrap();
 
         let Some(session_id) = jar.get("session_id").map(Cookie::value) else {
             return Ok(Self(None));
         };
-        let session = match Session::get_by_id(pool, session_id).await {
+        let session = match Session::get_by_id(&state.db, session_id).await {
             Ok(Some(session)) => session,
             Ok(None) => return Ok(Self(None)),
             Err(err) => {
@@ -107,7 +107,7 @@ where
                 return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
             }
         };
-        let user = match User::get_by_id(pool, session.user_id).await {
+        let user = match User::get_by_id(&state.db, session.user_id).await {
             Ok(Some(user)) => user,
             Ok(None) => return Ok(Self(None)),
             Err(err) => {
@@ -123,21 +123,20 @@ where
 pub struct BasicAuthExtractor(pub User);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for BasicAuthExtractor
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<AppState> for BasicAuthExtractor {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let Ok(TypedHeader(Authorization(x))) =
             TypedHeader::<Authorization<Basic>>::from_request_parts(parts, state).await
         else {
             return Err(StatusCode::UNAUTHORIZED.into_response());
         };
         // let session_id = x.username();
-        let pool: &SqlitePool = parts.extensions.get().unwrap();
-        match check_login(pool, x.username(), x.password()).await {
+        match check_login(&state.db, x.username(), x.password()).await {
             Some(user) => Ok(Self(user)),
             None => Err(StatusCode::UNAUTHORIZED.into_response()),
         }

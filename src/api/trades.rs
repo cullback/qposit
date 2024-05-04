@@ -1,11 +1,14 @@
+use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
-use axum::{extract::Query, http::StatusCode, response::Response, Extension};
+use axum::{extract::Query, http::StatusCode, response::Response};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
-use sqlx::{QueryBuilder, SqlitePool};
-use tracing::{error, info};
+use sqlx::QueryBuilder;
+use tracing::error;
 use utoipa::ToSchema;
+
+use crate::app_state::AppState;
 
 #[derive(Debug, Serialize, ToSchema, FromRow)]
 struct Trade {
@@ -48,8 +51,7 @@ pub struct TradeParams {
         (status = 200, description = "Success")
     )
 )]
-pub async fn get(Extension(db): Extension<SqlitePool>, params: Query<TradeParams>) -> Response {
-    info!(?params);
+pub async fn get(State(state): State<AppState>, params: Query<TradeParams>) -> Response {
     let mut query = QueryBuilder::new("SELECT * from trade WHERE 1 = 1");
 
     if let Some(book_id) = params.book_id {
@@ -70,7 +72,7 @@ pub async fn get(Extension(db): Extension<SqlitePool>, params: Query<TradeParams
     query.push(" ORDER BY created_at DESC LIMIT ");
     query.push_bind(params.limit);
 
-    let trades = match query.build_query_as::<Trade>().fetch_all(&db).await {
+    let trades = match query.build_query_as::<Trade>().fetch_all(&state.db).await {
         Ok(trades) => trades,
         Err(err) => {
             error!(?err);

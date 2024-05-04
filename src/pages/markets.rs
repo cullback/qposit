@@ -1,15 +1,15 @@
 use super::templates::market_page::MarketPage;
 use super::templates::order_form::OrderForm;
+use crate::app_state::AppState;
 use crate::models;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};
-use axum::extract::Path;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use axum::response::Redirect;
-use axum::{response::IntoResponse, Extension};
 use exchange::BookId;
 use orderbook::{Price, Quantity};
-use sqlx::SqlitePool;
 
 type PriceLevel = (Price, Quantity, Quantity);
 
@@ -77,9 +77,9 @@ impl OrderBook {
 pub async fn get(
     SessionExtractor(user): SessionExtractor,
     Path(slug): Path<String>,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let Ok(market) = Market::get_by_slug(&db, &slug).await else {
+    let Ok(market) = Market::get_by_slug(&state.db, &slug).await else {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 
@@ -87,10 +87,12 @@ pub async fn get(
         return Redirect::to("/404").into_response();
     };
 
-    let books = Book::get_all_for_market(&db, market.id).await.unwrap();
+    let books = Book::get_all_for_market(&state.db, market.id)
+        .await
+        .unwrap();
     let mut orderbooks = Vec::new();
     for book in &books {
-        let orders = models::order::Order::get_open_for_book(&db, book.id)
+        let orders = models::order::Order::get_open_for_book(&state.db, book.id)
             .await
             .unwrap();
         orderbooks.push(OrderBook::from_orders(book.id, orders));

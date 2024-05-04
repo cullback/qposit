@@ -1,18 +1,21 @@
 use super::templates::home_page;
+use crate::app_state::AppState;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};
-use axum::{response::IntoResponse, Extension};
-use sqlx::SqlitePool;
+use axum::extract::State;
+use axum::response::IntoResponse;
 
 pub async fn get(
     SessionExtractor(user): SessionExtractor,
-    Extension(db): Extension<SqlitePool>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let markets = Market::get_active_markets(&db).await.unwrap();
+    let markets = Market::get_active_markets(&state.db).await.unwrap();
 
     let mut blah = Vec::new();
     for market in markets {
-        let books = Book::get_all_for_market(&db, market.id).await.unwrap();
+        let books = Book::get_all_for_market(&state.db, market.id)
+            .await
+            .unwrap();
         blah.push((market, books));
     }
 

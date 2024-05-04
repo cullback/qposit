@@ -1,9 +1,11 @@
 use exchange::{BookEvent, Timestamp};
+use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::actors::matcher_request::MatcherRequest;
 
 pub struct AppState {
+    pub db: SqlitePool,
     /// Sending requests to matching engine.
     pub cmd_send: mpsc::Sender<MatcherRequest>,
     /// Receiving market data events.
@@ -13,6 +15,7 @@ pub struct AppState {
 impl Clone for AppState {
     fn clone(&self) -> Self {
         Self {
+            db: self.db.clone(),
             cmd_send: self.cmd_send.clone(),
             feed_receive: self.feed_receive.resubscribe(),
         }
@@ -20,11 +23,13 @@ impl Clone for AppState {
 }
 
 impl AppState {
-    pub fn build(
+    pub fn new(
+        db: SqlitePool,
         cmd_send: mpsc::Sender<MatcherRequest>,
         feed_receive: broadcast::Receiver<BookEvent>,
     ) -> Self {
         Self {
+            db,
             cmd_send,
             feed_receive,
         }

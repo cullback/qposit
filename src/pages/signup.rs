@@ -1,6 +1,5 @@
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
-use axum::extract::ConnectInfo;
-use axum::Extension;
+use axum::extract::{ConnectInfo, State};
 use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Redirect},
@@ -11,12 +10,11 @@ use axum_extra::headers::UserAgent;
 use axum_extra::TypedHeader;
 use rand::rngs::OsRng;
 use serde::Deserialize;
-use sqlx::SqlitePool;
 use std::net::SocketAddr;
 use tracing::warn;
 
 use super::templates::{signup, signup_form};
-use crate::app_state::current_time_micros;
+use crate::app_state::{current_time_micros, AppState};
 use crate::auth::{self, SessionExtractor};
 use crate::models;
 
@@ -37,7 +35,7 @@ pub async fn post(
     jar: CookieJar,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    db: Extension<SqlitePool>,
+    State(state): State<AppState>,
     Form(form): Form<Credentials>,
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
@@ -67,10 +65,11 @@ pub async fn post(
         balance: 0,
     };
 
-    match user.insert(&db).await {
+    match user.insert(&state.db).await {
         Ok(user_id) => {
             let cookie =
-                auth::create_session(&db, user_id, timestamp, addr.to_string(), user_agent).await;
+                auth::create_session(&state.db, user_id, timestamp, addr.to_string(), user_agent)
+                    .await;
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
