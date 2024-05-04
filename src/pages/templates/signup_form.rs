@@ -9,11 +9,7 @@ pub struct SignupForm {
 }
 
 impl SignupForm {
-    pub fn build_with_error_message(
-        username: String,
-        username_message: String,
-        password_message: String,
-    ) -> Self {
+    pub const fn new(username: String, username_message: String, password_message: String) -> Self {
         Self {
             username,
             username_message,

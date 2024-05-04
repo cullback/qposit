@@ -25,7 +25,7 @@ struct Trade {
     pub is_buy: bool,
 }
 
-fn default_limit() -> u32 {
+const fn default_limit() -> u32 {
     100
 }
 

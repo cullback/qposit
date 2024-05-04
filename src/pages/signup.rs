@@ -43,12 +43,8 @@ pub async fn post(
     let username_message = validate_username(&form.username);
     let password_message = validate_password(&form.password);
     if !username_message.is_empty() || !password_message.is_empty() {
-        return signup_form::SignupForm::build_with_error_message(
-            form.username,
-            username_message,
-            password_message,
-        )
-        .into_response();
+        return signup_form::SignupForm::new(form.username, username_message, password_message)
+            .into_response();
     }
 
     let salt = SaltString::generate(&mut OsRng);
@@ -73,7 +69,7 @@ pub async fn post(
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
-            signup_form::SignupForm::build_with_error_message(
+            signup_form::SignupForm::new(
                 form.username,
                 "Username already taken".to_string(),
                 String::new(),

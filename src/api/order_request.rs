@@ -48,11 +48,11 @@ pub enum TimeInForce {
 }
 
 impl TimeInForce {
-    pub fn ioc() -> Self {
+    pub const fn ioc() -> Self {
         Self::IOC
     }
 
-    pub fn gtc() -> Self {
+    pub const fn gtc() -> Self {
         Self::GTC
     }
 }

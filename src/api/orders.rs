@@ -30,11 +30,11 @@ pub enum TimeInForce {
 }
 
 impl TimeInForce {
-    pub fn ioc() -> Self {
+    pub const fn ioc() -> Self {
         Self::IOC
     }
 
-    pub fn gtc() -> Self {
+    pub const fn gtc() -> Self {
         Self::GTC
     }
 }
@@ -144,6 +144,7 @@ pub async fn get(
     Json(resp).into_response()
 }
 
+/// Delete all open orders.
 #[utoipa::path(
     delete,
     path = "/orders",
@@ -165,16 +166,16 @@ pub async fn delete(
         let (req, recv) = MatcherRequest::cancel(user.id, order.id);
         state.cmd_send.send(req).await.expect("Receiver dropped");
         let resp = recv.await.expect("Sender dropped");
-        match resp {
-            Ok(exchange::BookEvent {
-                time: _,
-                tick: _,
-                book: _,
-                user: _,
-                action: Action::Remove { id },
-            }) => deleted.push(id),
-            _ => {}
-        }
+        if let Ok(exchange::BookEvent {
+            time: _,
+            tick: _,
+            book: _,
+            user: _,
+            action: Action::Remove { id },
+        }) = resp
+        {
+            deleted.push(id);
+        };
     }
 
     Json(json!({"deleted": deleted})).into_response()
@@ -197,16 +198,17 @@ pub async fn delete_by_id(
     let (req, recv) = MatcherRequest::cancel(user.id, order_id);
     state.cmd_send.send(req).await.expect("Receiver dropped");
     let resp = recv.await.expect("Sender dropped");
-    match resp {
-        Ok(exchange::BookEvent {
-            time: _,
-            tick: _,
-            book: _,
-            user: _,
-            action: Action::Remove { id },
-        }) => deleted.push(id),
-        _ => {}
-    }
+
+    if let Ok(exchange::BookEvent {
+        time: _,
+        tick: _,
+        book: _,
+        user: _,
+        action: Action::Remove { id },
+    }) = resp
+    {
+        deleted.push(id);
+    };
 
     Json(json!({"deleted": deleted})).into_response()
 }

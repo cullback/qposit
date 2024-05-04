@@ -65,7 +65,7 @@ async fn check_login(db: &SqlitePool, username: &str, password: &str) -> Option<
             Argon2::default()
                 .verify_password(password.as_bytes(), &parsed_hash)
                 .ok()
-                .map(|_| user)
+                .map(|()| user)
         })
 }
 

@@ -15,13 +15,13 @@ pub struct Market {
 
 impl Market {
     pub async fn get_by_slug(db: &SqlitePool, slug: &str) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as::<_, Self>(r#"SELECT * FROM 'market' WHERE slug = ?"#)
+        sqlx::query_as::<_, Self>("SELECT * FROM 'market' WHERE slug = ?")
             .bind(slug)
             .fetch_optional(db)
             .await
     }
     pub async fn get_active_markets(db: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as::<_, Self>(r#"SELECT * FROM 'market'"#)
+        sqlx::query_as::<_, Self>("SELECT * FROM 'market'")
             .fetch_all(db)
             .await
     }

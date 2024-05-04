@@ -105,7 +105,7 @@ pub async fn post(
             value: None,
             last_trade_price: None,
         };
-        let book_id = book.insert(&state.db).await.unwrap() as BookId;
+        let book_id = BookId::try_from(book.insert(&state.db).await.unwrap()).unwrap();
         let req = MatcherRequest::AddBook { book_id };
         state.cmd_send.send(req).await.unwrap();
     }

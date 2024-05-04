@@ -63,9 +63,7 @@ pub async fn run_matcher(
                     "REQUEST: {timestamp} submit order user_id={user} {:?}",
                     order
                 );
-                let res = exchange
-                    .submit_order(timestamp, user, order.into())
-                    .map(|x| x.into());
+                let res = exchange.submit_order(timestamp, user, order);
                 if let Ok(event) = res.clone() {
                     market_data.send(event).expect("Receiver dropped");
                 }
@@ -78,9 +76,7 @@ pub async fn run_matcher(
             } => {
                 info!("REQUEST: {timestamp} remove user_id={user} {order}");
 
-                let res = exchange
-                    .cancel_order(timestamp, user, order)
-                    .map(|x| x.into());
+                let res = exchange.cancel_order(timestamp, user, order);
                 if let Ok(event) = res.clone() {
                     market_data.send(event).expect("Receiver dropped");
                 }

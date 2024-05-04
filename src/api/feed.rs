@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 use crate::app_state::AppState;
 
 /// Book update event.
-#[derive(Debug, Clone, PartialEq, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct BookEvent {
     /// The timestamp this event ocurred at.
     pub time: i64,
@@ -27,7 +27,7 @@ pub struct BookEvent {
     pub action: Action,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum Action {

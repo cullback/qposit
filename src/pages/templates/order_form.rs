@@ -23,7 +23,7 @@ impl OrderForm {
             message: String::new(),
         }
     }
-    pub fn with_messages(
+    pub const fn with_messages(
         book_id: BookId,
         quantity: String,
         price: String,

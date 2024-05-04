@@ -8,7 +8,7 @@ pub struct LoginPage {
 }
 
 impl LoginPage {
-    pub fn new(username: String, message: String) -> Self {
+    pub const fn new(username: String, message: String) -> Self {
         Self { username, message }
     }
 }

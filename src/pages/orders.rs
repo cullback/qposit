@@ -15,6 +15,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum OrderType {
     Market,
     GTC,
@@ -84,8 +85,7 @@ pub async fn post(
         price,
         is_buy: form.is_buy,
         tif: match form.order_type {
-            OrderType::Market => exchange::TimeInForce::GTC,
-            OrderType::GTC => exchange::TimeInForce::GTC,
+            OrderType::Market | OrderType::GTC => exchange::TimeInForce::GTC,
             OrderType::IOC => exchange::TimeInForce::IOC,
             OrderType::POST => exchange::TimeInForce::POST,
         },

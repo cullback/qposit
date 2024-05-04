@@ -7,7 +7,7 @@ pub struct AboutPage {
 }
 
 impl AboutPage {
-    pub fn new(username: String) -> Self {
+    pub const fn new(username: String) -> Self {
         Self { username }
     }
 }

@@ -82,9 +82,9 @@ impl State {
         let buyer_cost = buyer_cost(pos_a, trade.quantity, trade.price);
         let seller_cost = seller_cost(pos_b, trade.quantity, trade.price);
 
-        println!("trade: {:?}", trade);
-
-        if trade.taker_id != trade.maker_id {
+        if trade.taker_id == trade.maker_id {
+            warn!(?trade, "self trade, not updating balance or position");
+        } else {
             sqlx::query!(
                 "
                 UPDATE user SET balance = balance - ? WHERE id = ?;
@@ -116,8 +116,6 @@ impl State {
             .execute(&mut *executor)
             .await
             .unwrap();
-        } else {
-            warn!(?trade, "self trade, not updating balance or position");
         }
 
         sqlx::query!(

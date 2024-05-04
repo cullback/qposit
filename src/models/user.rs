@@ -28,10 +28,7 @@ impl User {
 
     pub async fn insert(&self, db: &SqlitePool) -> Result<UserId, sqlx::Error> {
         sqlx::query!(
-            r#"
-            INSERT INTO user (username, password_hash, created_at)
-            VALUES (?, ?, ?)
-            "#,
+            "INSERT INTO user (username, password_hash, created_at) VALUES (?, ?, ?)",
             self.username,
             self.password_hash,
             self.created_at
@@ -41,8 +38,8 @@ impl User {
         .map(|row| UserId::try_from(row.last_insert_rowid()).unwrap())
     }
 
-    pub async fn get_with_nonzero_balances(db: &SqlitePool) -> Result<Vec<User>, sqlx::Error> {
-        sqlx::query_as::<_, User>("SELECT * FROM user WHERE balance != 0")
+    pub async fn get_with_nonzero_balances(db: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>("SELECT * FROM user WHERE balance != 0")
             .fetch_all(db)
             .await
     }

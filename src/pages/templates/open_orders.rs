@@ -22,7 +22,7 @@ pub struct OpenOrders {
 impl OpenOrders {
     pub async fn build(db: &SqlitePool, user: UserId) -> Self {
         let orders = sqlx::query_as::<_, Order>(
-            r#"
+            "
                 SELECT
                     id,
                     book_id,
@@ -32,7 +32,7 @@ impl OpenOrders {
                     status
                 FROM 'order'
                 WHERE user_id = ? AND status = 'open'
-            "#,
+            ",
         )
         .bind(user)
         .fetch_all(db)

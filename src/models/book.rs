@@ -27,9 +27,9 @@ impl Book {
     pub async fn get_all_for_market(
         db: &SqlitePool,
         market: i64,
-    ) -> Result<Vec<Book>, sqlx::Error> {
-        sqlx::query_as::<_, Book>(
-            r#"
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            "
             SELECT
                 book.id,
                 book.market_id,
@@ -44,16 +44,16 @@ impl Book {
                 ) AS last_trade_price
             FROM book
             WHERE book.market_id = ?;
-            "#,
+            ",
         )
         .bind(market)
         .fetch_all(db)
         .await
     }
 
-    pub async fn get_active(db: &SqlitePool) -> Result<Vec<Book>, sqlx::Error> {
-        sqlx::query_as::<_, Book>(
-            r#"
+    pub async fn get_active(db: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            "
             SELECT
                 book.id,
                 book.market_id,
@@ -67,7 +67,7 @@ impl Book {
                     LIMIT 1
                 ) as last_trade_price
             FROM book
-            "#,
+            ",
         )
         .fetch_all(db)
         .await

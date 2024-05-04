@@ -37,6 +37,7 @@ impl AppState {
 }
 
 /// Returns the current time in microseconds.
+#[allow(clippy::cast_possible_truncation)]
 pub fn current_time_micros() -> Timestamp {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
