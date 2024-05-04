@@ -54,7 +54,7 @@ pub async fn post(
         .price
         .parse::<f32>()
         .ok()
-        .and_then(|p| if p < 0.0 { None } else { Some(p) })
+        .filter(|&p| p <= 0.0 || p >= 100.0)
         .map(|p| (p * 100.0).round() as Price);
 
     let quantity_msg = if quantity.is_some() {
