@@ -53,7 +53,7 @@ def main():
 
     # post_order()
     get_open_orders()
-    delete_orders()
+    # delete_orders()
 
 if __name__ == "__main__":
     main()

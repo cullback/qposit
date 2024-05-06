@@ -2,18 +2,18 @@ use askama::Template;
 
 #[derive(Template)]
 #[template(path = "signup.html")]
-pub struct Component<'a> {
-    username: &'a str,
-    username_message: &'a str,
-    password_message: &'a str,
+pub struct Component {
+    username: String,
+    username_message: String,
+    password_message: String,
 }
 
-pub fn build() -> String {
-    Component {
-        username: "",
-        username_message: "",
-        password_message: "",
+impl Component {
+    pub fn new() -> Self {
+        Self {
+            username: String::new(),
+            username_message: String::new(),
+            password_message: String::new(),
+        }
     }
-    .render()
-    .unwrap()
 }

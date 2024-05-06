@@ -64,6 +64,7 @@ impl Order {
         .await
     }
 
+    /// Returns the open orders of a book from lowest price to highest price.
     pub async fn get_open_for_book(
         db: &SqlitePool,
         book: BookId,

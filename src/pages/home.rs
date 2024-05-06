@@ -1,4 +1,4 @@
-use super::templates::home_page;
+use super::templates::home_page::{self, HomePage};
 use crate::app_state::AppState;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};
@@ -9,18 +9,24 @@ pub async fn get(
     SessionExtractor(user): SessionExtractor,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let markets = Market::get_active_markets(&state.db).await.unwrap();
+    let active_markets = Market::get_active_markets(&state.db).await.unwrap();
 
-    let mut blah = Vec::new();
-    for market in markets {
+    let mut markets = Vec::new();
+    for market in active_markets {
         let books = Book::get_all_for_market(&state.db, market.id)
             .await
             .unwrap();
-        blah.push((market, books));
+        markets.push((market, books));
     }
 
     match user {
-        Some(user) => home_page::HomePage::new(user.username, blah),
-        None => home_page::HomePage::new(String::new(), blah),
+        Some(user) => HomePage {
+            username: user.username,
+            markets,
+        },
+        None => HomePage {
+            username: String::new(),
+            markets,
+        },
     }
 }

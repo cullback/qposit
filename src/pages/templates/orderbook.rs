@@ -1,18 +1,21 @@
-// use askama::Template;
-// use orderbook::{Price, Quantity};
+use askama::Template;
+use orderbook::{Price, Quantity};
 
-// #[derive(Template)]
-// #[template(path = "orderbook.html")]
-// pub struct OrderBook<'a> {
-//     bids: &'a [(Price, Quantity, Quantity)],
-//     asks: &'a [(Price, Quantity, Quantity)],
-// }
+pub struct PriceLevel {
+    pub price: String,
+    pub quantity: String,
+    pub value: String,
+}
 
-// impl<'a> OrderBook<'a> {
-//     pub async fn build(
-//         bids: &'a [(Price, Quantity, Quantity)],
-//         asks: &'a [(Price, Quantity, Quantity)],
-//     ) -> Self {
-//         OrderBook { bids, asks }
-//     }
-// }
+#[derive(Template)]
+#[template(path = "orderbook.html")]
+pub struct OrderBook {
+    pub bids: Vec<PriceLevel>,
+    pub asks: Vec<PriceLevel>,
+}
+
+impl OrderBook {
+    pub fn new(bids: Vec<PriceLevel>, asks: Vec<PriceLevel>) -> Self {
+        Self { bids, asks }
+    }
+}

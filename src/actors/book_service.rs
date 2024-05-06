@@ -1,7 +1,14 @@
-use exchange::{Action, BookEvent, BookId, UserId};
-use orderbook::Book;
+//! Tracks state of all books and streams price-level orderbooks.
+//!
+//! Every BookEvent represents a change in the order book state that needs to be
+//! broadcast to all clients.
+//!
+//! - volume
+//! - last price
+//! - order book state
+use exchange::{Action, BookEvent, BookId, Tick, UserId};
+use orderbook::{Book, Order};
 use orderbook::{OrderId, Price, Quantity};
-use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tracing::info;
@@ -10,7 +17,6 @@ type PriceLevel = (Price, Quantity, Quantity);
 
 pub struct BookService {
     books: HashMap<BookId, orderbook::DefaultBook>,
-    positions: HashMap<(UserId, BookId), i32>,
     order_owner: HashMap<OrderId, UserId>,
 }
 
@@ -18,13 +24,13 @@ impl BookService {
     pub fn new() -> Self {
         Self {
             books: HashMap::new(),
-            positions: HashMap::new(),
             order_owner: HashMap::new(),
         }
     }
 
+    /// Computes price levels from best to worst.
     /// Orders should be sorted from best price to worst price.
-    fn do_side(orders: &[&orderbook::Order]) -> Vec<PriceLevel> {
+    fn do_side<'a>(orders: impl IntoIterator<Item = &'a Order>) -> Vec<PriceLevel> {
         let mut price_levels: Vec<PriceLevel> = Vec::new();
         let mut current_price: Option<Price> = None;
         let mut total_quantity = 0;
@@ -51,8 +57,8 @@ impl BookService {
     fn update_levels(&self, book: BookId) {
         let book = self.books.get(&book).unwrap();
 
-        let bids = Self::do_side(book.bids().collect::<Vec<_>>().as_slice());
-        let asks = Self::do_side(book.asks().collect::<Vec<_>>().as_slice());
+        let bids = Self::do_side(book.bids());
+        let asks = Self::do_side(book.asks());
     }
 
     fn on_event(&mut self, event: BookEvent) {
@@ -64,7 +70,6 @@ impl BookService {
                 price,
                 is_buy,
             } => {
-                self.order_owner.insert(id, event.user);
                 if is_buy {
                     book.buy(id, quantity, price);
                 } else {
@@ -73,15 +78,14 @@ impl BookService {
             }
             Action::Remove { id } => {
                 assert!(book.remove(id));
-                self.order_owner.remove(&id);
             }
         }
         self.update_levels(event.book);
     }
 }
 
-/// Runs the exchange service
-pub async fn run_book_service(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
+/// Starts the book service.
+pub async fn run_book_service(mut feed: broadcast::Receiver<BookEvent>) {
     info!("Starting book service...");
     let mut state = BookService::new();
 

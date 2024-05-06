@@ -1,0 +1,26 @@
+<p>Order book</p>
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Price</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ask in asks.iter().rev() %}
+        <tr>
+            <td class="pico-color-red-350">{{ask.price}}¢</td>
+            <td>{{ask.quantity}}</td>
+            <td>${{ask.value}}</td>
+        </tr>
+        {% endfor %}
+        {% for bid in bids %}
+        <tr>
+            <td class="pico-color-green-350">{{bid.price}}¢</td>
+            <td>{{bid.quantity}}</td>
+            <td>${{bid.value}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

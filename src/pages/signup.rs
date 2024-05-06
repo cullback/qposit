@@ -2,7 +2,7 @@ use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::extract::{ConnectInfo, State};
 use axum::{
     http::StatusCode,
-    response::{Html, IntoResponse, Redirect},
+    response::{IntoResponse, Redirect},
     Form,
 };
 use axum_extra::extract::CookieJar;
@@ -21,7 +21,7 @@ use crate::models;
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
         Some(_) => Redirect::to("/").into_response(),
-        None => Html(signup::build()).into_response(),
+        None => signup::Component::new().into_response(),
     }
 }
 

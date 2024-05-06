@@ -122,6 +122,7 @@ impl From<models::order::Order> for OrderResponse {
     }
 }
 
+/// Gets the open orders.
 #[utoipa::path(
     get,
     path = "/orders",
