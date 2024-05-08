@@ -1,16 +1,16 @@
 use exchange::{BookEvent, Timestamp};
-use kanal::{AsyncReceiver, AsyncSender};
 use sqlx::SqlitePool;
+use tokio::sync::{broadcast, mpsc};
 
 use crate::{actors::matcher_request::MatcherRequest, pages::OrderBook};
 
 pub struct AppState {
     pub db: SqlitePool,
     /// Sending requests to matching engine.
-    pub cmd_send: AsyncSender<MatcherRequest>,
+    pub cmd_send: mpsc::Sender<MatcherRequest>,
     /// Receiving market data events.
-    pub feed_receive: AsyncReceiver<BookEvent>,
-    pub book_receive: AsyncReceiver<OrderBook>,
+    pub feed_receive: broadcast::Receiver<BookEvent>,
+    pub book_receive: broadcast::Receiver<OrderBook>,
 }
 
 impl Clone for AppState {
@@ -27,9 +27,9 @@ impl Clone for AppState {
 impl AppState {
     pub fn new(
         db: SqlitePool,
-        cmd_send: AsyncSender<MatcherRequest>,
-        feed_receive: AsyncReceiver<BookEvent>,
-        book_receive: AsyncReceiver<OrderBook>,
+        cmd_send: mpsc::Sender<MatcherRequest>,
+        feed_receive: broadcast::Receiver<BookEvent>,
+        book_receive: broadcast::Receiver<OrderBook>,
     ) -> Self {
         Self {
             db,

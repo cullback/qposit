@@ -6,6 +6,7 @@ mod auth;
 mod models;
 mod pages;
 
+use crate::actors::book_service;
 use crate::actors::matcher;
 use crate::pages::OrderBook;
 use app_state::AppState;
@@ -17,7 +18,6 @@ use tokio::{
     sync::{broadcast, mpsc},
 };
 use tracing::info;
-use crate::actors::book_service;
 
 /// Connects to the database using the `DATABASE_URL` environment variable.
 async fn connect_db() -> SqlitePool {
@@ -30,17 +30,23 @@ async fn connect_db() -> SqlitePool {
 
 #[tokio::main]
 async fn main() {
+    let default_panic = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default_panic(info);
+        std::process::exit(1);
+    }));
+
     tracing_subscriber::fmt().init();
 
     let db = connect_db().await;
 
-    let (cmd_send, cmd_receive) = kanal::bounded_async(32);
-    let (feed_send, feed_receive) = kanal::bounded_async::<BookEvent>(32);
-    let (book_send, book_receive) = kanal::bounded_async::<OrderBook>(32);
+    let (cmd_send, cmd_receive) = mpsc::channel(32);
+    let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
+    let (book_send, book_receive) = broadcast::channel::<OrderBook>(32);
 
     tokio::spawn({
         let db = db.clone();
-        let feed_receive = feed_receive.clone();
+        let feed_receive = feed_receive.resubscribe();
         async move { actors::writer::run_persistor(db, feed_receive).await }
     });
     tokio::spawn({
@@ -50,9 +56,10 @@ async fn main() {
         }
     });
     tokio::spawn({
-        let feed_receive = feed_receive.clone();
+        let db = db.clone();
+        let feed_receive = feed_receive.resubscribe();
         async move {
-            book_service::run_book_service(feed_receive, book_send).await;
+            book_service::run_book_service(db, feed_receive, book_send).await;
         }
     });
 

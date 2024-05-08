@@ -24,8 +24,8 @@ fn do_side<'a>(orders: impl IntoIterator<Item = &'a Order>) -> Vec<PriceLevel> {
 
     for order in orders {
         if current_price == Some(order.price) {
-            level_quantity += order.quantity;
-            cumulative_value += order.quantity * Quantity::from(order.price);
+            level_quantity += order.remaining;
+            cumulative_value += order.remaining * Quantity::from(order.price);
         } else {
             if let Some(price) = current_price {
                 price_levels.push(PriceLevel {
@@ -34,8 +34,8 @@ fn do_side<'a>(orders: impl IntoIterator<Item = &'a Order>) -> Vec<PriceLevel> {
                     value: format!("{:.2}", f64::from(cumulative_value) / 10000.0),
                 });
             }
-            level_quantity = order.quantity;
-            cumulative_value += order.quantity * Quantity::from(order.price);
+            level_quantity = order.remaining;
+            cumulative_value += order.remaining * Quantity::from(order.price);
             current_price = Some(order.price);
         }
     }
@@ -75,6 +75,7 @@ pub async fn get(
             .unwrap();
 
         let orderbook = OrderBook {
+            book_id: book.id,
             bids: do_side(orders.iter().filter(|order| order.is_buy).rev()),
             asks: do_side(orders.iter().filter(|order| !order.is_buy)),
         };

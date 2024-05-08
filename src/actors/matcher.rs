@@ -1,5 +1,4 @@
 use exchange::{BookEvent, Exchange, OrderRequest, TimeInForce};
-use kanal::{AsyncReceiver, AsyncSender};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -45,13 +44,13 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
 /// Runs the exchange service.
 pub async fn run_matcher(
     db: SqlitePool,
-    mut recv:  AsyncReceiver<MatcherRequest>,
-    market_data: AsyncSender<BookEvent>,
+    mut recv:  mpsc::Receiver<MatcherRequest>,
+    market_data: broadcast::Sender<BookEvent>,
 ) {
     info!("Starting matching engine...");
     let mut exchange = bootstrap_exchange(&db).await;
 
-    while let Ok(msg) = recv.recv().await {
+    while let Some(msg) = recv.recv().await {
         let timestamp = current_time_micros();
 
         match msg {
@@ -66,7 +65,7 @@ pub async fn run_matcher(
                 );
                 let res = exchange.submit_order(timestamp, user, order);
                 if let Ok(event) = res.clone() {
-                    market_data.send(event).await.expect("Receiver dropped");
+                    market_data.send(event).expect("Receiver dropped");
                 }
                 response.send(res).expect("Receiver dropped");
             }
@@ -79,7 +78,7 @@ pub async fn run_matcher(
 
                 let res = exchange.cancel_order(timestamp, user, order);
                 if let Ok(event) = res.clone() {
-                    market_data.send(event).await.expect("Receiver dropped");
+                    market_data.send(event).expect("Receiver dropped");
                 }
                 response.send(res).expect("Receiver dropped");
             }

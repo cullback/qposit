@@ -1,5 +1,5 @@
 mod about;
-mod feed;
+mod orderbook;
 mod home;
 mod login;
 mod markets;
@@ -54,6 +54,6 @@ pub fn router(state: AppState) -> Router {
         .route("/markets/:slug", get(markets::get))
         .route("/orders", post(orders::post))
         .route("/orders/:order_id", delete(orders::delete_by_id))
-        .route("/orderbook", get(feed::sse_handler))
+        .route("/orderbook", get(orderbook::sse_handler))
         .with_state(state)
 }

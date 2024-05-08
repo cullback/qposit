@@ -3,7 +3,6 @@
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
 use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
-use kanal::AsyncReceiver;
 use orderbook::{Book, DefaultBook};
 use orderbook::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
@@ -12,6 +11,8 @@ use tokio::sync::broadcast;
 use tracing::{info, warn};
 
 use crate::models;
+
+use super::bootstrap_books;
 
 #[derive(Debug)]
 struct Trade {
@@ -36,24 +37,11 @@ struct State {
 
 impl State {
     pub async fn new(db: SqlitePool) -> Self {
-        let mut books = HashMap::new();
+        let orders = models::order::Order::get_open_orders(&db).await.unwrap();
+        let books = bootstrap_books(&db, orders.as_slice()).await;
+        let order_owner = orders.iter().map(|order| (order.id, order.user_id)).collect();
+        
         let mut positions = HashMap::new();
-        let mut order_owner = HashMap::new();
-
-        for book in models::book::Book::get_active(&db).await.unwrap() {
-            books.insert(book.id, DefaultBook::default());
-        }
-
-        for order in models::order::Order::get_open_orders(&db).await.unwrap() {
-            let book = books.get_mut(&order.book_id).unwrap();
-            if order.is_buy {
-                book.buy(order.id, order.remaining, order.price);
-            } else {
-                book.sell(order.id, order.remaining, order.price);
-            }
-            order_owner.insert(order.id, order.user_id);
-        }
-
         for position in models::position::Position::get_non_zero(&db).await.unwrap() {
             positions.insert((position.user_id, position.book_id), position.position);
         }
@@ -224,7 +212,7 @@ impl State {
 }
 
 /// Runs the exchange service
-pub async fn run_persistor(db: SqlitePool, feed: AsyncReceiver<BookEvent>) {
+pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
     info!("Starting persistor...");
     let mut state = State::new(db).await;
 

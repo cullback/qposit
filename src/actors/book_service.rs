@@ -7,14 +7,17 @@
 //! - last price
 //! - order book state
 use exchange::{Action, BookEvent, BookId, Tick, UserId};
-use kanal::{AsyncReceiver, AsyncSender};
 use orderbook::{Book, Order};
 use orderbook::{OrderId, Price, Quantity};
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tracing::info;
 
+use crate::models;
 use crate::pages::{OrderBook, PriceLevel};
+
+use super::bootstrap_books;
 
 /// Computes the price levels for an order book.
 ///
@@ -58,26 +61,24 @@ fn do_side<'a>(orders: impl IntoIterator<Item = &'a Order>) -> Vec<PriceLevel> {
 
 pub struct BookService {
     books: HashMap<BookId, orderbook::DefaultBook>,
-    order_owner: HashMap<OrderId, UserId>,
 }
 
 impl BookService {
-    pub fn new() -> Self {
-        Self {
-            books: HashMap::new(),
-            order_owner: HashMap::new(),
-        }
+    pub async fn new(db: &SqlitePool) -> Self {
+        let orders = models::order::Order::get_open_orders(db).await.unwrap();
+        let books = bootstrap_books(db, &orders).await;
+        Self { books }
     }
 
     /// Updates the price-by-level for a book
     /// Every add / remove changes the quantity on a level and we send a message
-    fn update_levels(&self, book: BookId) -> OrderBook {
-        let book = self.books.get(&book).unwrap();
+    fn update_levels(&self, book_id: BookId) -> OrderBook {
+        let book = self.books.get(&book_id).unwrap();
 
         let bids = do_side(book.bids());
         let asks = do_side(book.asks());
 
-        OrderBook { bids, asks }
+        OrderBook { book_id, bids, asks }
     }
 
     fn on_event(&mut self, event: BookEvent) -> OrderBook {
@@ -105,14 +106,16 @@ impl BookService {
 }
 
 /// Starts the book service.
-pub async fn run_book_service(feed: AsyncReceiver<BookEvent>,
-    book_stream: AsyncSender<OrderBook>,
+pub async fn run_book_service(
+    db: SqlitePool,
+    mut feed: broadcast::Receiver<BookEvent>,
+    book_stream: broadcast::Sender<OrderBook>,
 ) {
     info!("Starting book service...");
-    let mut state = BookService::new();
+    let mut state = BookService::new(&db).await;
 
     while let Ok(event) = feed.recv().await {
         let orderbook = state.on_event(event);
-        book_stream.send(orderbook).await.unwrap();
+        book_stream.send(orderbook).unwrap();
     }
 }
