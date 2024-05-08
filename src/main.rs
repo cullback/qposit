@@ -7,6 +7,7 @@ mod models;
 mod pages;
 
 use crate::actors::matcher;
+use crate::pages::OrderBook;
 use app_state::AppState;
 use exchange::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
@@ -16,6 +17,7 @@ use tokio::{
     sync::{broadcast, mpsc},
 };
 use tracing::info;
+use crate::actors::book_service;
 
 /// Connects to the database using the `DATABASE_URL` environment variable.
 async fn connect_db() -> SqlitePool {
@@ -32,12 +34,13 @@ async fn main() {
 
     let db = connect_db().await;
 
-    let (cmd_send, cmd_receive) = mpsc::channel(32);
-    let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
+    let (cmd_send, cmd_receive) = kanal::bounded_async(32);
+    let (feed_send, feed_receive) = kanal::bounded_async::<BookEvent>(32);
+    let (book_send, book_receive) = kanal::bounded_async::<OrderBook>(32);
 
     tokio::spawn({
         let db = db.clone();
-        let feed_receive = feed_receive.resubscribe();
+        let feed_receive = feed_receive.clone();
         async move { actors::writer::run_persistor(db, feed_receive).await }
     });
     tokio::spawn({
@@ -46,8 +49,14 @@ async fn main() {
             matcher::run_matcher(db, cmd_receive, feed_send).await;
         }
     });
+    tokio::spawn({
+        let feed_receive = feed_receive.clone();
+        async move {
+            book_service::run_book_service(feed_receive, book_send).await;
+        }
+    });
 
-    let state = AppState::new(db, cmd_send, feed_receive);
+    let state = AppState::new(db, cmd_send, feed_receive, book_receive);
 
     let app = pages::router(state.clone()).merge(api::router(state));
 

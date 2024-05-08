@@ -54,7 +54,7 @@ pub async fn post(
         .price
         .parse::<f32>()
         .ok()
-        .filter(|&p| p <= 0.0 || p >= 100.0)
+        .filter(|&p| p > 0.0 || p < 100.0)
         .map(|p| (p * 100.0).round() as Price);
 
     let quantity_msg = if quantity.is_some() {
@@ -65,10 +65,6 @@ pub async fn post(
     let price_msg = if price.is_some() { "" } else { "invalid price" };
 
     let (Some(quantity), Some(price)) = (quantity, price) else {
-        println!(
-            "AHHH {}, {}, {}, {}",
-            form.quantity, form.price, quantity_msg, price_msg
-        );
         return OrderForm::with_messages(
             form.book,
             form.quantity,

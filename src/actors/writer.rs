@@ -3,6 +3,7 @@
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
 use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
+use kanal::AsyncReceiver;
 use orderbook::{Book, DefaultBook};
 use orderbook::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
@@ -223,7 +224,7 @@ impl State {
 }
 
 /// Runs the exchange service
-pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
+pub async fn run_persistor(db: SqlitePool, feed: AsyncReceiver<BookEvent>) {
     info!("Starting persistor...");
     let mut state = State::new(db).await;
 

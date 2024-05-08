@@ -1,13 +1,13 @@
 use askama::Template;
-use orderbook::{Price, Quantity};
 
+#[derive(Debug, Clone)]
 pub struct PriceLevel {
     pub price: String,
     pub quantity: String,
     pub value: String,
 }
 
-#[derive(Template)]
+#[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]
 pub struct OrderBook {
     pub bids: Vec<PriceLevel>,
