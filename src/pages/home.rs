@@ -1,4 +1,4 @@
-use super::templates::home_page::{self, HomePage};
+use super::templates::home_page::HomePage;
 use crate::app_state::AppState;
 use crate::models::market::Market;
 use crate::{auth::SessionExtractor, models::book::Book};

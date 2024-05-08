@@ -3,7 +3,7 @@
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
 use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
-use orderbook::{Book, DefaultBook};
+use orderbook::Book;
 use orderbook::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
@@ -39,8 +39,11 @@ impl State {
     pub async fn new(db: SqlitePool) -> Self {
         let orders = models::order::Order::get_open_orders(&db).await.unwrap();
         let books = bootstrap_books(&db, orders.as_slice()).await;
-        let order_owner = orders.iter().map(|order| (order.id, order.user_id)).collect();
-        
+        let order_owner = orders
+            .iter()
+            .map(|order| (order.id, order.user_id))
+            .collect();
+
         let mut positions = HashMap::new();
         for position in models::position::Position::get_non_zero(&db).await.unwrap() {
             positions.insert((position.user_id, position.book_id), position.position);

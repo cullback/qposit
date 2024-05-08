@@ -15,6 +15,16 @@ pub struct Order {
     pub status: String,
 }
 
+impl From<&Order> for orderbook::Order {
+    fn from(order: &Order) -> Self {
+        orderbook::Order {
+            id: order.id,
+            quantity: order.remaining,
+            price: order.price,
+        }
+    }
+}
+
 impl Order {
     pub async fn insert<'c, E>(&self, db: E) -> Result<i64, sqlx::Error>
     where

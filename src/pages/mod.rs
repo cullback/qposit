@@ -1,13 +1,13 @@
 mod about;
-mod orderbook;
 mod home;
 mod login;
 mod markets;
+mod orderbook;
 mod orders;
 mod profile;
 mod signup;
 mod templates;
-pub use templates::orderbook::{OrderBook, PriceLevel};
+pub use templates::orderbook::OrderBook;
 
 use axum::{
     http::header,

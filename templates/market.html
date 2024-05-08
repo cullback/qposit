@@ -9,7 +9,7 @@ Closes Nov 5, 2024
 
 <hr>
 
-{% for (book, orderbook, order_form) in orderbooks %}
+{% for (book, order_form) in orderbooks %}
 
 <article>
     <details>
@@ -27,7 +27,7 @@ Closes Nov 5, 2024
             </div>
             <small>$7,669,592 Bet</small>
         </summary>
-        {{orderbook|safe}}
+        <div hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message"></div>
         {{order_form|safe}}
     </details>
 </article>
