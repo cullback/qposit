@@ -1,10 +1,11 @@
+//! Order entry form component.
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
     Form,
 };
-use exchange::BookId;
+use exchange::{Action, BookEvent, BookId, RejectReason};
 use orderbook::{OrderId, Price, Quantity};
 use serde::Deserialize;
 use tracing::info;
@@ -46,33 +47,32 @@ pub async fn post(
             String::new(),
             String::new(),
             "Error: must be logged in to place order.".to_string(),
-        );
+        )
+        .into_response();
     };
 
-    let quantity = form.quantity.parse::<Quantity>().ok();
+    let quantity = form
+        .quantity
+        .parse::<Quantity>()
+        .map_err(|_| "Invalid quantity");
     let price = form
         .price
         .parse::<f32>()
         .ok()
         .filter(|&p| p > 0.0 || p < 100.0)
-        .map(|p| (p * 100.0).round() as Price);
+        .map(|p| (p * 100.0).round() as Price)
+        .ok_or("Invalid price");
 
-    let quantity_msg = if quantity.is_some() {
-        ""
-    } else {
-        "invalid quantity"
-    };
-    let price_msg = if price.is_some() { "" } else { "invalid price" };
-
-    let (Some(quantity), Some(price)) = (quantity, price) else {
+    let (Ok(quantity), Ok(price)) = (quantity, price) else {
         return OrderForm::with_messages(
             form.book,
             form.quantity,
             form.price,
-            quantity_msg.to_owned(),
-            price_msg.to_owned(),
-            "error".to_owned(),
-        );
+            quantity.err().unwrap_or_default().to_owned(),
+            price.err().unwrap_or_default().to_owned(),
+            "".to_owned(),
+        )
+        .into_response();
     };
 
     let req = exchange::OrderRequest {
@@ -91,20 +91,42 @@ pub async fn post(
     state.cmd_send.send(req).await.unwrap();
     let response = recv.await.expect("Sender dropped");
 
-    info!("User {} posted an order {:?}", user.id, response);
-
-    let message = match response {
-        Ok(event) => format!("success: {event:?}"),
-        Err(err) => format!("error: {err:?}"),
-    };
-    OrderForm::with_messages(
-        book,
-        form.quantity,
-        form.price,
-        String::new(),
-        String::new(),
-        message,
-    )
+    match response {
+        Ok(BookEvent {
+            action: Action::Add { id, .. },
+            ..
+        }) => OrderForm::with_messages(
+            book,
+            form.quantity,
+            form.price,
+            String::new(),
+            String::new(),
+            format!("Order accepted! id: {id}"),
+        )
+        .into_response(),
+        Err(err) => {
+            let msg = match err {
+                RejectReason::InvalidPrice => "Error: Invalid price",
+                RejectReason::BookNotFound => "Error: Invalid book",
+                RejectReason::IOCNotMarketable => "Error: Order not marketable",
+                RejectReason::InvalidQuantity => "Error: Invalid quantity",
+                RejectReason::InsufficientFunds => "Error: Insufficient funds",
+                RejectReason::OrderNotFound => "Error: Order not found",
+            };
+            OrderForm::with_messages(
+                book,
+                form.quantity,
+                form.price,
+                String::new(),
+                String::new(),
+                msg.to_owned(),
+            )
+            .into_response()
+        }
+        _ => {
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    }
 }
 
 pub async fn delete_by_id(

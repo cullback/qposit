@@ -36,9 +36,13 @@
             </div>
             <div class="grid">
                 <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-green-450">
+                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-green-450"
+                    hx-disabled-elt="this"
+                    >
                 <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-red-450">
+                    hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-red-450"
+                    hx-disabled-elt="this"
+                    >
             </div>
         </fieldset>
     </form>

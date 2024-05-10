@@ -51,6 +51,7 @@ pub async fn run_matcher(
     let mut exchange = bootstrap_exchange(&db).await;
 
     while let Some(msg) = recv.recv().await {
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         let timestamp = current_time_micros();
 
         match msg {
