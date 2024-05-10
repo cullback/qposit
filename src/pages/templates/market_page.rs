@@ -2,7 +2,7 @@ use askama::Template;
 
 use crate::models::{book::Book, market::Market};
 
-use super::{order_form::OrderForm};
+use super::order_form::OrderForm;
 
 #[derive(Template)]
 #[template(path = "market.html")]

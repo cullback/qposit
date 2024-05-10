@@ -1,7 +1,6 @@
 use askama::Template;
 use orderbook::{Order, Price, Quantity};
 
-
 #[derive(Debug, Clone)]
 struct PriceLevel {
     pub price: String,
@@ -47,7 +46,6 @@ fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
     }
     price_levels
 }
-
 
 #[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use exchange::BookId;
+use orderbook::Book;
 use orderbook::DefaultBook;
 use sqlx::SqlitePool;
-use orderbook::Book;
 
 use crate::models;
 
@@ -12,7 +12,10 @@ pub mod matcher;
 pub mod matcher_request;
 pub mod writer;
 
-pub async fn bootstrap_books(db: &SqlitePool, orders: &[models::order::Order]) -> HashMap<BookId, DefaultBook> {
+pub async fn bootstrap_books(
+    db: &SqlitePool,
+    orders: &[models::order::Order],
+) -> HashMap<BookId, DefaultBook> {
     let mut books = HashMap::new();
 
     for book in models::book::Book::get_active(db).await.unwrap() {

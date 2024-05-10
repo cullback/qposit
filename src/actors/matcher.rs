@@ -44,7 +44,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
 /// Runs the exchange service.
 pub async fn run_matcher(
     db: SqlitePool,
-    mut recv:  mpsc::Receiver<MatcherRequest>,
+    mut recv: mpsc::Receiver<MatcherRequest>,
     market_data: broadcast::Sender<BookEvent>,
 ) {
     info!("Starting matching engine...");
