@@ -10,9 +10,11 @@ use utoipa::ToSchema;
 
 use crate::app_state::AppState;
 
+/// A trade.
 #[derive(Debug, Serialize, ToSchema, FromRow)]
-struct Trade {
+pub struct Trade {
     pub id: i64,
+    /// The timestamp of when the trade was created.
     pub created_at: i64,
     pub tick: u32,
     pub book_id: u32,

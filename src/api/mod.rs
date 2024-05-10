@@ -27,7 +27,7 @@ use utoipa::OpenApi;
         trades::get,
     ),
     components(
-        schemas(orders::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market),
+        schemas(orders::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market, trades::Trade),
     ),
     tags(
         (name = "QPosit", description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS).")
