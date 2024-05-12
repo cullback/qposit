@@ -1,5 +1,8 @@
 use askama::Template;
+use orderbook::Book;
 use orderbook::{Order, Price, Quantity};
+
+use crate::actors::book_service::BookData;
 
 #[derive(Debug, Clone)]
 struct PriceLevel {
@@ -52,17 +55,19 @@ fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 pub struct OrderBook {
     bids: Vec<PriceLevel>,
     asks: Vec<PriceLevel>,
+    last_price: String,
+    volume: String,
 }
 
-impl OrderBook {
-    /// Orders should be sorted by prices ascending.
-    pub fn from_orders(
-        bids: impl IntoIterator<Item = Order>,
-        asks: impl IntoIterator<Item = Order>,
-    ) -> Self {
+impl From<&BookData> for OrderBook {
+    fn from(book: &BookData) -> Self {
+        let last_price = format!("{:.2}", book.last_price.unwrap_or(0) as f32 / 100.0);
+        let volume = format!("{}", book.volume);
         Self {
-            bids: do_side(bids),
-            asks: do_side(asks),
+            bids: do_side(book.inner.bids()),
+            asks: do_side(book.inner.asks()),
+            last_price,
+            volume,
         }
     }
 }

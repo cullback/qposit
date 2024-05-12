@@ -1,4 +1,3 @@
-use super::orderbook::book_snapshot;
 use super::templates::market_page::MarketPage;
 use crate::app_state::AppState;
 use crate::models::market::Market;
@@ -24,12 +23,6 @@ pub async fn get(
     let books = Book::get_all_for_market(&state.db, market.id)
         .await
         .unwrap();
-
-    let mut orderbooks = Vec::new();
-    for book in &books {
-        let orderbook = book_snapshot(&state.db, book.id).await;
-        orderbooks.push(orderbook);
-    }
 
     match user {
         Some(user) => MarketPage::new(user.username, market, books).into_response(),

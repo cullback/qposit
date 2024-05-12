@@ -8,7 +8,6 @@ use axum::{
 use exchange::{Action, BookEvent, BookId, RejectReason};
 use orderbook::{OrderId, Price, Quantity};
 use serde::Deserialize;
-use tracing::info;
 
 use crate::{
     actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor,
