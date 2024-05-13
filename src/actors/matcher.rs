@@ -20,7 +20,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     }
 
     for book in Book::get_active(db).await.unwrap() {
-        engine.add_book(book.id, 100);
+        engine.add_book(book.id);
     }
 
     for position in Position::get_non_zero(db).await.unwrap() {
@@ -84,7 +84,7 @@ pub async fn run_matcher(
                 response.send(res).expect("Receiver dropped");
             }
             MatcherRequest::AddBook { book_id } => {
-                exchange.add_book(book_id, 100);
+                exchange.add_book(book_id);
             }
         }
     }

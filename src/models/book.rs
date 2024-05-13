@@ -23,7 +23,7 @@ impl Book {
                     SELECT trade.price
                     FROM trade
                     WHERE trade.book_id = book.id
-                    ORDER BY trade.tick DESC
+                    ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
                 ) as last_trade_price
             FROM book
@@ -63,7 +63,7 @@ impl Book {
                     SELECT trade.price
                     FROM trade
                     WHERE trade.book_id = book.id
-                    ORDER BY trade.tick DESC
+                    ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
                 ) AS last_trade_price
             FROM book
@@ -87,7 +87,7 @@ impl Book {
                     SELECT trade.price
                     FROM trade
                     WHERE trade.book_id = book.id
-                    ORDER BY trade.tick DESC
+                    ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
                 ) as last_trade_price
             FROM book
