@@ -11,6 +11,30 @@ pub struct Book {
 }
 
 impl Book {
+    pub async fn get(db: &SqlitePool, id: BookId) -> Result<Self, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            "
+            SELECT
+                book.id,
+                book.market_id,
+                book.title,
+                book.value,
+                (
+                    SELECT trade.price
+                    FROM trade
+                    WHERE trade.book_id = book.id
+                    ORDER BY trade.tick DESC
+                    LIMIT 1
+                ) as last_trade_price
+            FROM book
+            WHERE book.id = ?;
+            ",
+        )
+        .bind(id)
+        .fetch_one(db)
+        .await
+    }
+
     pub async fn insert(&self, db: &SqlitePool) -> Result<i64, sqlx::Error> {
         sqlx::query!(
             "INSERT INTO book (market_id, title, value)

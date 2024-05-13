@@ -20,6 +20,8 @@ use crate::models;
 use crate::pages::OrderBook;
 
 pub struct BookData {
+    pub book_id: BookId,
+    pub title: String,
     pub inner: orderbook::DefaultBook,
     pub last_price: Option<Price>,
     pub volume: u64,
@@ -36,19 +38,15 @@ impl BookData {
         u64::try_from(volume).unwrap()
     }
 
-    /// Gets the last trade price for a book. Returns `None` if no trades have ocurred.`
-    async fn last_price(db: &SqlitePool, book_id: BookId) -> Option<Price> {
-        let price = sqlx::query_as::<_, (Price,)>("SELECT price FROM trade WHERE book_id = ?")
-            .bind(book_id)
-            .fetch_optional(db)
+    pub async fn new(
+        db: &SqlitePool,
+        book_id: BookId,
+        title: String,
+        last_trade_price: Option<Price>,
+    ) -> Self {
+        let orders = models::order::Order::get_open_for_book(db, book_id)
             .await
             .unwrap();
-
-        price.map(|(price,)| price)
-    }
-
-    pub async fn new(db: &SqlitePool, book_id: BookId) -> Self {
-        let orders = models::order::Order::get_open_orders(db).await.unwrap();
         let mut book = DefaultBook::default();
         for order in orders {
             assert!(book
@@ -57,11 +55,12 @@ impl BookData {
         }
 
         let volume = Self::get_volume_for_book(db, book_id).await;
-        let last_price = Self::last_price(db, book_id).await;
 
         BookData {
+            book_id,
+            title,
             inner: book,
-            last_price,
+            last_price: last_trade_price,
             volume: volume as u64,
         }
     }
@@ -95,7 +94,7 @@ impl BookService {
     pub async fn new(db: &SqlitePool) -> Self {
         let mut books = HashMap::new();
         for book in models::book::Book::get_active(db).await.unwrap() {
-            let book_data = BookData::new(db, book.id).await;
+            let book_data = BookData::new(db, book.id, book.title, book.last_trade_price).await;
             books.insert(book.id, book_data);
         }
 

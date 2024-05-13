@@ -36,12 +36,19 @@ async fn get_htmx() -> impl IntoResponse {
         include_str!("../../static/htmx.min.js"),
     )
 }
+async fn get_htmx_sse() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        include_str!("../../static/sse.js"),
+    )
+}
 
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/pico.min.css", get(get_pico_css))
         .route("/pico.colors.min.css", get(get_pico_colors))
         .route("/htmx.min.js", get(get_htmx))
+        .route("/sse.js", get(get_htmx_sse))
         .route("/", get(home::get))
         .route("/about", get(about::get))
         .route("/profile", get(profile::get))

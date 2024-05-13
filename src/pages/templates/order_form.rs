@@ -1,7 +1,7 @@
 use askama::Template;
 use exchange::BookId;
 
-#[derive(Template)]
+#[derive(Template, Debug, Clone)]
 #[template(path = "order_form.html")]
 pub struct OrderForm {
     book_id: BookId,

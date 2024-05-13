@@ -1,8 +1,11 @@
 use askama::Template;
+use exchange::BookId;
 use orderbook::Book;
 use orderbook::{Order, Price, Quantity};
 
 use crate::actors::book_service::BookData;
+
+use super::order_form::OrderForm;
 
 #[derive(Debug, Clone)]
 struct PriceLevel {
@@ -53,21 +56,27 @@ fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 #[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]
 pub struct OrderBook {
-    bids: Vec<PriceLevel>,
-    asks: Vec<PriceLevel>,
+    pub book_id: BookId,
+    title: String,
     last_price: String,
     volume: String,
+    bids: Vec<PriceLevel>,
+    asks: Vec<PriceLevel>,
+    order_form: OrderForm,
 }
 
 impl From<&BookData> for OrderBook {
     fn from(book: &BookData) -> Self {
         let last_price = format!("{:.2}", book.last_price.unwrap_or(0) as f32 / 100.0);
-        let volume = format!("{}", book.volume);
+        let volume = format!("{:.2}", book.volume as f32 / 100.0);
         Self {
-            bids: do_side(book.inner.bids()),
-            asks: do_side(book.inner.asks()),
+            book_id: book.book_id,
+            title: book.title.clone(),
             last_price,
             volume,
+            bids: do_side(book.inner.bids()),
+            asks: do_side(book.inner.asks()),
+            order_form: OrderForm::new(book.book_id),
         }
     }
 }

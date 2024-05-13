@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 
 use crate::actors::book_service::BookData;
 use crate::app_state::AppState;
+use crate::models;
 
 use super::templates::orderbook::OrderBook;
 
@@ -25,9 +26,19 @@ pub async fn sse_handler(
     Query(params): Query<BookParams>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let receiver_stream = BroadcastStream::new(state.book_receive)
+        .filter(move |x| match x {
+            Ok(x) => x.book_id == params.book,
+            Err(_) => true,
+        })
         .map(|msg| Ok(Event::default().data(msg.unwrap().render().unwrap())));
 
-    let book = OrderBook::from(&BookData::new(&state.db, params.book).await);
+    let book = models::book::Book::get(&state.db, params.book)
+        .await
+        .unwrap();
+
+    let book = OrderBook::from(
+        &BookData::new(&state.db, params.book, book.title, book.last_trade_price).await,
+    );
     let stream = tokio_stream::once(Ok(Event::default().data(book.render().unwrap())))
         .chain(receiver_stream);
 

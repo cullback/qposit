@@ -12,23 +12,8 @@
 {% for (book, order_form) in orderbooks %}
 
 <article>
-    <details>
-        <summary>
-            <div class="grid">
-                <h3>{{book.title}}</h3>
-                <div style="display: flex; align-self: start; justify-content: flex-end">
-                    {% match book.last_trade_price %}
-                    {% when Some with (val) %}
-                    <kbd>{{val / 100}}.{{"{:0>2}"|format(val % 100)}}¢</kbd>&nbsp;
-                    {% when None %}
-                    <kbd>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</kbd>
-                    {% endmatch %}
-                </div>
-            </div>
-            <small>$7,669,592 Bet</small>
-        </summary>
-        <div hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message"></div>
-        {{order_form|safe}}
+    <details hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message">
+
     </details>
 </article>
 

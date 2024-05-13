@@ -1,4 +1,13 @@
-<p>Order book</p>
+<summary>
+    <div class="grid">
+        <h3>{{title}}</h3>
+        <div style="display: flex; align-self: start; justify-content: flex-end">
+            <kbd>{{last_price}}¢</kbd>
+        </div>
+    </div>
+    <small>${{volume}} Bet</small>
+</summary>
+
 <table>
     <thead>
         <tr>
@@ -24,3 +33,7 @@
         {% endfor %}
     </tbody>
 </table>
+
+<div hx-preserve id="thingy-{{book_id}}">
+    {{order_form|safe}}
+</div>
