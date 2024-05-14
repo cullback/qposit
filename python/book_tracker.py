@@ -9,8 +9,9 @@ class Order:
     timestamp: int
     user_id: int
     order_id: int
-    size: int
+    quantity: int
     price: int
+    is_buy: bool
 
 
 class Book:
@@ -18,24 +19,25 @@ class Book:
         self.user_id = user_id
         self.book_id = book_id
         # the next sequence number we expect to see
-        self.next_seq: int = 0
+        self.next_tick: int = 0
+        # ordered from best price to worst price
         self.bids: list[Order] = []
         self.asks: list[Order] = []
 
     def update(self, event: dict[str, Any]) -> None:
-        assert event["market"] == self.book_id
-        assert event["sequence"] == self.next_seq
-        self.next_seq += 1
+        assert event["book"] == self.book_id
+        assert event["tick"] == self.next_tick
+        self.next_tick += 1
 
         if event["type"] == "add":
             order = Order(
                 event["timestamp"],
                 event["user_id"],
                 event["id"],
-                event["size"],
+                event["quantity"],
                 event["price"],
             )
-            if event["side"] == "buy":
+            if event["is_buy"]:
                 self._add_bid(order)
             else:
                 self._add_ask(order)
@@ -65,25 +67,26 @@ class Book:
     def _add_bid(self, order: Order) -> None:
         self.bids.append(order)
         # stable sort should preserve FIFO ordering
+        # price descending
         self.bids.sort(key=attrgetter("price"), reverse=True)
         self._match()
 
     def _add_ask(self, order: Order) -> None:
         self.asks.append(order)
         # stable sort should preserve FIFO ordering
+        # price ascending
         self.asks.sort(key=attrgetter("price"))
         self._match()
 
     def _match(self) -> None:
         while self.bids and self.asks and self.bids[0].price >= self.asks[0].price:
-            print("match")
             bid, ask = self.bids[0], self.asks[0]
-            match_size = min(bid.size, ask.size)
-            bid.size -= match_size
-            ask.size -= match_size
-            if bid.size == 0:
+            match_size = min(bid.quantity, ask.quantity)
+            bid.quantity -= match_size
+            ask.quantity -= match_size
+            if bid.quantity == 0:
                 self.bids.pop(0)
-            if ask.size == 0:
+            if ask.quantity == 0:
                 self.asks.pop(0)
 
     def __str__(self) -> str:
@@ -91,9 +94,9 @@ class Book:
 
         levels = [0] * 100
         for bid in self.bids:
-            levels[bid.price] += bid.size
+            levels[bid.price] += bid.quantity
         for ask in self.asks:
-            levels[ask.price] += ask.size
+            levels[ask.price] += ask.quantity
 
         n_levels = 5
 
@@ -132,7 +135,7 @@ def test():
             "oid": 1,
             "size": 5,
             "price": 10,
-            "side": "buy",
+            "is_buy": True,
         }
     )
 
@@ -146,7 +149,7 @@ def test():
             "oid": 1,
             "size": 7,
             "price": 15,
-            "side": "sell",
+            "is_buy": False,
         }
     )
     print(book)

@@ -15,51 +15,37 @@ VALUES (
     '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', -- password123
     1710007894419934,
     10000 * 100
+),
+(
+    3,
+    'strategy2',
+    '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw', -- password123
+    1710007894419934,
+    10000 * 100
 )
 ;
-
 
 INSERT INTO
     market(id, slug, title, description, status, created_at, expires_at)
 VALUES (
     1,
-    '2024-us-presidential-election',
-    'US Presidential Election',
+    'demo-market',
+    'Demo Market',
     '
 ## Resolution criteria
 
-This question will resolve as Yes for the person who wins the 2024 US presidential election,
-and No for all other options. This will be the person who wins the majority of votes
-in the Electoral College, or selected by Congress following the contingency procedure in the Twelfth
-Amendment. This question is not limited to the individuals currently listed below; the question may
-resolve as No for all listed options, and options may be added later.',
-    'active',
-    1710007894419934,
-    1710008894419934
-),
-(
-    2,
-    '2024-us-republican-nominee',
-    'US Republican VP Nominee',
-    '
-## Resolution criteria
-
-This question will resolve as Yes for the person who is selected as the Republican nominee for Vice President.
-',
+This market will be resolved however I please.',
     'active',
     1710007894419934,
     1710008894419934
 );
 
+
 INSERT INTO
     book(id, market_id, title)
 VALUES
-    (1, 1, 'Donald Trump'),
-    (2, 1, 'Joe Biden'),
-    (3, 2, 'Tim Scott'),
-    (4, 2, 'Other man'),
-    (5, 2, 'Other Woman'),
-    (6, 2, 'Kristi Noem');
+    (1, 1, 'Option A'),
+    (2, 1, 'Option B');
 
 INSERT INTO
     'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)

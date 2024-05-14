@@ -8,6 +8,7 @@ use axum::{
 use exchange::{Action, BookEvent, BookId, RejectReason};
 use orderbook::{OrderId, Price, Quantity};
 use serde::Deserialize;
+use tracing::warn;
 
 use crate::{
     actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor,
@@ -27,6 +28,8 @@ pub enum OrderType {
 pub struct PostOrder {
     book: BookId,
     quantity: String,
+    // may be empty on market orders
+    #[serde(default)]
     price: String,
     is_buy: bool,
     order_type: OrderType,
@@ -54,13 +57,17 @@ pub async fn post(
         .quantity
         .parse::<Quantity>()
         .map_err(|_| "Invalid quantity");
-    let price = form
-        .price
-        .parse::<f32>()
-        .ok()
-        .filter(|&p| p > 0.0 || p < 100.0)
-        .map(|p| (p * 100.0).round() as Price)
-        .ok_or("Invalid price");
+
+    let price = match form.order_type {
+        OrderType::Market => Ok(if form.is_buy { 9999 } else { 1 }),
+        _ => form
+            .price
+            .parse::<f32>()
+            .ok()
+            .filter(|&p| p > 0.0 || p < 100.0)
+            .map(|p| (p * 100.0).round() as Price)
+            .ok_or("Invalid price"),
+    };
 
     let (Ok(quantity), Ok(price)) = (quantity, price) else {
         return OrderForm::with_messages(
@@ -80,8 +87,8 @@ pub async fn post(
         price,
         is_buy: form.is_buy,
         tif: match form.order_type {
-            OrderType::Market | OrderType::GTC => exchange::TimeInForce::GTC,
-            OrderType::IOC => exchange::TimeInForce::IOC,
+            OrderType::Market | OrderType::IOC => exchange::TimeInForce::IOC,
+            OrderType::GTC => exchange::TimeInForce::GTC,
             OrderType::POST => exchange::TimeInForce::POST,
         },
     };

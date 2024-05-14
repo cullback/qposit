@@ -54,7 +54,7 @@ pub struct TradeParams {
     )
 )]
 pub async fn get(State(state): State<AppState>, params: Query<TradeParams>) -> Response {
-    let mut query = QueryBuilder::new("SELECT * from trade WHERE 1 = 1");
+    let mut query = QueryBuilder::new("SELECT * from trade WHERE 1=1");
 
     if let Some(book_id) = params.book_id {
         query.push(" AND book_id = ");

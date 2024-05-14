@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
@@ -8,13 +8,110 @@ use exchange::Action;
 use orderbook::OrderId;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::QueryBuilder;
 use utoipa::ToSchema;
+use tracing::error;
 
 use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor, models,
+    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor, models::{self, order::Order},
 };
 
 use super::feed::BookEvent;
+
+
+
+
+
+const fn default_limit() -> u32 {
+    100
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct GetOrderParams {
+    pub book_id: Option<u32>,
+    pub user_id: Option<u32>,
+    pub before: Option<i64>,
+    #[serde(default = "default_limit")]
+    pub limit: u32,
+}
+
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct OrderResponse {
+    id: i64,
+    created_at: i64,
+    book: u32,
+    user: u32,
+    quantity: u32,
+    remaining: u32,
+    price: u16,
+    is_buy: bool,
+}
+
+impl From<models::order::Order> for OrderResponse {
+    fn from(value: models::order::Order) -> Self {
+        Self {
+            id: value.id,
+            created_at: value.created_at,
+            book: value.book_id,
+            user: value.user_id,
+            quantity: value.quantity,
+            remaining: value.remaining,
+            price: value.price,
+            is_buy: value.is_buy,
+        }
+    }
+}
+
+/// Gets the open orders.
+#[utoipa::path(
+    get,
+    path = "/orders",
+    responses(
+        (status = 200, description = "Get an active order")
+    )
+)]
+pub async fn get(
+    BasicAuthExtractor(user): BasicAuthExtractor,
+    State(state): State<AppState>,
+    Query(params): Query<GetOrderParams>,
+) -> Response {
+
+
+    let mut query = QueryBuilder::new("SELECT * from 'order' WHERE status = 'open'");
+
+    if let Some(book_id) = params.book_id {
+        query.push(" AND book_id = ");
+        query.push_bind(book_id);
+    }
+    if let Some(user_id) = params.user_id {
+        query.push(" AND user_id = ");
+        query.push_bind(user_id);
+    }
+    if let Some(after) = params.before {
+        query.push(" AND created_at < ");
+        query.push_bind(after);
+    }
+    query.push(" ORDER BY created_at DESC LIMIT ");
+    query.push_bind(params.limit);
+
+    let orders = match query.build_query_as::<Order>().fetch_all(&state.db).await {
+        Ok(orders) => orders,
+        Err(err) => {
+            error!(?err);
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+
+    let resp = orders
+        .into_iter()
+        .map(OrderResponse::from)
+        .collect::<Vec<_>>();
+    Json(resp).into_response()
+}
+
+
+
 
 /// The time in force of an order.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
@@ -93,56 +190,6 @@ pub async fn post(
         Ok(event) => Json(BookEvent::from(event)).into_response(),
         Err(err) => Json(json!({"error": format!("{err:?}")})).into_response(),
     }
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct OrderResponse {
-    id: i64,
-    created_at: i64,
-    book: u32,
-    user: u32,
-    quantity: u32,
-    remaining: u32,
-    price: u16,
-    is_buy: bool,
-}
-
-impl From<models::order::Order> for OrderResponse {
-    fn from(value: models::order::Order) -> Self {
-        Self {
-            id: value.id,
-            created_at: value.created_at,
-            book: value.book_id,
-            user: value.user_id,
-            quantity: value.quantity,
-            remaining: value.remaining,
-            price: value.price,
-            is_buy: value.is_buy,
-        }
-    }
-}
-
-/// Gets the open orders.
-#[utoipa::path(
-    get,
-    path = "/orders",
-    responses(
-        (status = 200, description = "Get an active order")
-    )
-)]
-pub async fn get(
-    BasicAuthExtractor(user): BasicAuthExtractor,
-    State(state): State<AppState>,
-) -> Response {
-    let Ok(orders) = models::order::Order::get_for_user(&state.db, user.id).await else {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    };
-
-    let resp = orders
-        .into_iter()
-        .map(OrderResponse::from)
-        .collect::<Vec<_>>();
-    Json(resp).into_response()
 }
 
 /// Delete all open orders.

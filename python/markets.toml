@@ -4,8 +4,9 @@ slug = "2024-us-presidential-election"
 title = "US Presidential Election"
 created_at = 1697838953000000
 expires_at = 1730764800000000
+tags = ["politics", "election"]
 description = """
-# Resolution criteria
+## Resolution criteria
 
 This question will resolve as Yes for the person who wins the 2024 US presidential election,
 and No for all other options. This will be the person who wins the majority of votes in the
@@ -19,7 +20,6 @@ books = [
     "Robert F. Kennedy Jr.",
     "Kamala Harris",
 ]
-tags = ["politics", "election"]
 
 
 [[markets]]
@@ -27,8 +27,9 @@ slug = "2024-us-republican-nominee"
 title = "US Republican Nominee"
 created_at = 1697838953000000
 expires_at = 1730764800000000
+tags = ["politics"]
 description = """
-# Resolution criteria
+## Resolution criteria
 
 Resolve to the person who is nominated by the Republican Party to run for US
 President in the 2024 election.
@@ -41,8 +42,9 @@ slug = "2024-stanley-cup-playoffs"
 title = "Stanley Cup Playoffs"
 created_at = 1697838953000000
 expires_at = 1730764800000000
+tags = ["sports", "hockey"]
 description = """
-# Resolution criteria
+## Resolution criteria
 
 This market will resolve to Yes for the team that wins the 2024 Stanley Cup Champion
 and No for all other options.
@@ -55,22 +57,20 @@ books = [
     "Colorado Avalanche",
     "Boston Bruins",
 ]
-tags = ["sports", "hockey"]
 
 [[markets]]
 slug = "2024-06-fed-interest-rate"
 title = "Fed interest rate"
+created_at = 1697838953000000
+expires_at = 1730764800000000
+tags = ["economics"]
 description = """
-# Resolution criteria
+## Resolution criteria
 
-This market will resolve to Yes for the team that wins the 2024 Stanley Cup Champion
-and No for all other options.
+The fed is meeting June 11.
 """
 books = [
-    "Florida Panthers",
-    "Dallas Stars",
-    "New York Rangers",
-    "Edmonton Oilers",
-    "Colorado Avalanche",
-    "Boston Bruins",
+    "No increase",
+    "Between 4.75% and 4.99%",
+    "Between 5.00% and 5.24%",
 ]

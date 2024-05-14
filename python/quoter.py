@@ -1,25 +1,50 @@
-'''
-The AMM strategy seeks to emulate the liquidity available in a concentrated liquidity AMM.
-Note that max_collateral only bounds the amount of capital used as liquidity at any given
-time. The only way to bound your total losses is to limit the amount of collateral in
-your account.
-'''
+import json
 import requests
+from typing import Iterator
 import time
-import random
 
-AUTH = ("testaccount", "password123")
 
-p_min = 0
-p_max = 0
-spread = 0
-delta = 0
-depth = 0
-max_collateral = 0
+USER_ID = 3
+USERNAME = "strategy2"
+PASSWORD = "password123"
+AUTH = (USERNAME, PASSWORD)
+BOOK = 2
+URL = "http://localhost:3000/api/v1"
+SPREAD = 250
 
-while True:
-    is_buy = random.random() < 0.5
-    data = {"book": 123, "quantity": 100, "is_buy": is_buy}
-    resp = requests.post("http://localhost:3000/api/orders", json=data, auth=AUTH)
+def step():
+    
+    # cancel open orders
+    params = {"user_id": USER_ID}
+    resp = requests.get(f"{URL}/orders", params=params, auth=AUTH)
+    print("open orders", resp.status_code, resp.text)
+
+    for order in resp.json():
+        params = {"id": order["id"]}
+        resp = requests.delete(f"{URL}/orders", params=params, auth=AUTH)
+        print("deleted order:", order, resp.status_code, resp.json())
+
+    time.sleep(1.5)
+
+    valuation = 5000
+
+    # submit two-sided quote
+    bid_price = valuation - SPREAD
+    bid = {"book": BOOK, "quantity": 100, "price": bid_price, "is_buy": True}
+    resp = requests.post(f"{URL}/orders", json=bid, auth=AUTH)
     print(resp.status_code, resp.text)
-    time.sleep(2)
+
+    ask_price = valuation + SPREAD
+    ask = {"book": BOOK, "quantity": 100, "price": ask_price, "is_buy": False}
+    resp = requests.post(f"{URL}/orders", json=ask, auth=AUTH)
+    print(resp.status_code, resp.text)
+
+def main():
+
+    while True:
+        print("stepping...")
+        step()
+        time.sleep(8)
+
+if __name__ == "__main__":
+    main()
