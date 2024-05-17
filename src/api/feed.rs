@@ -50,16 +50,11 @@ impl From<exchange::BookEvent> for BookEvent {
             book: event.book,
             user: event.user,
             action: match event.action {
-                exchange::Action::Add {
-                    id,
-                    quantity,
-                    price,
-                    is_buy,
-                } => Action::Add {
-                    id,
-                    quantity,
-                    price,
-                    is_buy,
+                exchange::Action::Add(order) => Action::Add {
+                    id: order.id,
+                    quantity: order.quantity,
+                    price: order.price,
+                    is_buy: order.side.is_buy(),
                 },
                 exchange::Action::Remove { id } => Action::Remove { id },
             },

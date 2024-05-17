@@ -6,7 +6,7 @@ use axum::{
     Form,
 };
 use exchange::{Action, BookEvent, BookId, RejectReason};
-use orderbook::{OrderId, Price, Quantity};
+use orderbook::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 use tracing::warn;
 
@@ -85,7 +85,7 @@ pub async fn post(
         book: form.book,
         quantity,
         price,
-        is_buy: form.is_buy,
+        side: Side::new(form.is_buy),
         tif: match form.order_type {
             OrderType::Market | OrderType::IOC => exchange::TimeInForce::IOC,
             OrderType::GTC => exchange::TimeInForce::GTC,
@@ -99,7 +99,7 @@ pub async fn post(
 
     match response {
         Ok(BookEvent {
-            action: Action::Add { id, .. },
+            action: Action::Add(order),
             ..
         }) => OrderForm::with_messages(
             book,
@@ -107,7 +107,7 @@ pub async fn post(
             form.price,
             String::new(),
             String::new(),
-            format!("Order accepted! id: {id}"),
+            format!("Order accepted! id: {}", order.id),
         )
         .into_response(),
         Err(err) => {

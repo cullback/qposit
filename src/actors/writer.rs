@@ -156,33 +156,24 @@ impl State {
 
         let mut transaction = self.db.begin().await.unwrap();
         match event.action {
-            Action::Add {
-                id,
-                quantity,
-                price,
-                is_buy,
-            } => {
+            Action::Add(order) => {
                 models::order::Order {
-                    id,
+                    id: order.id,
                     created_at: event.time,
                     book_id: event.book,
                     user_id: event.user,
-                    quantity,
-                    remaining: quantity,
-                    price,
-                    is_buy,
+                    quantity: order.quantity,
+                    remaining: order.quantity,
+                    price: order.price,
+                    is_buy: order.side.is_buy(),
                     status: "open".to_string(),
                 }
                 .insert(&mut *transaction)
                 .await
                 .unwrap();
 
-                self.order_owner.insert(id, event.user);
-                let fills = if is_buy {
-                    book.buy(id, quantity, price)
-                } else {
-                    book.sell(id, quantity, price)
-                };
+                self.order_owner.insert(order.id, event.user);
+                let fills = book.add(order);
 
                 for fill in fills {
                     let trade = Trade {
@@ -191,11 +182,11 @@ impl State {
                         book_id: event.book,
                         taker_id: event.user,
                         maker_id: self.order_owner[&fill.id],
-                        taker_oid: id,
+                        taker_oid: order.id,
                         maker_oid: fill.id,
                         quantity: fill.quantity,
                         price: fill.price,
-                        is_buy,
+                        is_buy: order.side.is_buy(),
                     };
                     self.on_trade(&mut *transaction, trade).await;
                 }

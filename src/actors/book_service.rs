@@ -10,7 +10,7 @@
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every event.
 use exchange::{Action, BookEvent, BookId};
-use orderbook::{Book, DefaultBook, Price};
+use orderbook::{Book, DefaultBook, Price, Side};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -49,9 +49,13 @@ impl BookData {
             .unwrap();
         let mut book = DefaultBook::default();
         for order in orders {
-            assert!(book
-                .add(order.id, order.remaining, order.price, order.is_buy)
-                .is_empty());
+            let order2 = orderbook::Order::new(
+                order.id,
+                order.quantity,
+                order.price,
+                Side::new(order.is_buy),
+            );
+            assert!(book.add(order2).is_empty());
         }
 
         let volume = Self::get_volume_for_book(db, book_id).await;
@@ -67,13 +71,8 @@ impl BookData {
 
     pub fn on_event(&mut self, event: BookEvent) {
         match event.action {
-            Action::Add {
-                id,
-                quantity,
-                price,
-                is_buy,
-            } => {
-                let fills = self.inner.add(id, quantity, price, is_buy);
+            Action::Add(order) => {
+                let fills = self.inner.add(order);
                 for fill in fills {
                     self.volume += u64::from(fill.quantity);
                     self.last_price = Some(fill.price);

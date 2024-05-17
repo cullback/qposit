@@ -1,3 +1,4 @@
+use orderbook::Side;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -24,7 +25,7 @@ impl From<OrderRequest> for exchange::OrderRequest {
             book: req.book,
             quantity: req.size,
             price: req.price,
-            is_buy: req.is_buy,
+            side: Side::new(req.is_buy),
             tif: match req.tif {
                 TimeInForce::GTC => exchange::TimeInForce::GTC,
                 TimeInForce::IOC => exchange::TimeInForce::IOC,

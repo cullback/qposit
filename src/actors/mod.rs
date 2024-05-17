@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use exchange::BookId;
 use orderbook::Book;
 use orderbook::DefaultBook;
+use orderbook::Side;
 use sqlx::SqlitePool;
 
 use crate::models;
@@ -25,9 +26,13 @@ pub async fn bootstrap_books(
 
     for order in orders {
         let book = books.get_mut(&order.book_id).unwrap();
-        assert!(book
-            .add(order.id, order.remaining, order.price, order.is_buy)
-            .is_empty());
+        let order2 = orderbook::Order::new(
+            order.id,
+            order.remaining,
+            order.price,
+            Side::new(order.is_buy),
+        );
+        assert!(book.add(order2).is_empty());
     }
     books
 }

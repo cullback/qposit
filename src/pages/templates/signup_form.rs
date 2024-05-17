@@ -10,7 +10,12 @@ pub struct SignupForm {
 }
 
 impl SignupForm {
-    pub const fn new(username: String, username_message: String, password_message: String, invite_message: String) -> Self {
+    pub const fn new(
+        username: String,
+        username_message: String,
+        password_message: String,
+        invite_message: String,
+    ) -> Self {
         Self {
             username,
             username_message,

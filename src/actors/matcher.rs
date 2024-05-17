@@ -1,4 +1,5 @@
 use exchange::{BookEvent, Exchange, OrderRequest, TimeInForce};
+use orderbook::Side;
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -32,7 +33,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
             order.book_id,
             order.quantity,
             order.price,
-            order.is_buy,
+            Side::new(order.is_buy),
             TimeInForce::GTC,
         );
         engine.init_order(order.id, order.user_id, req);

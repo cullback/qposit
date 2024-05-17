@@ -9,18 +9,18 @@ use orderbook::OrderId;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::QueryBuilder;
-use utoipa::ToSchema;
 use tracing::error;
+use utoipa::ToSchema;
 
+use crate::api::order_request::OrderRequest;
 use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor, models::{self, order::Order},
+    actors::matcher_request::MatcherRequest,
+    app_state::AppState,
+    auth::BasicAuthExtractor,
+    models::{self, order::Order},
 };
 
 use super::feed::BookEvent;
-
-
-
-
 
 const fn default_limit() -> u32 {
     100
@@ -34,7 +34,6 @@ pub struct GetOrderParams {
     #[serde(default = "default_limit")]
     pub limit: u32,
 }
-
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct OrderResponse {
@@ -76,8 +75,6 @@ pub async fn get(
     State(state): State<AppState>,
     Query(params): Query<GetOrderParams>,
 ) -> Response {
-
-
     let mut query = QueryBuilder::new("SELECT * from 'order' WHERE status = 'open'");
 
     if let Some(book_id) = params.book_id {
@@ -110,9 +107,6 @@ pub async fn get(
     Json(resp).into_response()
 }
 
-
-
-
 /// The time in force of an order.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
 #[allow(clippy::upper_case_acronyms)]
@@ -133,39 +127,6 @@ impl TimeInForce {
 
     pub const fn gtc() -> Self {
         Self::GTC
-    }
-}
-
-/// Request for a new order.
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct OrderRequest {
-    /// The id of the book to submit the order to.
-    pub book: u32,
-    /// The number of contracts to buy or sell.
-    #[schema(minimum = 1)]
-    pub quantity: u32,
-    /// The price to buy or sell at. If not present, order will be a market order.
-    #[schema(minimum = 1, maximum = 99)]
-    pub price: u16,
-    /// Whether to buy or sell.
-    pub is_buy: bool,
-    #[serde(default = "TimeInForce::gtc")]
-    pub tif: TimeInForce,
-}
-
-impl From<OrderRequest> for exchange::OrderRequest {
-    fn from(req: OrderRequest) -> Self {
-        Self {
-            book: req.book,
-            quantity: req.quantity,
-            price: req.price,
-            is_buy: req.is_buy,
-            tif: match req.tif {
-                TimeInForce::GTC => exchange::TimeInForce::GTC,
-                TimeInForce::IOC => exchange::TimeInForce::IOC,
-                TimeInForce::POST => exchange::TimeInForce::POST,
-            },
-        }
     }
 }
 

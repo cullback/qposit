@@ -1,5 +1,5 @@
 use exchange::{BookId, Timestamp, UserId};
-use orderbook::{OrderId, Price, Quantity};
+use orderbook::{OrderId, Price, Quantity, Side};
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
 
 #[derive(Debug, FromRow)]
@@ -17,12 +17,12 @@ pub struct Order {
 
 impl From<&Order> for orderbook::Order {
     fn from(order: &Order) -> Self {
-        orderbook::Order {
-            id: order.id,
-            quantity: order.remaining,
-            price: order.price,
-            is_buy: order.is_buy,
-        }
+        orderbook::Order::new(
+            order.id,
+            order.remaining,
+            order.price,
+            Side::new(order.is_buy),
+        )
     }
 }
 
