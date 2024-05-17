@@ -80,7 +80,7 @@ impl BookData {
                 }
             }
             Action::Remove { id } => {
-                assert!(self.inner.remove(id));
+                assert!(self.inner.remove(id).is_some());
             }
         }
     }

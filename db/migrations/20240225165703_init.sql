@@ -1,9 +1,19 @@
 CREATE TABLE IF NOT EXISTS user(
     id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    username        TEXT NOT NULL UNIQUE CHECK (length(username) >= 5 AND length(username) <= 20),
+    username        TEXT NOT NULL UNIQUE,
     password_hash   TEXT NOT NULL,
     created_at      INTEGER NOT NULL,
     balance         INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS invite_code(
+    id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    code            TEXT NOT NULL UNIQUE,
+    user_id         INTEGER, -- null if not assigned
+    created_by      INTEGER NOT NULL,
+    created_at      INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES user(id) ON DELETE CASCADE
 );
 
 

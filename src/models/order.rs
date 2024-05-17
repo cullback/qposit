@@ -21,6 +21,7 @@ impl From<&Order> for orderbook::Order {
             id: order.id,
             quantity: order.remaining,
             price: order.price,
+            is_buy: order.is_buy,
         }
     }
 }

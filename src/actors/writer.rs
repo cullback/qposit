@@ -201,7 +201,7 @@ impl State {
                 }
             }
             Action::Remove { id } => {
-                assert!(book.remove(id));
+                assert!(book.remove(id).is_some());
                 self.order_owner.remove(&id);
 
                 sqlx::query!("UPDATE 'order' SET status = 'cancelled' WHERE id = ?", id)

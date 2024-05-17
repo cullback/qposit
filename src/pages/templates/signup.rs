@@ -6,6 +6,7 @@ pub struct Component {
     username: String,
     username_message: String,
     password_message: String,
+    invite_message: String,
 }
 
 impl Component {
@@ -14,6 +15,7 @@ impl Component {
             username: String::new(),
             username_message: String::new(),
             password_message: String::new(),
+            invite_message: String::new(),
         }
     }
 }

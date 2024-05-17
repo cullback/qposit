@@ -19,6 +19,15 @@
             <small>{{password_message}}</small>
             {% endif %}
         </label>
+
+        <label>Invite code
+            {% if invite_message.len() == 0 %}
+            <input name="invite" type="text" placeholder="Invite code" />
+            {% else %}
+            <input name="invite" type="text" placeholder="Invite code" aria-invalid="true" />
+            <small>{{invite_message}}</small>
+            {% endif %}
+        </label>
     </fieldset>
     <button type="submit">Sign up</button>
 </form>
