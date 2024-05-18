@@ -6,13 +6,14 @@ CREATE TABLE IF NOT EXISTS user(
     balance         INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS invite_code(
-    id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    code            TEXT NOT NULL UNIQUE,
-    user_id         INTEGER, -- null if not assigned
-    created_by      INTEGER NOT NULL,
-    created_at      INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+
+CREATE TABLE IF NOT EXISTS invite(
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    code        TEXT NOT NULL UNIQUE,
+    used_by     INTEGER,
+    created_by  INTEGER NOT NULL,
+    created_at  INTEGER NOT NULL,
+    FOREIGN KEY (used_by) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES user(id) ON DELETE CASCADE
 );
 
@@ -40,7 +41,7 @@ CREATE TABLE IF NOT EXISTS market(
 
 
 CREATE TABLE IF NOT EXISTS book(
-    id          INTEGER NOT NULL PRIMARY KEY autoincrement,
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     market_id   INTEGER NOT NULL,
     title       TEXT NOT NULL,
     -- status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS "order"(
 
 
 CREATE TABLE IF NOT EXISTS trade(
-    id          INTEGER NOT NULL PRIMARY KEY autoincrement,
+    id          INTEGER NOT NULL PRIMARY KEY,
     created_at  INTEGER NOT NULL,
     tick        INTEGER NOT NULL,
     book_id     INTEGER NOT NULL,

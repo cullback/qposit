@@ -19,6 +19,7 @@ books = [
     "Michelle Obama",
     "Robert F. Kennedy Jr.",
     "Kamala Harris",
+    "Other candidate",
 ]
 
 
@@ -34,7 +35,7 @@ description = """
 Resolve to the person who is nominated by the Republican Party to run for US
 President in the 2024 election.
 """
-books = ["Donald Trump", "Nikki Haley", "Ron DeSantis"]
+books = ["Donald Trump", "Nikki Haley", "Ron DeSantis", "Other candidate"]
 
 
 [[markets]]
@@ -69,8 +70,4 @@ description = """
 
 The fed is meeting June 11.
 """
-books = [
-    "No increase",
-    "Between 4.75% and 4.99%",
-    "Between 5.00% and 5.24%",
-]
+books = ["No increase", "Between 4.75% and 4.99%", "Between 5.00% and 5.24%"]

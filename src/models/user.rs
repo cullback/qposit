@@ -1,5 +1,7 @@
 use exchange::Timestamp;
 use exchange::UserId;
+use sqlx::Executor;
+use sqlx::Sqlite;
 use sqlx::SqlitePool;
 
 #[derive(sqlx::FromRow, Debug)]
@@ -26,7 +28,10 @@ impl User {
             .await
     }
 
-    pub async fn insert(&self, db: &SqlitePool) -> Result<UserId, sqlx::Error> {
+    pub async fn insert<'c, E>(&self, db: E) -> Result<UserId, sqlx::Error>
+    where
+        E: Executor<'c, Database = Sqlite>,
+    {
         sqlx::query!(
             "INSERT INTO user (username, password_hash, created_at) VALUES (?, ?, ?)",
             self.username,

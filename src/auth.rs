@@ -10,7 +10,7 @@ use axum_extra::extract::{cookie::Cookie, cookie::SameSite, CookieJar};
 use axum_extra::headers::authorization::Basic;
 use axum_extra::headers::{Authorization, UserAgent};
 use axum_extra::TypedHeader;
-use sqlx::SqlitePool;
+use sqlx::{Executor, Sqlite, SqlitePool};
 use tracing::warn;
 
 use crate::app_state::AppState;
@@ -36,8 +36,8 @@ fn build_session_cookie(session_id: &str) -> Cookie<'static> {
 }
 
 /// Create a session for the user and return a cookie for it.
-pub async fn create_session(
-    db: &SqlitePool,
+pub async fn create_session<'c, E: Executor<'c, Database = Sqlite>>(
+    db: E,
     user_id: UserId,
     time: Timestamp,
     ip_address: String,

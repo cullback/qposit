@@ -1,4 +1,5 @@
 pub mod book;
+pub mod invite;
 pub mod market;
 pub mod order;
 pub mod position;

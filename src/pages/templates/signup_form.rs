@@ -1,6 +1,6 @@
 use askama::Template;
 
-#[derive(Template)]
+#[derive(Template, Default)]
 #[template(path = "signup_form.html")]
 pub struct SignupForm {
     username: String,

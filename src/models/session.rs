@@ -1,5 +1,7 @@
 use exchange::Timestamp;
 use exchange::UserId;
+use sqlx::Executor;
+use sqlx::Sqlite;
 use sqlx::SqlitePool;
 use tracing::info;
 
@@ -30,7 +32,10 @@ impl Session {
             .map(|row| row.rows_affected())
     }
 
-    pub async fn insert(&self, db: &SqlitePool) -> Result<i64, sqlx::Error> {
+    pub async fn insert<'c, E: Executor<'c, Database = Sqlite>>(
+        &self,
+        db: E,
+    ) -> Result<i64, sqlx::Error> {
         sqlx::query!(
             "INSERT INTO session (id, user_id, ip_address, user_agent, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
             self.id,

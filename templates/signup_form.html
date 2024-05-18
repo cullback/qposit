@@ -1,12 +1,16 @@
 <form hx-post="/signup" hx-swap="outerHTML" method="post">
     <h1>Sign up</h1>
+
+    <p>QPosit is currently invite-only. Request an invite in the <a href="https://discord.gg/W4VevFndHG">Discord</a>.
+    </p>
+
     <fieldset>
         <label>Username
             {% if username_message.len() == 0 %}
-            <input name="username" type="text" placeholder="Username" required />
+            <input name="username" type="text" placeholder="Username" value="{{username}}" required />
             {% else %}
-            <input name="username" type="text" placeholder="Username" value="{{username}}" aria-invalid="true"
-                required />
+            <input name="username" type="text" placeholder="Username" value="{{username}}" required
+                aria-invalid="true" />
             <small>{{username_message}}</small>
             {% endif %}
         </label>
@@ -15,16 +19,16 @@
             {% if password_message.len() == 0 %}
             <input name="password" type="password" placeholder="Password" required />
             {% else %}
-            <input name="password" type="password" placeholder="Password" aria-invalid="true" required />
+            <input name="password" type="password" placeholder="Password" required aria-invalid="true" />
             <small>{{password_message}}</small>
             {% endif %}
         </label>
 
         <label>Invite code
             {% if invite_message.len() == 0 %}
-            <input name="invite" type="text" placeholder="Invite code" />
+            <input name="invite_code" type="text" placeholder="Invite code" required />
             {% else %}
-            <input name="invite" type="text" placeholder="Invite code" aria-invalid="true" />
+            <input name="invite_code" type="text" placeholder="Invite code" required aria-invalid="true" />
             <small>{{invite_message}}</small>
             {% endif %}
         </label>

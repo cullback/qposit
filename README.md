@@ -1,6 +1,6 @@
 # QPosit
 
-A prediction market.
+A prediction market platform.
 
 - Rust
 - Axum for web server
@@ -9,7 +9,7 @@ A prediction market.
 - htmx for reactivity
 - picocss for styling
 - justfile for development recipes
-- todo: docker deployment
+- docker for deployment
 
 ## Features
 

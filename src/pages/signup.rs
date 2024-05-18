@@ -17,75 +17,106 @@ use super::templates::{signup, signup_form};
 use crate::app_state::{current_time_micros, AppState};
 use crate::auth::{self, SessionExtractor};
 use crate::models;
+use crate::models::invite::Invite;
 
+/// Get the signup page, or redirect to the home page if the user is already logged in.
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
         Some(_) => Redirect::to("/").into_response(),
-        None => signup::Component::new().into_response(),
+        None => signup::Component::default().into_response(),
     }
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Credentials {
+pub struct FormPayload {
     username: String,
     password: String,
+    invite_code: String,
 }
 
+/// Handle a signup request.
 pub async fn post(
     jar: CookieJar,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
-    Form(form): Form<Credentials>,
+    Form(form): Form<FormPayload>,
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
 
-    let username_message = validate_username(&form.username);
-    let password_message = validate_password(&form.password);
-    if !username_message.is_empty() || !password_message.is_empty() {
-        return signup_form::SignupForm::new(
-            form.username,
-            username_message,
-            password_message,
-            String::new(),
-        )
-        .into_response();
+    if let Err(page) = validate_inputs(&form) {
+        return page.into_response();
     }
 
-    let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
-    let Ok(password_hash) = argon2.hash_password(form.password.as_bytes(), &salt) else {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    };
-
+    let password_hash = generate_password_hash(&form.password);
     let user = models::user::User {
         id: 0,
         username: form.username.clone(),
-        password_hash: password_hash.to_string(),
+        password_hash,
         created_at: timestamp,
         balance: 0,
     };
 
-    match user.insert(&state.db).await {
-        Ok(user_id) => {
-            let cookie =
-                auth::create_session(&state.db, user_id, timestamp, addr.to_string(), user_agent)
-                    .await;
-            ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
-        }
+    let mut tx = state.db.begin().await.unwrap();
+    let user_id = match user.insert(&mut *tx).await {
+        Ok(user_id) => user_id,
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
-            signup_form::SignupForm::new(
+            return signup_form::SignupForm::new(
                 form.username,
                 "Username already taken".to_string(),
                 String::new(),
                 String::new(),
             )
-            .into_response()
+            .into_response();
         }
+        Err(err) => {
+            warn!("internal server error {err}");
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+    match Invite::check_and_claim(&mut *tx, &form.invite_code, user_id).await {
+        Ok(Some(_)) => {
+            tx.commit().await.unwrap();
+            let cookie =
+                auth::create_session(&state.db, user_id, timestamp, addr.to_string(), user_agent)
+                    .await;
+            ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
+        }
+        Ok(None) => signup_form::SignupForm::new(
+            form.username,
+            String::new(),
+            String::new(),
+            "Invite code does not exist or has already been claimed".to_string(),
+        )
+        .into_response(),
         Err(err) => {
             warn!("internal server error {err}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
+    }
+}
+
+fn generate_password_hash(plaintext_password: &str) -> String {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2
+        .hash_password(plaintext_password.as_bytes(), &salt)
+        .unwrap();
+    password_hash.to_string()
+}
+
+fn validate_inputs(form: &FormPayload) -> Result<(), signup_form::SignupForm> {
+    let username_message = validate_username(&form.username);
+    let password_message = validate_password(&form.password);
+    if !username_message.is_empty() || !password_message.is_empty() {
+        Err(signup_form::SignupForm::new(
+            form.username.clone(),
+            username_message,
+            password_message,
+            String::new(),
+        ))
+    } else {
+        Ok(())
     }
 }
 
