@@ -13,7 +13,7 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 use tracing::warn;
 
-use super::templates::{signup, signup_form};
+use super::templates::signup;
 use crate::app_state::{current_time_micros, AppState};
 use crate::auth::{self, SessionExtractor};
 use crate::models;
@@ -61,7 +61,7 @@ pub async fn post(
     let user_id = match user.insert(&mut *tx).await {
         Ok(user_id) => user_id,
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
-            return signup_form::SignupForm::new(
+            return signup::SignupForm::new(
                 form.username,
                 "Username already taken".to_string(),
                 String::new(),
@@ -82,7 +82,7 @@ pub async fn post(
                     .await;
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
-        Ok(None) => signup_form::SignupForm::new(
+        Ok(None) => signup::SignupForm::new(
             form.username,
             String::new(),
             String::new(),
@@ -105,11 +105,11 @@ fn generate_password_hash(plaintext_password: &str) -> String {
     password_hash.to_string()
 }
 
-fn validate_inputs(form: &FormPayload) -> Result<(), signup_form::SignupForm> {
+fn validate_inputs(form: &FormPayload) -> Result<(), signup::SignupForm> {
     let username_message = validate_username(&form.username);
     let password_message = validate_password(&form.password);
     if !username_message.is_empty() || !password_message.is_empty() {
-        Err(signup_form::SignupForm::new(
+        Err(signup::SignupForm::new(
             form.username.clone(),
             username_message,
             password_message,

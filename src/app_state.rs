@@ -1,5 +1,6 @@
 use exchange::{BookEvent, Timestamp};
 use sqlx::SqlitePool;
+use time::{format_description, OffsetDateTime};
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{actors::matcher_request::MatcherRequest, pages::OrderBook};
@@ -47,4 +48,13 @@ pub fn current_time_micros() -> Timestamp {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_micros() as Timestamp
+}
+
+/// Pretty prints a timestamp as a string.
+/// e.g. November 10, 2020 12:00:00
+pub fn format_as_string(timestamp: Timestamp) -> String {
+    let timestamp_seconds = timestamp / 1_000_000;
+    let thing = OffsetDateTime::from_unix_timestamp(timestamp_seconds).unwrap();
+    let fmt = format_description::parse("%B %d, %Y %H:%M:%S").unwrap();
+    thing.format(&fmt).unwrap()
 }

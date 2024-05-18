@@ -1,11 +1,9 @@
 pub mod about_page;
 pub mod home_page;
-pub mod login_form;
-pub mod login_page;
+pub mod login;
 pub mod market_page;
 pub mod open_orders;
 pub mod order_form;
 pub mod orderbook;
 pub mod positions;
 pub mod signup;
-pub mod signup_form;

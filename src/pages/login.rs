@@ -19,21 +19,17 @@ use crate::{
     models::session::Session,
 };
 
-use super::templates::{login_form, login_page};
+use super::templates::login;
 
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
         Some(_) => Redirect::to("/").into_response(),
-        None => login_page::LoginPage {
-            username: String::new(),
-            error_message: String::new(),
-        }
-        .into_response(),
+        None => login::LoginPage::default().into_response(),
     }
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Credentials {
+pub struct LoginFormPayload {
     username: String,
     password: String,
 }
@@ -43,7 +39,7 @@ pub async fn post(
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
-    Form(form): Form<Credentials>,
+    Form(form): Form<LoginFormPayload>,
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
 
@@ -61,7 +57,7 @@ pub async fn post(
             info!("User {} logged in", form.username);
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
-        None => login_form::LoginForm {
+        None => login::LoginForm {
             error_message: "Incorrect username / password combination".to_string(),
         }
         .into_response(),
