@@ -2,27 +2,25 @@
 
 {% block content %}
 
-
 <h1>{{market.title}}</h1>
 
 <p>Closes November 5, 2024</p>
 
-<p><mark><a href="">Politics</a></mark> <mark><a href="">Economics</a></mark> <mark><a href="">Culture</a></mark></p>
+<p><mark><a>Politics</a></mark> <mark><a>Economics</a></mark> <mark><a>Culture</a></mark></p>
 
 <hr>
 
-{% for (book, order_form) in orderbooks %}
-
-<article>
-    <!-- <details hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message"> -->
-    <details hx-ext="ws" ws-connect="/orderbook?book={{book.id}}">
-        <div id="content1-{{book.id}}"></div>
-        <div id="orderbook-{{book.id}}"></div>
-        {{order_form|safe}}
-    </details>
-</article>
-
-{% endfor %}
+<div hx-ext="ws" ws-connect="/orderbook?books={{books}}">
+    {% for (book_id, order_form) in orderbooks %}
+    <article>
+        <details>
+            <div id="header-{{book_id}}"></div>
+            <div id="orderbook-{{book_id}}"></div>
+            {{order_form|safe}}
+        </details>
+    </article>
+    {% endfor %}
+</div>
 
 {{market.description|markdown}}
 

@@ -6,6 +6,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Redirect;
+use exchange::BookId;
 
 pub async fn get(
     SessionExtractor(user): SessionExtractor,
@@ -22,7 +23,10 @@ pub async fn get(
 
     let books = Book::get_all_for_market(&state.db, market.id)
         .await
-        .unwrap();
+        .unwrap()
+        .iter()
+        .map(|book| book.id)
+        .collect::<Vec<BookId>>();
 
     match user {
         Some(user) => MarketPage::new(user.username, market, books).into_response(),
