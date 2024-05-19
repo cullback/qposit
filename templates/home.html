@@ -34,7 +34,7 @@
     <h3><a href="/markets/{{market.slug}}">{{market.title}}</a></h3>
     <table>
         <tbody>
-            {% for book in books %}
+            {% for book in books.iter().take(3) %}
             <tr>
                 <td>{{book.title}}</td>
                 <td style="display: flex; justify-content: flex-end">
@@ -47,6 +47,13 @@
                 </td>
             </tr>
             {% endfor %}
+            {% if books.len() > 3 %}
+            <tr>
+                <td colspan="2">
+                    <a href="/markets/{{market.slug}}">+ {{books.len() - 3}} more</a>
+                </td>
+            </tr>
+            {% endif %}
     </table>
 </article>
 
