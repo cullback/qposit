@@ -12,6 +12,18 @@ This question will resolve as Yes for the person who wins the 2024 US presidenti
 and No for all other options. This will be the person who wins the majority of votes in the
 Electoral College, or selected by Congress following the contingency procedure in the
 Twelfth Amendment.
+
+## Background information
+
+Joseph Robinette Biden Jr. is the incumbent US President after winning the 2020 election.
+He has stated multiple times his intention of running for re-election, particularly if the
+Republican nominee would be Donald Trump. A March 2022 poll by CNN found 52% of respondents
+expected Biden not to run for re-election, compared to 29% who predicted that he would.
+
+The previous US President Donald Trump has expressed several hints of his desire to run for
+re-election, stopping short of officially filing his campaign.
+
+The 2024 United States presidential election is scheduled for Tuesday, November 5, 2024.
 """
 books = [
     "Donald Trump",
@@ -19,55 +31,201 @@ books = [
     "Michelle Obama",
     "Robert F. Kennedy Jr.",
     "Kamala Harris",
-    "Other candidate",
+    "Other person",
 ]
 
 
 [[markets]]
-slug = "2024-us-republican-nominee"
-title = "US Republican Nominee"
+# https://www.metaculus.com/questions/18409/2024-gop-vice-presidential-nominee/
+slug = "2024-us-republican-vp-nominee"
+title = "US Republican Vice President Nominee"
 created_at = 1697838953000000
 expires_at = 1730764800000000
 tags = ["politics"]
 description = """
 ## Resolution criteria
 
-Resolve to the person who is nominated by the Republican Party to run for US
-President in the 2024 election.
+This question will resolve as Yes for the person who is named as the Republiccan Party's nominee
+for the office of vice president of the United States as of November 5, 2024 (election day). All
+other candidates will resolve as No.
+
+## Background information
+
+The vice president of the United States is the second-highest officer in the executive branch of
+the U.S. federal government, after the president of the United States, ranks first in the
+presidential line of succession, and is indirectly elected together with the president to a
+four-year term of office by the people of the United States through the Electoral College.
+
+As of August 2023, although Donald Trump is the frontrunner for the Republican Party's nomination
+for president in 2024, there is much speculation about who the Republican Party's nominee for the
+office of vice president will be, with dozens of individuals considered plausible candidates.
+
+An additional complication in the 2024 cycle is that Donald Trump is, as of August 2023, the
+subject of four active criminal cases, one or more of which may go to trial before, during, or
+after the Republican primaries, making this an especially turbulent and uncertain election cycle,
+with the potential for late changes to the party's ticket before election day.
 """
-books = ["Donald Trump", "Nikki Haley", "Ron DeSantis", "Other candidate"]
+books = [
+    "Tim Scott",
+    "Elise Stefanik",
+    "Doug Burgum",
+    "Marco Rubio",
+    "J.D. Vance",
+    "Sarah Huckabee Sanders",
+    "Vivek Ramaswamy",
+    "Tulsi Gabbard",
+    "Ben Carson",
+    "Other person",
+]
 
 
 [[markets]]
+# https://www.metaculus.com/questions/21016/2023-24-stanley-cup-champions/
 slug = "2024-stanley-cup-playoffs"
-title = "Stanley Cup Playoffs"
+title = "2023-2024 Stanley Cup Playoffs"
 created_at = 1697838953000000
 expires_at = 1730764800000000
 tags = ["sports", "hockey"]
 description = """
 ## Resolution criteria
 
-This market will resolve to Yes for the team that wins the 2024 Stanley Cup Champion
-and No for all other options.
+The question resolves "Yes" for the team that is crowned the 2023-24 Stanley Cup
+champion according to the NHL. The Finals is set to begin and end in June 2024.
+
+## Background information
+
+The National Hockey League (NHL) is the professional ice hockey league in North
+America comprising of 32 teams (25 in the United States of America, and 7 in Canada).
+The Stanley Cup playoffs is the annual NHL elimination tournament to determine the league
+champion. 8 teams from each of the 2 conferences (East and West) qualify for the playoffs
+based on regular season points totals. The Stanley Cup Finals is played by the 2
+conference champions, held in June.
+
+According to FanDuel SportsBook on 17 December 2023 (roughly a third into the regular
+season), Colorado Avalanche are favourites to win the Stanley Cup; they won the 2021-22
+Stanley Cup. Vegas Golden Knights are second favourites to win the Stanley Cup; they won
+the 2022-23 Stanley Cup.
 """
 books = [
-    "Florida Panthers",
-    "Dallas Stars",
     "New York Rangers",
-    "Edmonton Oilers",
+    "Florida Panthers",
     "Colorado Avalanche",
+    "Vancouver Canucks",
+    "Dallas Stars",
+    "Edmonton Oilers",
+    "Carolina Hurricanes",
     "Boston Bruins",
+    "Other team",
 ]
 
 [[markets]]
-slug = "2024-06-fed-interest-rate"
-title = "Fed interest rate"
+# https://polymarket.com/event/fed-interest-rates-june-2024?tid=1716073066348
+# https://goodjudgment.com/superforecasting-the-fed-interest-rate/
+slug = "2024-06-federal-funds-rate"
+title = "June 2024 Federal funds rate"
 created_at = 1697838953000000
 expires_at = 1730764800000000
 tags = ["economics"]
 description = """
 ## Resolution criteria
 
-The fed is meeting June 11.
+This market will resolve to the change in the targret federal funds rate following the Federal
+Reserve's June 2024 meeting.
+
+The resolution source for this market is the FOMC's statement after its meeting scheduled for
+June 11 - June 12, 2024 according to the official calendar:
+[https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm).
+
+The level and change of the target federal funds rate is also published at the official website of the
+Federal Reserve at https://www.federalreserve.gov/monetarypolicy/openmarket.htm.
+
+This market may resolve as soon as the FOMC's statement for their June meeting with relevant data is issued.
+If no statement is released by June 30, 2024, 11:59 PM ET, this market will resolve to the "No change" bracket.
+
+## Background information
+
+The federal funds rate is the benchmark interest rate in the U.S. economy and broadly affects economic conditions
+e.g. inflation, employment, and economic growth. The Federal Open Market Committee (FOMC) of the U.S. Federal
+Reserve sets the federal funds rate as part of its monetary policy. (See Investopedia).
+
+The effective fed funds rate is the weighted average interest rate at which depository institutions trade
+federal funds, which is influenced by the Federal Reserve to meet its targets. The current and historical
+rates can be seen at https://fred.stlouisfed.org/series/FEDFUNDS
+
+The Fed has sharply increased rates in recent months to combat high inflation. On the other hand, the Fed otherwise
+tends to decrease rates during downturns to help spur economic growth and recovery. In the near term, forecasts expect
+the Fed to continue increasing rates over the next several months. A summary of the median of the Fed's own
+projections is at https://fred.stlouisfed.org/series/FEDTARMD. However, there are far fewer forecasts on its longer term trends.
 """
-books = ["No increase", "Between 4.75% and 4.99%", "Between 5.00% and 5.24%"]
+books = ["50 bps decrease", "25 bps decrease", "No change", "25 bps increase", "50 bps increase"]
+
+
+[[markets]]
+# https://manifold.markets/DismalScientist/will-sonya-sotomayor-retire-from-th
+# https://www.metaculus.com/questions/20751/supreme-court-change-in-2024/
+slug = "2024-us-supreme-court-change"
+title = "US Supreme Court change"
+created_at = 1697838953000000
+expires_at = 1730764800000000
+tags = ["economics"]
+books = ["Yes"]
+description = """
+## Resolution criteria
+
+The question resolves as Yes if any of the nine current justices retires, dies, is impeached,
+or resigns. Additionally, a change in size of the Supreme Court would also qualify, such as
+adding or removing members. In situations like a justice announcing retirement but serving beyond
+2024, the resolution is based on the status as of December 31, 2024. If the justice is still
+serving on this date, the question resolves as No.
+
+## Background information
+
+As of the end of 2023, the U.S. Supreme Court comprises nine justices with lifetime appointments.
+The Court's composition includes:
+
+- Chief Justice John Roberts (appointed 2005)
+- Justice Clarence Thomas (appointed 1991)
+- Justice Samuel Alito (appointed 2006)
+- Justice Sonia Sotomayor (appointed 2009)
+- Justice Elena Kagan (appointed 2010)
+- Justice Neil Gorsuch (appointed 2017)
+- Justice Brett Kavanaugh (appointed 2018)
+- Justice Amy Coney Barrett (appointed 2020)
+- Justice Ketanji Brown Jackson (appointed 2022)
+
+The makeup of the U.S. Supreme Court plays a crucial role in shaping the country's legal landscape
+and has a significant impact on American society. The lifelong appointments of the justices mean
+that any changes in the Court's composition, due to retirement, death, or impeachment, can lead
+to substantial and enduring influences on both legal and societal matters in the United States.
+"""
+
+[[markets]]
+# https://manifold.markets/CarmelHadar/will-benjamin-netanyahu-bibi-will-b
+# https://www.metaculus.com/questions/20753/netanyahu-pm-2024/
+slug = "2024-bibi-prime-ministership"
+title = "Benjamin Netanyahu's Prime Ministership"
+tags = ["politics", "israel"]
+created_at = 1697838953000000
+expires_at = 1730764800000000
+books = ["Yes"]
+description = """
+
+## Resolution criteria
+
+If Benjamin Netanyahu has remained the Prime Minister of Israel for the entire duration of calendar year 2024,
+this question will resolve as YES on January 1, 2025. If he ceases to be Prime Minster at any point during 2024,
+this question resolves NO.
+
+## Background information
+
+Benjamin Netanyahu is the current Prime Minister of Israel, having previously held the office from 1996 to 1999
+and again from 2009 to 2021. Netanyahu is the longest-tenured prime minister in the country's history, having
+served for a total of over 16 years.
+
+A series of coordinated attacks, conducted by the Palestinian Islamist militant Hamas, from the Gaza Strip onto
+bordering areas in Israel, commenced on Saturday 7 October 2023. Israel declared war on Hamas on 8 October, and
+its response to the attack has seen the most significant military escalation in the region since the Yom Kippur
+War.
+
+Within Israel, Netanyahu's government has been widely condemned for failures to prepare for these attacks.
+"""
