@@ -36,10 +36,10 @@ async fn get_htmx() -> impl IntoResponse {
         include_str!("../../static/htmx.min.js"),
     )
 }
-async fn get_htmx_sse() -> impl IntoResponse {
+async fn get_htmx_ws() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/javascript")],
-        include_str!("../../static/sse.js"),
+        include_str!("../../static/htmx.ws.js"),
     )
 }
 
@@ -48,7 +48,7 @@ pub fn router(state: AppState) -> Router {
         .route("/pico.min.css", get(get_pico_css))
         .route("/pico.colors.min.css", get(get_pico_colors))
         .route("/htmx.min.js", get(get_htmx))
-        .route("/sse.js", get(get_htmx_sse))
+        .route("/htmx.ws.js", get(get_htmx_ws))
         .route("/", get(home::get))
         .route("/about", get(about::get))
         .route("/profile", get(profile::get))
@@ -61,6 +61,6 @@ pub fn router(state: AppState) -> Router {
         .route("/markets/:slug", get(markets::get))
         .route("/orders", post(orders::post))
         .route("/orders/:order_id", delete(orders::delete_by_id))
-        .route("/orderbook", get(orderbook::sse_handler))
+        .route("/orderbook", get(orderbook::get))
         .with_state(state)
 }

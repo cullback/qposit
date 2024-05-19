@@ -1,11 +1,8 @@
 use askama::Template;
-use axum::extract::{Query, State};
-use axum::response::{sse::Event, Sse};
-use futures::Stream;
+use askama_axum::IntoResponse;
+use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{Query, State, WebSocketUpgrade};
 use serde::Deserialize;
-use std::convert::Infallible;
-use tokio_stream::wrappers::BroadcastStream;
-use tokio_stream::StreamExt;
 use utoipa::ToSchema;
 
 use crate::actors::book_service::BookData;
@@ -20,18 +17,16 @@ pub struct BookParams {
     pub book: u32,
 }
 
-/// Generate a stream for a specific book.
-pub async fn sse_handler(
+pub async fn get(
     State(state): State<AppState>,
     Query(params): Query<BookParams>,
-) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    let receiver_stream = BroadcastStream::new(state.book_receive)
-        .filter(move |x| match x {
-            Ok(x) => x.book_id == params.book,
-            Err(_) => true,
-        })
-        .map(|msg| Ok(Event::default().data(msg.unwrap().render().unwrap())));
+    ws: WebSocketUpgrade,
+) -> impl IntoResponse {
+    ws.on_upgrade(|socket| handle_socket(state, socket, params))
+}
 
+async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookParams) {
+    println!("New websocket connection for book {}", params.book);
     let book = models::book::Book::get(&state.db, params.book)
         .await
         .unwrap();
@@ -39,8 +34,22 @@ pub async fn sse_handler(
     let book = OrderBook::from(
         &BookData::new(&state.db, params.book, book.title, book.last_trade_price).await,
     );
-    let stream = tokio_stream::once(Ok(Event::default().data(book.render().unwrap())))
-        .chain(receiver_stream);
 
-    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
+    socket
+        .send(Message::Text(book.render().unwrap()))
+        .await
+        .unwrap();
+
+    loop {
+        let event = state.book_receive.recv().await.expect("Sender dropped");
+
+        if event.book_id != params.book {
+            continue;
+        }
+
+        let text = event.render().unwrap();
+        if socket.send(Message::Text(text)).await.is_err() {
+            return;
+        }
+    }
 }

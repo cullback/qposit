@@ -10,7 +10,7 @@
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every event.
 use exchange::{Action, BookEvent, BookId};
-use orderbook::{Book, DefaultBook, Price, Side};
+use orderbook::{Book, DefaultBook, Order, Price, Side};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -29,12 +29,13 @@ pub struct BookData {
 
 impl BookData {
     async fn get_volume_for_book(db: &SqlitePool, book_id: BookId) -> u64 {
-        let (volume,) =
-            sqlx::query_as::<_, (i64,)>("SELECT SUM(quantity) FROM trade WHERE book_id = ?")
-                .bind(book_id)
-                .fetch_one(db)
-                .await
-                .unwrap();
+        let (volume,) = sqlx::query_as::<_, (i64,)>(
+            "SELECT SUM(quantity * price) FROM trade WHERE book_id = ?",
+        )
+        .bind(book_id)
+        .fetch_one(db)
+        .await
+        .unwrap();
         u64::try_from(volume).unwrap()
     }
 
@@ -49,9 +50,9 @@ impl BookData {
             .unwrap();
         let mut book = DefaultBook::default();
         for order in orders {
-            let order2 = orderbook::Order::new(
+            let order2 = Order::new(
                 order.id,
-                order.quantity,
+                order.remaining,
                 order.price,
                 Side::new(order.is_buy),
             );
@@ -65,7 +66,7 @@ impl BookData {
             title,
             inner: book,
             last_price: last_trade_price,
-            volume: volume as u64,
+            volume,
         }
     }
 
@@ -74,7 +75,7 @@ impl BookData {
             Action::Add(order) => {
                 let fills = self.inner.add(order);
                 for fill in fills {
-                    self.volume += u64::from(fill.quantity);
+                    self.volume += u64::from(fill.quantity) * u64::from(fill.price);
                     self.last_price = Some(fill.price);
                 }
             }

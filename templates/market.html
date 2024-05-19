@@ -14,8 +14,11 @@
 {% for (book, order_form) in orderbooks %}
 
 <article>
-    <details hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message">
-
+    <!-- <details hx-ext="sse" sse-connect="/orderbook?book={{book.id}}" sse-swap="message"> -->
+    <details hx-ext="ws" ws-connect="/orderbook?book={{book.id}}">
+        <div id="content1-{{book.id}}"></div>
+        <div id="orderbook-{{book.id}}"></div>
+        {{order_form|safe}}
     </details>
 </article>
 
