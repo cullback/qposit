@@ -84,6 +84,7 @@ pub async fn login(
     Some(cookie)
 }
 
+/// None if the session is invalid.
 pub struct SessionExtractor(pub Option<User>);
 
 #[async_trait]
@@ -135,10 +136,29 @@ impl FromRequestParts<AppState> for BasicAuthExtractor {
         else {
             return Err(StatusCode::UNAUTHORIZED.into_response());
         };
-        // let session_id = x.username();
         match check_login(&state.db, x.username(), x.password()).await {
             Some(user) => Ok(Self(user)),
             None => Err(StatusCode::UNAUTHORIZED.into_response()),
         }
+    }
+}
+
+pub struct OptionalBasicAuth(pub Option<User>);
+
+#[async_trait]
+impl FromRequestParts<AppState> for OptionalBasicAuth {
+    type Rejection = Response;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let Ok(TypedHeader(Authorization(header))) =
+            TypedHeader::<Authorization<Basic>>::from_request_parts(parts, state).await
+        else {
+            return Ok(Self(None));
+        };
+        let user = check_login(&state.db, header.username(), header.password()).await;
+        Ok(Self(user))
     }
 }

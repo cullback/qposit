@@ -12,28 +12,15 @@ use sqlx::QueryBuilder;
 use tracing::error;
 use utoipa::ToSchema;
 
-use crate::api::order_request::OrderRequest;
 use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
     auth::BasicAuthExtractor,
     models::{self, order::Order},
 };
+use crate::{api::order_request::OrderRequest, auth::OptionalBasicAuth};
 
 use super::feed::BookEvent;
-
-const fn default_limit() -> u32 {
-    100
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct GetOrderParams {
-    pub book_id: Option<u32>,
-    pub user_id: Option<u32>,
-    pub before: Option<i64>,
-    #[serde(default = "default_limit")]
-    pub limit: u32,
-}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct OrderResponse {
@@ -62,6 +49,19 @@ impl From<models::order::Order> for OrderResponse {
     }
 }
 
+const fn default_limit() -> u32 {
+    100
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct GetOrderParams {
+    pub book_id: Option<u32>,
+    pub user_id: Option<u32>,
+    pub before: Option<i64>,
+    #[serde(default = "default_limit")]
+    pub limit: u32,
+}
+
 /// Get orders
 ///
 /// Get orders according to query parameters.
@@ -77,7 +77,7 @@ impl From<models::order::Order> for OrderResponse {
     )
 )]
 pub async fn get(
-    BasicAuthExtractor(user): BasicAuthExtractor,
+    OptionalBasicAuth(user): OptionalBasicAuth,
     State(state): State<AppState>,
     Query(params): Query<GetOrderParams>,
 ) -> Response {
@@ -126,16 +126,6 @@ pub enum TimeInForce {
     POST,
 }
 
-impl TimeInForce {
-    pub const fn ioc() -> Self {
-        Self::IOC
-    }
-
-    pub const fn gtc() -> Self {
-        Self::GTC
-    }
-}
-
 /// Submit order
 ///
 /// Submit an order to the matching engine.
@@ -144,6 +134,9 @@ impl TimeInForce {
     path = "/orders",
     responses(
         (status = 200, description = "Order successfully submitted", body = [OrderRequest])
+    ),
+    security(
+        ("basic_auth" = [])
     )
 )]
 pub async fn post(

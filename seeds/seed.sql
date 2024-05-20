@@ -1,9 +1,9 @@
 PRAGMA foreign_keys = ON;
 
 INSERT INTO user(id, username, created_at, balance, password_hash) VALUES
-    (1, 'testaccount', 1710007894419934, 10000 * 100, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
-    (2, 'strategy',    1710007894419934, 10000 * 100, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
-    (3, 'strategy2',   1710007894419934, 10000 * 100, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw');
+    (1, 'testaccount', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
+    (2, 'strategy',    1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
+    (3, 'strategy2',   1710007894419934, 10000 * 10000000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw');
 
 INSERT INTO invite(code, created_by, created_at) VALUES
     ('MK6H5JI3HM', 1, 1710007894419934),
