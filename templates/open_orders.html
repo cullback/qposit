@@ -2,6 +2,7 @@
 <table>
     <thead>
         <tr>
+            <th scope="col">Market</th>
             <th scope="col">Book</th>
             <th scope="col">Quantity</th>
             <th scope="col">Price</th>
@@ -13,10 +14,11 @@
     <tbody hx-target="closest tr" hx-swap="outerHTML">
         {% for order in orders %}
         <tr>
-            <td>{{ order.book_id }}</td>
+            <td>{{ order.market_title }}</td>
+            <td>{{ order.book_title }} </td>
             <td>{{ order.quantity }}</td>
             <td>{{ order.price }}</td>
-            <td>{{ order.is_buy }}</td>
+            <td>{{ order.side }}</td>
             <td>{{ order.status }}</td>
             <td><a hx-delete="/orders/{{order.id}}">Cancel</a></td>
         </tr>
