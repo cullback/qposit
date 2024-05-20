@@ -15,13 +15,21 @@ mod order_request;
 mod orders;
 mod trades;
 
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::{
+        self,
+        security::{HttpAuthScheme, SecurityScheme},
+    },
+    Modify, OpenApi,
+};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        orders::post,
         orders::get,
+        orders::post,
+        orders::delete,
+        orders::delete_by_id,
         markets::post,
         feed::get,
         trades::get,
@@ -29,12 +37,26 @@ use utoipa::OpenApi;
     components(
         schemas(order_request::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market, trades::Trade),
     ),
+    modifiers(&SecurityAddon),
     tags(
         (name = "QPosit", description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS).")
     ),
 )]
 
 pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "basic_auth",
+                SecurityScheme::Http(openapi::security::Http::new(HttpAuthScheme::Basic)),
+            )
+        }
+    }
+}
 
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()

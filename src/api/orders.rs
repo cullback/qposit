@@ -62,12 +62,18 @@ impl From<models::order::Order> for OrderResponse {
     }
 }
 
-/// Gets the open orders.
+/// Get orders
+///
+/// Get orders according to query parameters.
 #[utoipa::path(
     get,
     path = "/orders",
     responses(
         (status = 200, description = "Get an active order")
+    ),
+    security(
+        (),
+        ("basic_auth" = [])
     )
 )]
 pub async fn get(
@@ -130,7 +136,9 @@ impl TimeInForce {
     }
 }
 
-/// Handles an order POST request.
+/// Submit order
+///
+/// Submit an order to the matching engine.
 #[utoipa::path(
     post,
     path = "/orders",
@@ -153,12 +161,14 @@ pub async fn post(
     }
 }
 
-/// Delete all open orders.
+/// Cancel orders
+///
+/// Submit cancel rerquest for specified orders.
 #[utoipa::path(
     delete,
     path = "/orders",
     responses(
-        (status = 200, description = "Deleted all orders")
+        (status = 200, description = "Selected orders cancelled succesfully")
     )
 )]
 pub async fn delete(
@@ -190,11 +200,17 @@ pub async fn delete(
     Json(json!({"deleted": deleted})).into_response()
 }
 
+/// Cancel order
+///
+/// Submit cancel request for specified order.
 #[utoipa::path(
     delete,
     path = "/orders/:order_id",
     responses(
         (status = 200, description = "Deleted all orders")
+    ),
+    security(
+        ("basic_auth" = [])
     )
 )]
 pub async fn delete_by_id(
