@@ -73,7 +73,7 @@ pub async fn post(
     Json(market): Json<Market>,
 ) -> impl IntoResponse {
     // TODO: make this a transaction
-    if user.username != "testaccount" {
+    if user.username != "admin" {
         // TODO
         return StatusCode::FORBIDDEN.into_response();
     }

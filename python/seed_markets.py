@@ -3,7 +3,7 @@ import pathlib
 import requests
 
 URL = "http://localhost:3000/api/v1"
-AUTH = requests.auth.HTTPBasicAuth("testaccount", "password123")
+AUTH = requests.auth.HTTPBasicAuth("admin", "password123")
 
 def seed_markets():
     markets = tomllib.loads(pathlib.Path("python/markets.toml").read_text())

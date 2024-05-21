@@ -1,5 +1,7 @@
+use exchange::Balance;
 use exchange::Timestamp;
 use exchange::UserId;
+use sqlx::sqlite::SqliteQueryResult;
 use sqlx::Executor;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
@@ -28,10 +30,10 @@ impl User {
             .await
     }
 
-    pub async fn insert<'c, E>(&self, db: E) -> Result<UserId, sqlx::Error>
-    where
-        E: Executor<'c, Database = Sqlite>,
-    {
+    pub async fn insert<'c, E: Executor<'c, Database = Sqlite>>(
+        &self,
+        db: E,
+    ) -> Result<UserId, sqlx::Error> {
         sqlx::query!(
             "INSERT INTO user (username, password_hash, created_at) VALUES (?, ?, ?)",
             self.username,
@@ -47,5 +49,20 @@ impl User {
         sqlx::query_as::<_, Self>("SELECT * FROM user WHERE balance != 0")
             .fetch_all(db)
             .await
+    }
+
+    pub async fn deposit<'c, E: Executor<'c, Database = Sqlite>>(
+        db: E,
+        user_id: UserId,
+        amount: Balance,
+    ) -> Result<u64, sqlx::Error> {
+        sqlx::query!(
+            "UPDATE user SET balance = balance + $1 WHERE id = $2",
+            amount,
+            user_id
+        )
+        .execute(db)
+        .await
+        .map(|row| row.rows_affected())
     }
 }

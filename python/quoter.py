@@ -10,7 +10,7 @@ import time
 import typing
 
 USER_ID = 3
-USERNAME = "strategy2"
+USERNAME = "account3"
 PASSWORD = "password123"
 AUTH = (USERNAME, PASSWORD)
 BOOKS = (
@@ -78,7 +78,6 @@ def compare_orders(
             # the order exists and has the correct quantity so don't place it
             del orders_to_place[key]
         else:
-            print("hi there")
             orders_to_cancel.append(order.order_id)
 
     orders_to_place = [
@@ -92,7 +91,7 @@ def compare_orders(
 def get_open_orders() -> list[Order]:
     params = {"user_id": USER_ID}
     resp = requests.get(f"{URL}/orders", params=params)
-    print("open orders:", resp.status_code, resp.text)
+    # print("open orders:", resp.status_code, resp.text)
     assert resp.status_code == 200
 
     orders = []
@@ -119,7 +118,7 @@ def step_for_book(book_id: int) -> None:
 
     for order_id in orders_to_cancel:
         resp = requests.delete(f"{URL}/orders/{order_id}", auth=AUTH)
-        print("deleted order:", order_id, resp.status_code, resp.json())
+        print("deleted order:", order_id, resp.status_code, resp.text)
         assert resp.status_code == 200
 
     for order in orders_to_place:
@@ -141,7 +140,7 @@ def main():
         print("stepping...")
         for book in BOOKS:
             step_for_book(book)
-        time.sleep(15)
+        time.sleep(2)
 
 
 if __name__ == "__main__":

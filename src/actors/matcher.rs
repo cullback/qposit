@@ -86,6 +86,9 @@ pub async fn run_matcher(
             MatcherRequest::AddBook { book_id } => {
                 exchange.add_book(book_id);
             }
+            MatcherRequest::Deposit { user, amount } => {
+                exchange.deposit(user, amount);
+            }
         }
     }
 }

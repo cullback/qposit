@@ -61,7 +61,7 @@ impl BookData {
 
         let volume = Self::get_volume_for_book(db, book_id).await;
 
-        BookData {
+        Self {
             book_id,
             title,
             inner: book,

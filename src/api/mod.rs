@@ -14,6 +14,7 @@ mod markets;
 mod order_request;
 mod orders;
 mod trades;
+mod user;
 
 use utoipa::{
     openapi::{

@@ -1,4 +1,4 @@
-use exchange::{BookEvent, BookId, OrderRequest, RejectReason, UserId};
+use exchange::{Balance, BookEvent, BookId, OrderRequest, RejectReason, UserId};
 use orderbook::OrderId;
 use tokio::sync::oneshot;
 
@@ -20,6 +20,10 @@ pub enum MatcherRequest {
     },
     AddBook {
         book_id: BookId,
+    },
+    Deposit {
+        user: UserId,
+        amount: Balance,
     },
 }
 
@@ -48,5 +52,10 @@ impl MatcherRequest {
             response,
         };
         (req, recv)
+    }
+
+    pub fn deposit(user: UserId, amount: Balance) -> Self {
+        let req = Self::Deposit { user, amount };
+        req
     }
 }
