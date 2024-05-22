@@ -10,7 +10,7 @@ use crate::actors::book_service;
 use crate::actors::matcher;
 use crate::pages::OrderBook;
 use app_state::AppState;
-use exchange::BookEvent;
+use lobster::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
 use tokio::{

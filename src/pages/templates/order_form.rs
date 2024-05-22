@@ -1,5 +1,5 @@
 use askama::Template;
-use exchange::BookId;
+use lobster::BookId;
 
 #[derive(Template, Debug, Clone)]
 #[template(path = "order_form.html")]

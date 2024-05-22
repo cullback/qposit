@@ -45,22 +45,22 @@ pub enum Action {
     },
 }
 
-impl From<exchange::BookEvent> for BookEvent {
-    fn from(event: exchange::BookEvent) -> Self {
+impl From<lobster::BookEvent> for BookEvent {
+    fn from(event: lobster::BookEvent) -> Self {
         Self {
             time: event.time,
             tick: event.tick,
             book: event.book,
             user: event.user,
             action: match event.action {
-                exchange::Action::Add(order) => Action::Add {
+                lobster::Action::Add(order) => Action::Add {
                     id: order.id,
                     quantity: order.quantity,
                     price: order.price,
                     is_buy: order.side.is_buy(),
                 },
-                exchange::Action::Remove { id } => Action::Remove { id },
-                exchange::Action::Resolve { price } => Action::Resolve { price },
+                lobster::Action::Remove { id } => Action::Remove { id },
+                lobster::Action::Resolve { price } => Action::Resolve { price },
             },
         }
     }

@@ -4,8 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use exchange::Action;
-use orderbook::OrderId;
+use lobster::Action;
+use lobster::OrderId;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::QueryBuilder;
@@ -178,7 +178,7 @@ pub async fn delete(
         let (req, recv) = MatcherRequest::cancel(user.id, order.id);
         state.cmd_send.send(req).await.expect("Receiver dropped");
         let resp = recv.await.expect("Sender dropped");
-        if let Ok(exchange::BookEvent {
+        if let Ok(lobster::BookEvent {
             time: _,
             tick: _,
             book: _,
@@ -217,7 +217,7 @@ pub async fn delete_by_id(
     state.cmd_send.send(req).await.expect("Receiver dropped");
     let resp = recv.await.expect("Sender dropped");
 
-    if let Ok(exchange::BookEvent {
+    if let Ok(lobster::BookEvent {
         time: _,
         tick: _,
         book: _,

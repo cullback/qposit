@@ -1,5 +1,5 @@
-use exchange::{BookEvent, Exchange};
-use orderbook::Side;
+use lobster::Side;
+use lobster::{BookEvent, Exchange};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -14,7 +14,7 @@ use crate::models::{book::Book, order::Order, position::Position, user::User};
 async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     let next_order_id = Order::get_next_order_id(db).await;
 
-    let mut engine = Exchange::new(next_order_id);
+    let mut engine = lobster::Exchange::new(next_order_id);
 
     for user in User::get_with_nonzero_balances(db).await.unwrap() {
         engine.deposit(user.id, user.balance);
@@ -29,7 +29,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     }
 
     for order in Order::get_open_orders(db).await.unwrap() {
-        let order2 = orderbook::Order::new(
+        let order2 = lobster::Order::new(
             order.id,
             order.user_id,
             order.price,

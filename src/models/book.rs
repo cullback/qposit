@@ -1,4 +1,4 @@
-use exchange::BookId;
+use lobster::BookId;
 use sqlx::{prelude::FromRow, SqlitePool};
 
 #[derive(Debug, FromRow)]

@@ -16,8 +16,8 @@ use tracing::warn;
 use crate::app_state::AppState;
 use crate::models::session::Session;
 use crate::models::user::User;
-use exchange::Timestamp;
-use exchange::UserId;
+use lobster::Timestamp;
+use lobster::UserId;
 
 /// Generates a random 128-bit hex string.
 fn generate_session_id() -> String {

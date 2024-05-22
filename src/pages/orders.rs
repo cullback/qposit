@@ -5,8 +5,8 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use exchange::{Action, BookEvent, BookId, RejectReason};
-use orderbook::{OrderId, Price, Quantity, Side};
+use lobster::{Action, BookEvent, BookId, RejectReason};
+use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
 use crate::{
@@ -80,15 +80,15 @@ pub async fn post(
         .into_response();
     };
 
-    let req = exchange::OrderRequest {
+    let req = lobster::OrderRequest {
         book: form.book,
         quantity,
         price,
         side: Side::new(form.is_buy),
         tif: match form.order_type {
-            OrderType::Market | OrderType::IOC => exchange::TimeInForce::IOC,
-            OrderType::GTC => exchange::TimeInForce::GTC,
-            OrderType::POST => exchange::TimeInForce::POST,
+            OrderType::Market | OrderType::IOC => lobster::TimeInForce::IOC,
+            OrderType::GTC => lobster::TimeInForce::GTC,
+            OrderType::POST => lobster::TimeInForce::POST,
         },
     };
 

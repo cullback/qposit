@@ -1,5 +1,5 @@
 use askama::Template;
-use exchange::BookId;
+use lobster::BookId;
 
 use crate::models::market::Market;
 

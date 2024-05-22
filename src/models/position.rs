@@ -1,5 +1,5 @@
-use exchange::BookId;
-use exchange::UserId;
+use lobster::BookId;
+use lobster::UserId;
 use sqlx::SqlitePool;
 
 #[derive(sqlx::FromRow, Debug)]

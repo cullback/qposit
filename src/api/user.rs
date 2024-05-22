@@ -1,6 +1,6 @@
 use askama_axum::IntoResponse;
 use axum::{extract::State, http::StatusCode, Json};
-use exchange::UserId;
+use lobster::UserId;
 use serde::Deserialize;
 use serde_json::json;
 use utoipa::ToSchema;

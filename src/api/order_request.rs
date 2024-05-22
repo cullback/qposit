@@ -1,4 +1,4 @@
-use orderbook::Side;
+use lobster::Side;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -21,7 +21,7 @@ pub struct OrderRequest {
     pub tif: TimeInForce,
 }
 
-impl From<OrderRequest> for exchange::OrderRequest {
+impl From<OrderRequest> for lobster::OrderRequest {
     fn from(req: OrderRequest) -> Self {
         Self {
             book: req.book,
@@ -29,9 +29,9 @@ impl From<OrderRequest> for exchange::OrderRequest {
             price: req.price,
             side: Side::new(req.is_buy),
             tif: match req.tif {
-                TimeInForce::GTC => exchange::TimeInForce::GTC,
-                TimeInForce::IOC => exchange::TimeInForce::IOC,
-                TimeInForce::POST => exchange::TimeInForce::POST,
+                TimeInForce::GTC => lobster::TimeInForce::GTC,
+                TimeInForce::IOC => lobster::TimeInForce::IOC,
+                TimeInForce::POST => lobster::TimeInForce::POST,
             },
         }
     }

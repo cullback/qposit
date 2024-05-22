@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use exchange::Timestamp;
+use lobster::Timestamp;
 
 #[derive(sqlx::FromRow)]
 pub struct Market {

@@ -1,7 +1,6 @@
 use askama::Template;
-use exchange::BookId;
-use orderbook::Book;
-use orderbook::{Order, Price, Quantity};
+use lobster::BookId;
+use lobster::{Order, Price, Quantity};
 
 use crate::actors::book_service::BookData;
 

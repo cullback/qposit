@@ -1,6 +1,6 @@
 use askama::Template;
-use exchange::UserId;
-use orderbook::Price;
+use lobster::UserId;
+use lobster::Price;
 use sqlx::SqlitePool;
 
 #[derive(sqlx::FromRow, Debug)]

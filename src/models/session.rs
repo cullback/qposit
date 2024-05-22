@@ -1,5 +1,5 @@
-use exchange::Timestamp;
-use exchange::UserId;
+use lobster::Timestamp;
+use lobster::UserId;
 use sqlx::Executor;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;

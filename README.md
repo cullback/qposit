@@ -1,20 +1,18 @@
 # QPosit
 
-A prediction market platform.
+QPosit is a prediction market platform.
+
+## Tech stack
 
 - Rust
 - Axum for web server
-- sqlx for database access
+- sqlx for database interaction
 - askama for templating
 - htmx for reactivity
 - picocss for styling
 - justfile for development recipes
 - docker for deployment
 
-## Features
-
-- log in, log out, sign up (passwords stored in plaintext)
-- multiple pages (home, profile)
 
 ## Run locally
 
@@ -31,18 +29,10 @@ sqlx migrate add --source db/migrations init
 docker run -v ./db:/db basic_site
 ```
 
-### `.env` file
+### Example `.env` file
 
 ```shell
 MIGRATIONS_PATH=db/migrations
 DATABASE_PATH=db/db.db
 DATABASE_URL=sqlite:${DATABASE_PATH}
-```
-
-## Strategy
-
-```shell
-python3 -m venv ~/envs/default
-source ~/envs/default/bin/activate
-python3 -m pip install requests
 ```

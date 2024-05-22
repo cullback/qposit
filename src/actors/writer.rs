@@ -2,9 +2,8 @@
 //! all events to the database.
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
-use exchange::{buyer_cost, seller_cost, Action, BookEvent, BookId, Tick, Timestamp, UserId};
-use orderbook::Book;
-use orderbook::{OrderId, Price, Quantity};
+use lobster::{buyer_cost, seller_cost, Action, BookEvent, BookId, OrderBook, Tick, Timestamp, UserId};
+use lobster::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -30,7 +29,7 @@ struct Trade {
 
 struct State {
     db: SqlitePool,
-    books: HashMap<BookId, orderbook::DefaultBook>,
+    books: HashMap<BookId, OrderBook>,
     positions: HashMap<(UserId, BookId), i32>,
     order_owner: HashMap<OrderId, UserId>,
 }

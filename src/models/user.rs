@@ -1,6 +1,6 @@
-use exchange::Balance;
-use exchange::Timestamp;
-use exchange::UserId;
+use lobster::Balance;
+use lobster::Timestamp;
+use lobster::UserId;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::Executor;
 use sqlx::Sqlite;

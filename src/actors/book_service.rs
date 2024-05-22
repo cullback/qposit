@@ -9,8 +9,8 @@
 //!
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every event.
-use exchange::{Action, BookEvent, BookId};
-use orderbook::{Book, DefaultBook, Order, Price, Side};
+use lobster::{Action, BookEvent, BookId};
+use lobster::{Order, Price, Side};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -22,7 +22,7 @@ use crate::pages::OrderBook;
 pub struct BookData {
     pub book_id: BookId,
     pub title: String,
-    pub inner: orderbook::DefaultBook,
+    pub inner: lobster::OrderBook,
     pub last_price: Option<Price>,
     pub volume: u64,
 }
@@ -48,7 +48,7 @@ impl BookData {
         let orders = models::order::Order::get_open_for_book(db, book_id)
             .await
             .unwrap();
-        let mut book = DefaultBook::default();
+        let mut book = lobster::OrderBook::default();
         for order in orders {
             let order2 = Order::new(
                 order.id,

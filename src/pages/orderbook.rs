@@ -4,7 +4,7 @@ use askama::Template;
 use askama_axum::IntoResponse;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Query, State, WebSocketUpgrade};
-use exchange::BookId;
+use lobster::BookId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 

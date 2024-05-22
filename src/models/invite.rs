@@ -1,6 +1,6 @@
 use sqlx::{Executor, Sqlite};
 
-use exchange::{Timestamp, UserId};
+use lobster::{Timestamp, UserId};
 
 #[derive(sqlx::FromRow)]
 pub struct Invite {

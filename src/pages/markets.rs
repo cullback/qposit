@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Redirect;
-use exchange::BookId;
+use lobster::BookId;
 
 pub async fn get(
     SessionExtractor(user): SessionExtractor,

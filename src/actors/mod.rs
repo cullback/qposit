@@ -1,32 +1,31 @@
 use std::collections::HashMap;
 
-use exchange::BookId;
-use orderbook::Book;
-use orderbook::DefaultBook;
-use orderbook::Side;
+use lobster::BookId;
+use lobster::OrderBook;
+use lobster::Side;
 use sqlx::SqlitePool;
 
 use crate::models;
 
 pub mod book_service;
-pub mod matcher;
 pub mod matcher_request;
+pub mod matcher;
 pub mod writer;
 
 pub async fn bootstrap_books(
     db: &SqlitePool,
     orders: &[models::order::Order],
-) -> HashMap<BookId, DefaultBook> {
-    let mut books: HashMap<BookId, DefaultBook> = models::book::Book::get_active(db)
+) -> HashMap<BookId, OrderBook> {
+    let mut books: HashMap<BookId, OrderBook> = models::book::Book::get_active(db)
         .await
         .unwrap()
         .into_iter()
-        .map(|x| (x.id, DefaultBook::default()))
+        .map(|x| (x.id, OrderBook::default()))
         .collect();
 
     for order in orders {
         let book = books.get_mut(&order.book_id).unwrap();
-        let order2 = orderbook::Order::new(
+        let order2 = lobster::Order::new(
             order.id,
             order.remaining,
             order.price,

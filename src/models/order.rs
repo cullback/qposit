@@ -1,5 +1,5 @@
-use exchange::{BookId, Timestamp, UserId};
-use orderbook::{OrderId, Price, Quantity, Side};
+use lobster::{BookId, Timestamp, UserId};
+use lobster::{OrderId, Price, Quantity, Side};
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
 
 #[derive(Debug, FromRow)]
@@ -15,9 +15,9 @@ pub struct Order {
     pub status: String,
 }
 
-impl From<&Order> for orderbook::Order {
+impl From<&Order> for lobster::Order {
     fn from(order: &Order) -> Self {
-        orderbook::Order::new(
+        lobster::Order::new(
             order.id,
             order.remaining,
             order.price,
