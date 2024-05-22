@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
-    auth::BasicAuthExtractor,
+    authentication::BasicAuthExtractor,
     models::{self, book::Book},
 };
 

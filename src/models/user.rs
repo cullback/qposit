@@ -1,7 +1,6 @@
 use lobster::Balance;
 use lobster::Timestamp;
 use lobster::UserId;
-use sqlx::sqlite::SqliteQueryResult;
 use sqlx::Executor;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
@@ -51,6 +50,7 @@ impl User {
             .await
     }
 
+    /// Deposits the given amount into the user's account.
     pub async fn deposit<'c, E: Executor<'c, Database = Sqlite>>(
         db: E,
         user_id: UserId,

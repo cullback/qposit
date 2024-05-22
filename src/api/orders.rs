@@ -15,10 +15,10 @@ use utoipa::ToSchema;
 use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
-    auth::BasicAuthExtractor,
+    authentication::BasicAuthExtractor,
     models::{self, order::Order},
 };
-use crate::{api::order_request::OrderRequest, auth::OptionalBasicAuth};
+use crate::{api::order_request::OrderRequest, authentication::OptionalBasicAuth};
 
 use super::feed::BookEvent;
 

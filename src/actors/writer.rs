@@ -2,7 +2,9 @@
 //! all events to the database.
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
-use lobster::{buyer_cost, seller_cost, Action, BookEvent, BookId, OrderBook, Tick, Timestamp, UserId};
+use lobster::{
+    buyer_cost, seller_cost, Action, BookEvent, BookId, OrderBook, Tick, Timestamp, UserId,
+};
 use lobster::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
@@ -199,20 +201,21 @@ impl State {
                     .await
                     .unwrap();
             }
-            Action::Resolve { price } => {
-                
-            }
+            Action::Resolve { price } => {}
         }
         transaction.commit().await.unwrap();
     }
 }
 
-/// Runs the exchange service
-pub async fn run_persistor(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
-    info!("Starting persistor...");
-    let mut state = State::new(db).await;
+pub fn start_writer_service(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
+    tokio::spawn({
+        async move {
+            info!("Starting writer service...");
+            let mut state = State::new(db).await;
 
-    while let Ok(event) = feed.recv().await {
-        state.on_event(event).await;
-    }
+            while let Ok(event) = feed.recv().await {
+                state.on_event(event).await;
+            }
+        }
+    });
 }

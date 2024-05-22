@@ -16,7 +16,7 @@ use tracing::warn;
 use super::templates::signup;
 use crate::actors::matcher_request::MatcherRequest;
 use crate::app_state::{current_time_micros, AppState};
-use crate::auth::{self, SessionExtractor};
+use crate::authentication::{self, SessionExtractor};
 use crate::models;
 use crate::models::invite::Invite;
 use crate::models::user::User;
@@ -79,9 +79,14 @@ pub async fn post(
     match Invite::check_and_claim(&mut *tx, &form.invite_code, user_id).await {
         Ok(Some(_)) => {
             tx.commit().await.unwrap();
-            let cookie =
-                auth::create_session(&state.db, user_id, timestamp, addr.to_string(), user_agent)
-                    .await;
+            let cookie = authentication::create_session(
+                &state.db,
+                user_id,
+                timestamp,
+                addr.to_string(),
+                user_agent,
+            )
+            .await;
 
             let initial_amount = 10000 * 500; // TODO
             let rows_affected = User::deposit(&state.db, user_id, initial_amount)

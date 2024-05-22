@@ -1,7 +1,7 @@
 use super::templates::home_page::HomePage;
 use crate::app_state::AppState;
 use crate::models::market::Market;
-use crate::{auth::SessionExtractor, models::book::Book};
+use crate::{authentication::SessionExtractor, models::book::Book};
 use axum::extract::State;
 use axum::response::IntoResponse;
 

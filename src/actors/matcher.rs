@@ -41,53 +41,50 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     engine
 }
 
-/// Runs the exchange service.
-pub async fn run_matcher(
+pub fn start_matcher_service(
     db: SqlitePool,
     mut recv: mpsc::Receiver<MatcherRequest>,
     market_data: broadcast::Sender<BookEvent>,
 ) {
-    info!("Starting matching engine...");
-    let mut exchange = bootstrap_exchange(&db).await;
+    tokio::spawn({
+        async move {
+            info!("Starting matching engine...");
+            let mut exchange = bootstrap_exchange(&db).await;
 
-    while let Some(msg) = recv.recv().await {
-        let timestamp = current_time_micros();
-
-        match msg {
-            MatcherRequest::SubmitOrder {
-                user,
-                order,
-                response,
-            } => {
-                info!(
-                    "REQUEST: {timestamp} submit order user_id={user} {:?}",
-                    order
-                );
-                let res = exchange.submit_order(timestamp, user, order);
-                if let Ok(event) = res.clone() {
-                    market_data.send(event).expect("Receiver dropped");
+            while let Some(msg) = recv.recv().await {
+                let timestamp = current_time_micros();
+                info!("REQUEST: {timestamp} request: {msg:?}");
+                match msg {
+                    MatcherRequest::SubmitOrder {
+                        user,
+                        order,
+                        response,
+                    } => {
+                        let res = exchange.submit_order(timestamp, user, order);
+                        if let Ok(event) = res.clone() {
+                            market_data.send(event).expect("Receiver dropped");
+                        }
+                        response.send(res).expect("Receiver dropped");
+                    }
+                    MatcherRequest::CancelOrder {
+                        user,
+                        order,
+                        response,
+                    } => {
+                        let res = exchange.cancel_order(timestamp, user, order);
+                        if let Ok(event) = res.clone() {
+                            market_data.send(event).expect("Receiver dropped");
+                        }
+                        response.send(res).expect("Receiver dropped");
+                    }
+                    MatcherRequest::AddBook { book_id } => {
+                        exchange.add_book(book_id);
+                    }
+                    MatcherRequest::Deposit { user, amount } => {
+                        exchange.deposit(user, amount);
+                    }
                 }
-                response.send(res).expect("Receiver dropped");
-            }
-            MatcherRequest::CancelOrder {
-                user,
-                order,
-                response,
-            } => {
-                info!("REQUEST: {timestamp} remove user_id={user} {order}");
-
-                let res = exchange.cancel_order(timestamp, user, order);
-                if let Ok(event) = res.clone() {
-                    market_data.send(event).expect("Receiver dropped");
-                }
-                response.send(res).expect("Receiver dropped");
-            }
-            MatcherRequest::AddBook { book_id } => {
-                exchange.add_book(book_id);
-            }
-            MatcherRequest::Deposit { user, amount } => {
-                exchange.deposit(user, amount);
             }
         }
-    }
+    });
 }

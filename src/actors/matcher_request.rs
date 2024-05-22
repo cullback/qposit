@@ -1,5 +1,5 @@
-use lobster::{Balance, BookEvent, BookId, OrderRequest, RejectReason, UserId};
 use lobster::OrderId;
+use lobster::{Balance, BookEvent, BookId, OrderRequest, RejectReason, UserId};
 use tokio::sync::oneshot;
 
 /// A request to the database engine.

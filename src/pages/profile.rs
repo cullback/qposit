@@ -1,5 +1,5 @@
 use super::templates::{open_orders, positions};
-use crate::{app_state::AppState, auth::SessionExtractor};
+use crate::{app_state::AppState, authentication::SessionExtractor};
 use askama::Template;
 use axum::{
     extract::State,

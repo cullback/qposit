@@ -10,7 +10,7 @@ use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
 use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState, auth::SessionExtractor,
+    actors::matcher_request::MatcherRequest, app_state::AppState, authentication::SessionExtractor,
     pages::templates::order_form::OrderForm,
 };
 

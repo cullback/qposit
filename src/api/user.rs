@@ -6,8 +6,8 @@ use serde_json::json;
 use utoipa::ToSchema;
 
 use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState, auth::BasicAuthExtractor,
-    models::user::User,
+    actors::matcher_request::MatcherRequest, app_state::AppState,
+    authentication::BasicAuthExtractor, models::user::User,
 };
 
 #[derive(Debug, Deserialize, ToSchema)]

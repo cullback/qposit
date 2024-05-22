@@ -111,17 +111,20 @@ impl BookService {
     }
 }
 
-/// Starts the book service.
-pub async fn run_book_service(
+pub fn start_book_service(
     db: SqlitePool,
     mut feed: broadcast::Receiver<BookEvent>,
     book_stream: broadcast::Sender<OrderBook>,
 ) {
-    info!("Starting book service...");
-    let mut state = BookService::new(&db).await;
+    tokio::spawn({
+        async move {
+            info!("Starting book service...");
+            let mut state = BookService::new(&db).await;
 
-    while let Ok(event) = feed.recv().await {
-        let orderbook = state.on_event(event);
-        book_stream.send(orderbook).unwrap();
-    }
+            while let Ok(event) = feed.recv().await {
+                let orderbook = state.on_event(event);
+                book_stream.send(orderbook).unwrap();
+            }
+        }
+    });
 }

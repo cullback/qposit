@@ -8,8 +8,8 @@ use sqlx::SqlitePool;
 use crate::models;
 
 pub mod book_service;
-pub mod matcher_request;
 pub mod matcher;
+pub mod matcher_request;
 pub mod writer;
 
 pub async fn bootstrap_books(

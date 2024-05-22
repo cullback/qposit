@@ -15,7 +15,7 @@ use tracing::info;
 
 use crate::{
     app_state::{current_time_micros, AppState},
-    auth::{self, SessionExtractor},
+    authentication::{self, SessionExtractor},
     models::session::Session,
 };
 
@@ -43,7 +43,7 @@ pub async fn post(
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
 
-    match auth::login(
+    match authentication::login(
         &state.db,
         &form.username,
         &form.password,
