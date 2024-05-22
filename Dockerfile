@@ -2,11 +2,12 @@
 FROM rust:1.76.0 as builder
 
 # Create a new empty shell project
-RUN USER=root cargo new --bin basic_site
-WORKDIR /basic_site
+RUN USER=root cargo new --bin qposit
+WORKDIR /qposit
 
 # Copy our manifests
 COPY ./Cargo.toml ./Cargo.toml
+COPY ./matcher ./matcher
 
 # This trick will cache our dependencies
 RUN cargo build --release
@@ -14,6 +15,8 @@ RUN rm src/*.rs
 
 # Copy our source code
 COPY ./src ./src
+COPY ./matcher ./matcher
+COPY ./static ./static
 COPY ./db/migrations ./db/migrations
 COPY ./templates ./templates
 

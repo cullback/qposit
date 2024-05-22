@@ -38,13 +38,15 @@ sudo usermod -aG docker $USER
 # build the image
 docker build -t qposit .
 docker save -o qposit_app.tar qposit:latest
-gcloud compute scp qposit_app.tar Caddyfile docker-compose.yml <username>@<NAME>:~/
-gcloud compute scp db/db.db <username>@<NAME>:~/db/db.db
-gcloud compute scp .env <username>@<NAME>:~/.env
+gcloud compute scp qposit_app.tar Caddyfile docker-compose.yml implygate@basic-site:~/
+gcloud compute scp db/db.db implygate@basic-site:~/db/db.db
+gcloud compute scp .env implygate@basic-site:~/.env
 
 # ssh into VM
-gcloud compute ssh <username>@<NAME>
+gcloud compute ssh implygate@basic-site
 docker load -i qposit_app.tar
 docker compose up -d
-```
 
+# take it down
+docker compose down
+```

@@ -10,20 +10,21 @@ import time
 import typing
 
 USER_ID = 3
-USERNAME = "account3"
-PASSWORD = "password123"
+USERNAME = "admin"
+PASSWORD = "berlopletrople"
 AUTH = (USERNAME, PASSWORD)
-BOOKS = (
-    2,  # Option B of demo market
-)
-URL = "http://localhost:3000/api/v1"
-
-
-def get_probability(book_id: int) -> float:
-    vals = {1: 0.50, 2: 0.75}
-    default_val = 0.5
-    return vals.get(book_id, default_val)
-
+BOOKS = {
+    1: 0.55, # donald trump
+    # 2: 0.46, # joe biden
+    # 7: 0.23, # tim scott
+    # 8: 0.13, # elise stefanik
+    # 9: 0.15, # doug bourgum
+    # 11: 0.05, # J.D. Vance
+    # 10: 0.05, # marco rubio
+    # 17: 0.25, # new york rangers
+}
+# URL = "http://localhost:3000/api/v1"
+URL = "http://qposit.com/api/v1"
 
 def probability_to_price(probability: float) -> int:
     return round(probability * 10_000)
@@ -91,7 +92,7 @@ def compare_orders(
 def get_open_orders() -> list[Order]:
     params = {"user_id": USER_ID}
     resp = requests.get(f"{URL}/orders", params=params)
-    # print("open orders:", resp.status_code, resp.text)
+    print("open orders:", resp.status_code, resp.text)
     assert resp.status_code == 200
 
     orders = []
@@ -109,12 +110,13 @@ def get_open_orders() -> list[Order]:
 
 
 def step_for_book(book_id: int) -> None:
-    probability = get_probability(book_id)
+    probability = BOOKS[book_id]
     price = probability_to_price(probability)
     desired_orders = compute_desired_orders(price)
 
     open_orders = get_open_orders()
     orders_to_cancel, orders_to_place = compare_orders(desired_orders, open_orders)
+    return
 
     for order_id in orders_to_cancel:
         resp = requests.delete(f"{URL}/orders/{order_id}", auth=AUTH)
@@ -140,7 +142,7 @@ def main():
         print("stepping...")
         for book in BOOKS:
             step_for_book(book)
-        time.sleep(2)
+        time.sleep(10)
 
 
 if __name__ == "__main__":

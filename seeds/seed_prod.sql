@@ -1,9 +1,7 @@
 PRAGMA foreign_keys = ON;
 
 INSERT INTO user(id, username, created_at, balance, password_hash) VALUES
-    (1, 'admin', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
-    (2, 'account2', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
-    (3, 'account3', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw');
+    (1, 'admin', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$s2UMIFFiROfa4dsnjWVR7Q$FQk7me+PMOPnDO/DVsp+msGzjksDBubFb++vHdU+TrM');
 
 INSERT INTO invite(code, created_by, created_at) VALUES
     ('MK6H5JI3HM', 1, 1710007894419934),

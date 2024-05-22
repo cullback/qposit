@@ -1,7 +1,7 @@
 PRAGMA foreign_keys = ON;
 
 INSERT INTO user(id, username, created_at, balance, password_hash) VALUES
-    (1, 'admin', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
+    (1, 'admin', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$nH0r96UMcq28+lOfYqI55A$mxXgoWB5sjsY+TCtG6eLr5PSBnugL7X5pXOshECqHyc'),
     (2, 'account2', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw'),
     (3, 'account3', 1710007894419934, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$oY7oDHdkawz7pDgD91BJqw$qdQnWbgzexhJBC23YLJ8M8TJhHi22zf+BMHJAqAL9Rw');
 

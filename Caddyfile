@@ -1,7 +1,7 @@
-benburk.ca {
+qposit.com {
   reverse_proxy qposit:3000
 }
 
-www.benburk.ca {
-  redir https://benburk.ca{uri}
+www.qposit.com {
+  redir https://qposit.com{uri}
 }

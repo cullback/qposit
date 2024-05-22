@@ -15,6 +15,11 @@ db-reset:
   sqlx database drop && sqlx database create && sqlx migrate run --source $MIGRATIONS_PATH
   sqlite3 $DATABASE_PATH < seeds/seed.sql
 
+db-reset-prod:
+  echo "Resetting..."
+  sqlx database drop && sqlx database create && sqlx migrate run --source $MIGRATIONS_PATH
+  sqlite3 $DATABASE_PATH < seeds/seed_prod.sql
+
 build-server:
   cargo build --release
 

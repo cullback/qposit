@@ -40,6 +40,9 @@ pub enum Action {
     Remove {
         id: i64,
     },
+    Resolve {
+        price: u16,
+    },
 }
 
 impl From<exchange::BookEvent> for BookEvent {
@@ -57,6 +60,7 @@ impl From<exchange::BookEvent> for BookEvent {
                     is_buy: order.side.is_buy(),
                 },
                 exchange::Action::Remove { id } => Action::Remove { id },
+                exchange::Action::Resolve { price } => Action::Resolve { price },
             },
         }
     }

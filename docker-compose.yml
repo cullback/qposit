@@ -9,8 +9,8 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
 
-  basic_site:
-    image: basic_site:latest
+  qposit:
+    image: qposit:latest
     volumes:
       - ./db:/db
       - ./.env:/.env

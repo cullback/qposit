@@ -25,10 +25,11 @@ fn generate_session_id() -> String {
 }
 
 fn build_session_cookie(session_id: &str) -> Cookie<'static> {
+    let is_release = !cfg!(debug_assertions);
     Cookie::build(("session_id", session_id))
         .path("/")
         .same_site(SameSite::Strict)
-        // .secure(true) // TODO
+        .secure(is_release)
         .http_only(true)
         .max_age(time::Duration::WEEK)
         .build()

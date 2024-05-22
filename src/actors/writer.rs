@@ -200,6 +200,9 @@ impl State {
                     .await
                     .unwrap();
             }
+            Action::Resolve { price } => {
+                
+            }
         }
         transaction.commit().await.unwrap();
     }
