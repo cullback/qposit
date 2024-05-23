@@ -59,7 +59,7 @@ pub async fn post(
         balance: 0,
     };
 
-    let mut tx = state.db.begin().await.unwrap();
+    let mut tx = state.pool.begin().await.unwrap();
     let user_id = match user.insert(&mut *tx).await {
         Ok(user_id) => user_id,
         Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
@@ -80,7 +80,7 @@ pub async fn post(
         Ok(Some(_)) => {
             tx.commit().await.unwrap();
             let cookie = authentication::create_session(
-                &state.db,
+                &state.pool,
                 user_id,
                 timestamp,
                 addr.to_string(),
@@ -89,7 +89,7 @@ pub async fn post(
             .await;
 
             let initial_amount = 10000 * 500; // TODO
-            let rows_affected = User::deposit(&state.db, user_id, initial_amount)
+            let rows_affected = User::deposit(&state.pool, user_id, initial_amount)
                 .await
                 .unwrap();
             assert_eq!(rows_affected, 1);

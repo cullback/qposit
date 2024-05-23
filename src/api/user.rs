@@ -35,7 +35,7 @@ pub async fn deposit(
         return Json(json!({"error": "not authorized"})).into_response();
     }
 
-    match User::deposit(&state.db, payload.user_id, payload.amount)
+    match User::deposit(&state.pool, payload.user_id, payload.amount)
         .await
         .map(|x| x == 1)
     {

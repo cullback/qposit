@@ -38,7 +38,7 @@ fn build_session_cookie(session_id: &str) -> Cookie<'static> {
 
 /// Create a session for the user and return a cookie for it.
 pub async fn create_session<'c, E: Executor<'c, Database = Sqlite>>(
-    db: E,
+    pool: E,
     user_id: UserId,
     time: Timestamp,
     ip_address: String,
@@ -53,14 +53,17 @@ pub async fn create_session<'c, E: Executor<'c, Database = Sqlite>>(
         created_at: time,
         expires_at: 0, // todo
     };
-    session.insert(db).await.unwrap();
+    session.insert(pool).await.unwrap();
     build_session_cookie(&id)
 }
 
-async fn check_login(db: &SqlitePool, username: &str, password: &str) -> Option<User> {
-    User::get_by_username(db, username)
+/// Checks a usernames+password combination using the database and returns the user if it is valid.
+/// Returns `None` if the user does not exist or the password is incorrect.
+async fn check_login(pool: &SqlitePool, username: &str, password: &str) -> Option<User> {
+    User::get_by_username(pool, username)
         .await
         .ok()
+        .flatten()
         .and_then(|user| {
             let parsed_hash = PasswordHash::new(&user.password_hash).expect("Failed to parsh hash");
             Argon2::default()
@@ -101,7 +104,7 @@ impl FromRequestParts<AppState> for SessionExtractor {
         let Some(session_id) = jar.get("session_id").map(Cookie::value) else {
             return Ok(Self(None));
         };
-        let session = match Session::get_by_id(&state.db, session_id).await {
+        let session = match Session::get_by_id(&state.pool, session_id).await {
             Ok(Some(session)) => session,
             Ok(None) => return Ok(Self(None)),
             Err(err) => {
@@ -109,7 +112,7 @@ impl FromRequestParts<AppState> for SessionExtractor {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
             }
         };
-        let user = match User::get_by_id(&state.db, session.user_id).await {
+        let user = match User::get_by_id(&state.pool, session.user_id).await {
             Ok(Some(user)) => user,
             Ok(None) => return Ok(Self(None)),
             Err(err) => {
@@ -137,7 +140,7 @@ impl FromRequestParts<AppState> for BasicAuthExtractor {
         else {
             return Err(StatusCode::UNAUTHORIZED.into_response());
         };
-        match check_login(&state.db, x.username(), x.password()).await {
+        match check_login(&state.pool, x.username(), x.password()).await {
             Some(user) => Ok(Self(user)),
             None => Err(StatusCode::UNAUTHORIZED.into_response()),
         }
@@ -159,7 +162,7 @@ impl FromRequestParts<AppState> for OptionalBasicAuth {
         else {
             return Ok(Self(None));
         };
-        let user = check_login(&state.db, header.username(), header.password()).await;
+        let user = check_login(&state.pool, header.username(), header.password()).await;
         Ok(Self(user))
     }
 }

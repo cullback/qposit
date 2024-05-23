@@ -26,8 +26,8 @@ pub async fn get(
     let page = Component {
         username: &user.username,
         balance: user.balance as f32,
-        positions: positions::Positions::build(&state.db, user.id).await,
-        open_orders: open_orders::OpenOrders::build(&state.db, user.id).await,
+        positions: positions::Positions::build(&state.pool, user.id).await,
+        open_orders: open_orders::OpenOrders::build(&state.pool, user.id).await,
     }
     .render()
     .unwrap();

@@ -98,7 +98,7 @@ pub async fn get(
     query.push(" ORDER BY created_at DESC LIMIT ");
     query.push_bind(params.limit);
 
-    let orders = match query.build_query_as::<Order>().fetch_all(&state.db).await {
+    let orders = match query.build_query_as::<Order>().fetch_all(&state.pool).await {
         Ok(orders) => orders,
         Err(err) => {
             error!(?err);
@@ -168,7 +168,7 @@ pub async fn delete(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
 ) -> impl IntoResponse {
-    let Ok(orders) = models::order::Order::get_for_user(&state.db, user.id).await else {
+    let Ok(orders) = models::order::Order::get_for_user(&state.pool, user.id).await else {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 

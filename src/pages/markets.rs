@@ -13,7 +13,7 @@ pub async fn get(
     Path(slug): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let Ok(market) = Market::get_by_slug(&state.db, &slug).await else {
+    let Ok(market) = Market::get_by_slug(&state.pool, &slug).await else {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 
@@ -21,7 +21,7 @@ pub async fn get(
         return Redirect::to("/404").into_response();
     };
 
-    let books = Book::get_all_for_market(&state.db, market.id)
+    let books = Book::get_all_for_market(&state.pool, market.id)
         .await
         .unwrap()
         .iter()

@@ -24,12 +24,12 @@ use crate::{
     )
 )]
 pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
-    let markets = models::market::Market::get_active_markets(&state.db)
+    let markets = models::market::Market::get_active_markets(&state.pool)
         .await
         .unwrap();
     let mut resp = vec![];
     for market in markets {
-        let books = Book::get_all_for_market(&state.db, market.id)
+        let books = Book::get_all_for_market(&state.pool, market.id)
             .await
             .unwrap();
         resp.push(json!({
@@ -88,7 +88,7 @@ pub async fn post(
         expires_at: market.expires_at,
     };
 
-    let market_id = match record.insert(&state.db).await {
+    let market_id = match record.insert(&state.pool).await {
         Ok(row_id) => row_id,
         Err(sqlx::Error::Database(x)) if x.is_unique_violation() => {
             return Json(json!({"error": "Market already exists"})).into_response();
@@ -106,7 +106,7 @@ pub async fn post(
             value: None,
             last_trade_price: None,
         };
-        let book_id = BookId::try_from(book.insert(&state.db).await.unwrap()).unwrap();
+        let book_id = BookId::try_from(book.insert(&state.pool).await.unwrap()).unwrap();
         let req = MatcherRequest::AddBook { book_id };
         state.cmd_send.send(req).await.unwrap();
     }

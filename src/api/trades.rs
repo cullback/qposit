@@ -74,7 +74,7 @@ pub async fn get(State(state): State<AppState>, params: Query<TradeParams>) -> R
     query.push(" ORDER BY created_at DESC LIMIT ");
     query.push_bind(params.limit);
 
-    let trades = match query.build_query_as::<Trade>().fetch_all(&state.db).await {
+    let trades = match query.build_query_as::<Trade>().fetch_all(&state.pool).await {
         Ok(trades) => trades,
         Err(err) => {
             error!(?err);

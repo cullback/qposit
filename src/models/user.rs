@@ -22,13 +22,17 @@ impl User {
             .await
     }
 
-    pub async fn get_by_username(db: &SqlitePool, username: &str) -> Result<Self, sqlx::Error> {
+    pub async fn get_by_username(
+        db: &SqlitePool,
+        username: &str,
+    ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM 'user' WHERE username = ?")
             .bind(username)
-            .fetch_one(db)
+            .fetch_optional(db)
             .await
     }
 
+    /// Inserts the user into the database and returns the new user's ID.
     pub async fn insert<'c, E: Executor<'c, Database = Sqlite>>(
         &self,
         db: E,

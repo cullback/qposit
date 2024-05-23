@@ -44,7 +44,7 @@ pub async fn post(
     let timestamp = current_time_micros();
 
     match authentication::login(
-        &state.db,
+        &state.pool,
         &form.username,
         &form.password,
         timestamp,
@@ -67,7 +67,7 @@ pub async fn post(
 pub async fn delete(jar: CookieJar, State(state): State<AppState>) -> impl IntoResponse {
     info!("DELETE /login");
     if let Some(cookie) = jar.get("session_id") {
-        Session::delete_by_id(&state.db, cookie.value())
+        Session::delete_by_id(&state.pool, cookie.value())
             .await
             .expect("failed to delete session id from database");
     }
@@ -82,6 +82,8 @@ pub async fn delete_by_id(
     Path(session_id): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    Session::delete_by_id(&state.db, &session_id).await.unwrap();
+    Session::delete_by_id(&state.pool, &session_id)
+        .await
+        .unwrap();
     Html("").into_response()
 }
