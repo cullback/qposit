@@ -11,7 +11,7 @@ use axum_extra::TypedHeader;
 use rand::rngs::OsRng;
 use serde::Deserialize;
 use std::net::SocketAddr;
-use tracing::warn;
+use tracing::{error, warn};
 
 use super::templates::signup;
 use crate::actors::matcher_request::MatcherRequest;

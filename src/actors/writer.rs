@@ -2,9 +2,7 @@
 //! all events to the database.
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
-use lobster::{
-    buyer_cost, seller_cost, Action, BookEvent, BookId, OrderBook, Tick, Timestamp, UserId,
-};
+use lobster::{trade_cost, Action, BookEvent, BookId, OrderBook, Side, Tick, Timestamp, UserId};
 use lobster::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
@@ -26,7 +24,8 @@ struct Trade {
     maker_oid: OrderId,
     quantity: Quantity,
     price: Price,
-    is_buy: bool,
+    /// Taker side
+    side: Side,
 }
 
 struct State {
@@ -58,22 +57,30 @@ impl State {
         }
     }
 
-    async fn on_trade<E>(&self, executor: &mut E, trade: Trade)
+    /// This logic is mostly copy-pasted from the matching engine.
+    async fn on_trade<E>(&mut self, executor: &mut E, trade: Trade)
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        // https://stackoverflow.com/questions/76394665/how-to-pass-sqlx-connection-a-mut-trait-as-a-fn-parameter-in-rust
-        let (user_a, user_b) = if trade.is_buy {
-            (trade.taker_id, trade.maker_id)
-        } else {
-            (trade.maker_id, trade.taker_id)
+        let position = self
+            .positions
+            .entry((trade.taker_id, trade.book_id))
+            .or_default();
+        let taker_cost = trade_cost(*position, trade.quantity, trade.price, trade.side);
+
+        let signed_quantity = match trade.side {
+            Side::Buy => trade.quantity as i32,
+            Side::Sell => -(trade.quantity as i32),
         };
 
-        let pos_a = *self.positions.get(&(user_a, trade.book_id)).unwrap_or(&0);
-        let pos_b = *self.positions.get(&(user_b, trade.book_id)).unwrap_or(&0);
+        *position += signed_quantity;
 
-        let buyer_cost = buyer_cost(pos_a, trade.quantity, trade.price);
-        let seller_cost = seller_cost(pos_b, trade.quantity, trade.price);
+        let position = self
+            .positions
+            .entry((trade.maker_id, trade.book_id))
+            .or_default();
+        let maker_cost = trade_cost(*position, trade.quantity, trade.price, !trade.side);
+        *position -= signed_quantity;
 
         if trade.taker_id == trade.maker_id {
             warn!(?trade, "self trade, not updating balance or position");
@@ -90,27 +97,29 @@ impl State {
                 VALUES (?, ?, -?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position - ?;
                 ",
                 // update taker balance params
-                buyer_cost,
+                taker_cost,
                 trade.taker_id,
                 // update maker balance params
-                seller_cost,
+                maker_cost,
                 trade.maker_id,
                 // update taker position params
-                user_a,
+                trade.taker_id,
                 trade.book_id,
-                trade.quantity,
-                trade.quantity,
+                signed_quantity,
+                signed_quantity,
                 // update maker position params
-                user_b,
+                trade.maker_id,
                 trade.book_id,
-                trade.quantity,
-                trade.quantity,
+                signed_quantity,
+                signed_quantity,
             )
             .execute(&mut *executor)
             .await
             .unwrap();
         }
 
+        // this is a separate query that runs regardless of self-match or not
+        let is_buy = trade.side.is_buy();
         sqlx::query!(
             "
             INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
@@ -136,7 +145,7 @@ impl State {
             trade.maker_oid,
             trade.quantity,
             trade.price,
-            trade.is_buy,
+            is_buy,
             // update taker order
             trade.quantity,
             trade.quantity,
@@ -187,7 +196,7 @@ impl State {
                         maker_oid: fill.id,
                         quantity: fill.quantity,
                         price: fill.price,
-                        is_buy: order.side.is_buy(),
+                        side: order.side,
                     };
                     self.on_trade(&mut *transaction, trade).await;
                 }

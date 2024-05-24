@@ -11,7 +11,7 @@ use axum_extra::headers::authorization::Basic;
 use axum_extra::headers::{Authorization, UserAgent};
 use axum_extra::TypedHeader;
 use sqlx::{Executor, Sqlite, SqlitePool};
-use tracing::warn;
+use tracing::{error, warn};
 
 use crate::app_state::AppState;
 use crate::models::session::Session;

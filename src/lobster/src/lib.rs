@@ -23,7 +23,7 @@ pub use reject_reason::RejectReason;
 
 pub use orderbook::{Fill, Order, OrderBook, OrderId, Price, Quantity, Side};
 
-pub use math::{buyer_cost, seller_cost, trade_cost};
+pub use math::trade_cost;
 
 /// Balance in basis points.
 pub type Balance = i64;
@@ -617,5 +617,33 @@ mod tests {
 
         assert_eq!(exch.balances[&bob], 100500);
         assert_eq!(exch.balances[&cat], 99500);
+    }
+
+    #[test]
+    fn trade_with_top_of_book() {
+        let mut exch = setup_default_scenario();
+        let time = 1;
+        let book = 1;
+        let bob = 1;
+        let cat = 2;
+
+        // bob places resting order
+        let order = OrderRequest::sell(book, 5, 7000, TimeInForce::GTC);
+        let event = exch.submit_order(time, bob, order);
+        assert_eq!(event, Ok(BookEvent::sell(time, 0, book, bob, 0, 5, 7000)));
+
+        let order = OrderRequest::buy(book, 5, 6000, TimeInForce::GTC);
+        let event = exch.submit_order(time, bob, order);
+        assert_eq!(event, Ok(BookEvent::buy(time, 1, book, bob, 1, 5, 6000)));
+
+        let order = OrderRequest::buy(book, 1, 9999, TimeInForce::IOC);
+        let event = exch.submit_order(time, cat, order);
+        assert_eq!(event, Ok(BookEvent::buy(time, 2, book, cat, 2, 1, 9999)));
+        let order = OrderRequest::sell(book, 1, 1, TimeInForce::IOC);
+        let event = exch.submit_order(time, cat, order);
+        assert_eq!(event, Ok(BookEvent::sell(time, 3, book, cat, 3, 1, 1)));
+
+        assert_eq!(exch.balances[&bob], 101000);
+        assert_eq!(exch.balances[&cat], 99000);
     }
 }

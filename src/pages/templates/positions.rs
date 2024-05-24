@@ -15,6 +15,7 @@ struct Position {
 struct PositionAsHtml {
     market_title: String,
     book_title: String,
+    side: String,
     position: String,
     last_price: String,
     market_value: String,
@@ -22,10 +23,12 @@ struct PositionAsHtml {
 
 impl From<Position> for PositionAsHtml {
     fn from(position: Position) -> Self {
+        let side = if position.position >= 0 { "Yes" } else { "No" }.to_string();
         Self {
             market_title: position.market_title,
             book_title: position.book_title,
-            position: format!("{}", position.position),
+            side,
+            position: format!("{}", position.position.abs()),
             last_price: format!("{:.2}", position.last_price as f32 / 100.0),
             market_value: format!("{:.2}", position.market_value as f32 / 10000.0),
         }
