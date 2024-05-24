@@ -3,12 +3,8 @@
         <fieldset>
             <div hx-preserve id="order_type{{book_id}}">
                 <legend>Order type</legend>
-                <label><input type="radio" name="order_type" value="GTC" checked
-                        onclick="document.getElementById('price_field{{book_id}}').disabled = false" />GTC</label>
-                <label><input type="radio" name="order_type" value="IOC"
-                        onclick="document.getElementById('price_field{{book_id}}').disabled = false" />IOC</label>
-                <label><input type="radio" name="order_type" value="POST"
-                        onclick="document.getElementById('price_field{{book_id}}').disabled = false" />POST</label>
+                <label><input type="radio" name="order_type" value="Limit" checked
+                        onclick="document.getElementById('price_field{{book_id}}').disabled = false" />Limit</label>
                 <label><input type="radio" name="order_type" value="Market"
                         onclick="document.getElementById('price_field{{book_id}}').disabled = true" />Market</label>
             </div>
@@ -35,10 +31,10 @@
                 </label>
             </div>
             <div class="grid">
-                <input type="submit" value="Buy" hx-vals='{"is_buy":true,"book":{{book_id}}}' hx-swap="innerHTML"
+                <input type="submit" value="Yes" hx-vals='{"is_buy":true,"book":{{book_id}}}' hx-swap="innerHTML"
                     hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-green-450"
                     hx-disabled-elt="this">
-                <input type="submit" value="Sell" hx-vals='{"is_buy":false,"book":{{book_id}}}' hx-swap="innerHTML"
+                <input type="submit" value="No" hx-vals='{"is_buy":false,"book":{{book_id}}}' hx-swap="innerHTML"
                     hx-target="#order_form{{book_id}}" hx-post="/orders" class="pico-background-red-450"
                     hx-disabled-elt="this">
             </div>
