@@ -1,7 +1,7 @@
 use askama::Template;
 use lobster::BookId;
 
-use crate::models::market::Market;
+use crate::{app_state::format_as_string, models::market::Market};
 
 use super::order_form::OrderForm;
 
@@ -9,6 +9,7 @@ use super::order_form::OrderForm;
 #[template(path = "market.html")]
 pub struct MarketPage {
     username: String,
+    expires_at: String,
     market: Market,
     /// Comma-separated list of book IDs
     books: String,
@@ -19,6 +20,7 @@ impl MarketPage {
     pub fn new(username: String, market: Market, books: Vec<BookId>) -> Self {
         Self {
             username,
+            expires_at: format_as_string(market.expires_at),
             market,
             books: books
                 .iter()

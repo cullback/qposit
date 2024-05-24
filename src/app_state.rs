@@ -1,6 +1,10 @@
 use lobster::{BookEvent, Timestamp};
 use sqlx::SqlitePool;
-use time::{format_description, OffsetDateTime};
+use time::{
+    format_description,
+    macros::{format_description, offset},
+    OffsetDateTime, UtcOffset,
+};
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{actors::matcher_request::MatcherRequest, pages::OrderBook};
@@ -53,8 +57,24 @@ pub fn current_time_micros() -> Timestamp {
 /// Pretty prints a timestamp as a string.
 /// e.g. November 10, 2020 12:00:00
 pub fn format_as_string(timestamp: Timestamp) -> String {
-    let timestamp_seconds = timestamp / 1_000_000;
-    let thing = OffsetDateTime::from_unix_timestamp(timestamp_seconds).unwrap();
-    let fmt = format_description::parse("%B %d, %Y %H:%M:%S").unwrap();
-    thing.format(&fmt).unwrap()
+    let date = OffsetDateTime::from_unix_timestamp_nanos(i128::from(timestamp * 1000)).unwrap();
+    // convert to eastern time
+    let date = date.to_offset(offset!(-5));
+
+    let format = format_description!(
+        "[weekday], [month repr:long] [day padding:none], [year] at [hour]:[minute]:[second]"
+    );
+    date.format(&format).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_as_string;
+
+    #[test]
+    fn test_timestamp_format() {
+        let timestamp = 1730829600_000000;
+        let formatted = format_as_string(timestamp);
+        assert_eq!(formatted, "Tuesday, November 5, 2024 at 13:00:00");
+    }
 }
