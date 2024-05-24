@@ -156,7 +156,7 @@ mod tests {
 
     #[test]
     fn add_then_remove() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         let id = 1;
         book.add(Order::buy(id, 1, 2));
         assert_eq!(book.len(), 1);
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn multiple_fills_with_cancel() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 2, 5));
         book.add(Order::sell(1, 3, 6));
         book.add(Order::sell(2, 4, 7));
@@ -178,14 +178,14 @@ mod tests {
 
     #[test]
     fn fire_for_order_that_was_filled_exactly() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 2, 23));
         let fills = book.add(Order::buy(1, 2, 23));
         assert_eq!(fills, vec![Fill::new(0, 2, 23, true)]);
         let fills = book.add(Order::buy(2, 2, 23));
         assert_eq!(fills, vec![]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, 2, 23));
         let fills = book.add(Order::sell(1, 2, 23));
         assert_eq!(fills, vec![Fill::new(0, 2, 23, true)]);
@@ -195,14 +195,14 @@ mod tests {
 
     #[test]
     fn fire_for_order_that_was_filled_excessively() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 1, 23));
         let fills = book.add(Order::buy(1, 2, 23));
         assert_eq!(fills, vec![Fill::new(0, 1, 23, true)]);
         let fills = book.add(Order::buy(2, 1, 23));
         assert_eq!(fills, vec![]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, 1, 23));
         let fills = book.add(Order::sell(1, 2, 23));
         assert_eq!(fills, vec![Fill::new(0, 1, 23, true)]);
@@ -212,14 +212,14 @@ mod tests {
 
     #[test]
     fn trade_twice_with_resting_order() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 2, 23));
         let fills = book.add(Order::buy(1, 1, 23));
         assert_eq!(fills, vec![Fill::new(0, 1, 23, false)]);
         let fills = book.add(Order::buy(2, 1, 23));
         assert_eq!(fills, vec![Fill::new(0, 1, 23, true)]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, 2, 23));
         let fills = book.add(Order::sell(1, 1, 23));
         assert_eq!(fills, vec![Fill::new(0, 1, 23, false)]);
@@ -229,12 +229,12 @@ mod tests {
 
     #[test]
     fn test_quantity_limits() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, Quantity::MAX, 23));
         let fills = book.add(Order::buy(1, Quantity::MAX, 23));
         assert_eq!(fills, vec![Fill::new(0, Quantity::MAX, 23, true)]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, Quantity::MAX, 23));
         let fills = book.add(Order::sell(1, Quantity::MAX, 23));
         assert_eq!(fills, vec![Fill::new(0, Quantity::MAX, 23, true)]);
@@ -242,28 +242,28 @@ mod tests {
 
     #[test]
     fn trade_twice_with_resting_order_price_limits() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 2, Price::MIN));
         let fills = book.add(Order::buy(1, 1, Price::MIN));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MIN, false)]);
         let fills = book.add(Order::buy(2, 1, Price::MIN));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MIN, true)]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, 2, Price::MIN));
         let fills = book.add(Order::sell(1, 1, Price::MIN));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MIN, false)]);
         let fills = book.add(Order::sell(2, 1, Price::MIN));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MIN, true)]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 2, Price::MAX));
         let fills = book.add(Order::buy(1, 1, Price::MAX));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MAX, false)]);
         let fills = book.add(Order::buy(2, 1, Price::MAX));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MAX, true)]);
 
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::buy(0, 2, Price::MAX));
         let fills = book.add(Order::sell(1, 1, Price::MAX));
         assert_eq!(fills, vec![Fill::new(0, 1, Price::MAX, false)]);
@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn test_queue_priority() {
-        let mut book = lobster::default();
+        let mut book = OrderBook::default();
         book.add(Order::sell(0, 1, 23));
         book.add(Order::sell(1, 1, 23));
         book.add(Order::sell(2, 1, 23));

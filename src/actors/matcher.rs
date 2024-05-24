@@ -31,7 +31,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     for order in Order::get_open_orders(db).await.unwrap() {
         let order2 = lobster::Order::new(
             order.id,
-            order.user_id,
+            order.quantity,
             order.price,
             Side::new(order.is_buy),
         );

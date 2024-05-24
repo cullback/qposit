@@ -339,14 +339,16 @@ impl Exchange {
 
 #[cfg(test)]
 mod tests {
-    use crate::{BookEvent, Exchange, OrderRequest, RejectReason, TimeInForce, RESOLVE_PRICE};
+    use crate::{
+        BookEvent, Exchange, OrderBook, OrderRequest, RejectReason, TimeInForce, RESOLVE_PRICE,
+    };
 
     /// Set up exchange with two users with balances and one book.
     fn setup_default_scenario() -> Exchange {
         let user1 = 1;
         let user2 = 2;
         let book = 1;
-        let mut exch = lobster::default();
+        let mut exch = Exchange::default();
         exch.add_book(book);
         exch.deposit(user1, 10 * i64::from(RESOLVE_PRICE));
         exch.deposit(user2, 10 * i64::from(RESOLVE_PRICE));
