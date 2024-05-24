@@ -96,4 +96,12 @@ impl Book {
         .fetch_all(db)
         .await
     }
+
+    pub async fn get_volume(db: &SqlitePool, book_id: BookId) -> Result<u64, sqlx::Error> {
+        sqlx::query_as::<_, (i64,)>("SELECT SUM(quantity * price) FROM trade WHERE book_id = ?")
+            .bind(book_id)
+            .fetch_one(db)
+            .await
+            .map(|x| x.0 as u64)
+    }
 }

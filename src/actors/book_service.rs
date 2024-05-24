@@ -17,6 +17,7 @@ use tokio::sync::broadcast;
 use tracing::info;
 
 use crate::models;
+use crate::models::book::Book;
 use crate::pages::OrderBook;
 
 pub struct BookData {
@@ -28,17 +29,6 @@ pub struct BookData {
 }
 
 impl BookData {
-    async fn get_volume_for_book(db: &SqlitePool, book_id: BookId) -> u64 {
-        let (volume,) = sqlx::query_as::<_, (i64,)>(
-            "SELECT SUM(quantity * price) FROM trade WHERE book_id = ?",
-        )
-        .bind(book_id)
-        .fetch_one(db)
-        .await
-        .unwrap();
-        u64::try_from(volume).unwrap()
-    }
-
     pub async fn new(
         db: &SqlitePool,
         book_id: BookId,
@@ -59,7 +49,7 @@ impl BookData {
             assert!(book.add(order2).is_empty());
         }
 
-        let volume = Self::get_volume_for_book(db, book_id).await;
+        let volume = Book::get_volume(db, book_id).await.unwrap();
 
         Self {
             book_id,
@@ -83,7 +73,7 @@ impl BookData {
                 assert!(self.inner.remove(id).is_some());
             }
             Action::Resolve { price } => {
-                todo!()
+                self.last_price = Some(price);
             }
         }
     }
