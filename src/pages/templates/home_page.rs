@@ -4,10 +4,10 @@ use lobster::BookId;
 use crate::models::{book::Book, market::Market};
 
 struct BookView {
-    pub id: BookId,
-    pub market_id: i64,
-    pub title: String,
-    pub last_trade_price: String,
+    id: BookId,
+    market_id: i64,
+    title: String,
+    last_trade_price: String,
 }
 
 impl From<Book> for BookView {
@@ -24,8 +24,9 @@ impl From<Book> for BookView {
 #[derive(Template)]
 #[template(path = "home.html")]
 pub struct HomePage {
-    pub username: String,
-    pub markets: Vec<(Market, Vec<BookView>)>,
+    /// Username for header. Empty string if not logged in.
+    username: String,
+    markets: Vec<(Market, Vec<BookView>)>,
 }
 
 impl HomePage {

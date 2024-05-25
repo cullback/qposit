@@ -1,7 +1,16 @@
 use askama::Template;
 
-#[derive(Template)]
+#[derive(Template, Default)]
 #[template(path = "about.html")]
 pub struct AboutPage {
-    pub username: String,
+    username: String,
+}
+
+
+impl AboutPage {
+    pub fn new(username: String) -> Self {
+        Self {
+            username: username,
+        }
+    }
 }
