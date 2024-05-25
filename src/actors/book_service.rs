@@ -24,6 +24,8 @@ pub struct BookData {
     pub book_id: BookId,
     pub title: String,
     pub inner: lobster::OrderBook,
+    pub best_bid_price: Option<Price>,
+    pub best_ask_price: Option<Price>,
     pub last_price: Option<Price>,
     pub volume: u64,
 }
@@ -54,6 +56,8 @@ impl BookData {
         Self {
             book_id,
             title,
+            best_bid_price: book.best_bid().map(|x| x.price),
+            best_ask_price: book.best_ask().map(|x| x.price),
             inner: book,
             last_price: last_trade_price,
             volume,
@@ -68,9 +72,13 @@ impl BookData {
                     self.volume += u64::from(fill.quantity) * u64::from(fill.price);
                     self.last_price = Some(fill.price);
                 }
+                self.best_bid_price = self.inner.best_bid().map(|x| x.price);
+                self.best_ask_price = self.inner.best_ask().map(|x| x.price);
             }
             Action::Remove { id } => {
                 assert!(self.inner.remove(id).is_some());
+                self.best_bid_price = self.inner.best_bid().map(|x| x.price);
+                self.best_ask_price = self.inner.best_ask().map(|x| x.price);
             }
             Action::Resolve { price } => {
                 self.last_price = Some(price);

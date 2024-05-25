@@ -1,4 +1,4 @@
-use lobster::BookId;
+use lobster::{BookId, Price};
 use sqlx::{prelude::FromRow, SqlitePool};
 
 #[derive(Debug, FromRow)]
@@ -6,8 +6,10 @@ pub struct Book {
     pub id: BookId,
     pub market_id: i64,
     pub title: String,
-    pub value: Option<u16>,
-    pub last_trade_price: Option<u16>,
+    pub value: Option<Price>,
+    pub last_trade_price: Option<Price>,
+    pub best_bid_price: Option<Price>,
+    pub best_ask_price: Option<Price>,
 }
 
 impl Book {
@@ -25,7 +27,17 @@ impl Book {
                     WHERE trade.book_id = book.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
-                ) as last_trade_price
+                ) as last_trade_price,
+                (
+                    SELECT MAX(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
+                ) AS best_bid_price,
+                (
+                    SELECT MIN(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
+                ) AS best_ask_price
             FROM book
             WHERE book.id = ?;
             ",
@@ -65,7 +77,17 @@ impl Book {
                     WHERE trade.book_id = book.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
-                ) AS last_trade_price
+                ) AS last_trade_price,
+                (
+                    SELECT MAX(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
+                ) AS best_bid_price,
+                (
+                    SELECT MIN(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
+                ) AS best_ask_price
             FROM book
             WHERE book.market_id = ?;
             ",
@@ -89,7 +111,17 @@ impl Book {
                     WHERE trade.book_id = book.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
-                ) as last_trade_price
+                ) as last_trade_price,
+                (
+                    SELECT MAX(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
+                ) AS best_bid_price,
+                (
+                    SELECT MIN(price)
+                    FROM 'order'
+                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
+                ) AS best_ask_price
             FROM book
             ",
         )

@@ -8,15 +8,23 @@ struct BookView {
     market_id: i64,
     title: String,
     last_trade_price: String,
+    mid_price: String,
 }
 
 impl From<Book> for BookView {
     fn from(book: Book) -> Self {
+        let mid_price = match (book.best_bid_price, book.best_ask_price) {
+            (Some(bid), Some(ask)) => format!("{:.2}", (bid + ask) as f32 / 200.0),
+            (Some(bid), None) => format!("{:.2}", bid as f32 / 100.0),
+            (None, Some(ask)) => format!("{:.2}", ask as f32 / 100.0),
+            _ => "N/A".to_string(),
+        };
         Self {
             id: book.id,
             market_id: book.market_id,
             title: book.title,
             last_trade_price: format!("{:.2}", book.last_trade_price.unwrap_or(0) as f32 / 100.0),
+            mid_price,
         }
     }
 }

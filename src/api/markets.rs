@@ -104,6 +104,8 @@ pub async fn post(
             market_id,
             title: book,
             value: None,
+            best_bid_price: None,
+            best_ask_price: None,
             last_trade_price: None,
         };
         let book_id = BookId::try_from(book.insert(&state.pool).await.unwrap()).unwrap();

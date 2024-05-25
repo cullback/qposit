@@ -58,6 +58,7 @@ pub struct OrderBook {
     pub book_id: BookId,
     title: String,
     last_price: String,
+    mid_price: String,
     volume: String,
     bids: Vec<PriceLevel>,
     asks: Vec<PriceLevel>,
@@ -67,10 +68,17 @@ impl From<&BookData> for OrderBook {
     fn from(book: &BookData) -> Self {
         let last_price = format!("{:.2}", book.last_price.unwrap_or(0) as f32 / 100.0);
         let volume = format!("{:.2}", book.volume as f32 / 10000.0);
+        let mid_price = match (book.best_bid_price, book.best_ask_price) {
+            (Some(bid), Some(ask)) => format!("{:.2}", (bid + ask) as f32 / 200.0),
+            (Some(bid), None) => format!("{:.2}", bid as f32 / 100.0),
+            (None, Some(ask)) => format!("{:.2}", ask as f32 / 100.0),
+            _ => "N/A".to_string(),
+        };
         Self {
             book_id: book.book_id,
             title: book.title.clone(),
             last_price,
+            mid_price,
             volume,
             bids: do_side(book.inner.bids()),
             asks: do_side(book.inner.asks()),
