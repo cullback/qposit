@@ -206,7 +206,7 @@ slug = "2024-bibi-prime-ministership"
 title = "Benjamin Netanyahu's Prime Ministership"
 tags = ["politics", "israel"]
 created_at = 1697838953000000
-expires_at = 1730764800000000
+expires_at = 1735689600000000 # 31 Dec 2024
 books = ["Yes"]
 description = """
 

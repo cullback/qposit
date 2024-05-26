@@ -1,5 +1,5 @@
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Router,
 };
 use utoipa_rapidoc::RapiDoc;
@@ -9,6 +9,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::app_state::AppState;
 
+mod books;
 mod feed;
 mod markets;
 mod order_request;
@@ -33,6 +34,7 @@ use utoipa::{
         orders::delete_by_id,
         markets::post,
         feed::get,
+        books::patch,
         trades::get,
     ),
     components(
@@ -69,6 +71,8 @@ pub fn router(state: AppState) -> Router {
         .route("/markets/:slug", post(markets::post))
         .route("/markets", get(markets::get))
         .route("/trades", get(trades::get))
+        .route("/books/:id", patch(books::patch))
+        .route("/deposit/:id", post(user::deposit))
         .route("/feed", get(feed::get));
 
     Router::new()

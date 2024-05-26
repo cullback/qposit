@@ -8,6 +8,6 @@ pub struct AboutPage {
 
 impl AboutPage {
     pub fn new(username: String) -> Self {
-        Self { username: username }
+        Self { username }
     }
 }

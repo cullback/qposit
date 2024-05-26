@@ -1,5 +1,5 @@
-use lobster::OrderId;
 use lobster::{Balance, BookEvent, BookId, OrderRequest, RejectReason, UserId};
+use lobster::{OrderId, Price};
 use tokio::sync::oneshot;
 
 /// A request to the database engine.
@@ -24,6 +24,12 @@ pub enum MatcherRequest {
     Deposit {
         user: UserId,
         amount: Balance,
+    },
+    Resolve {
+        user_id: UserId,
+        book_id: BookId,
+        price: Price,
+        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
     },
 }
 
@@ -57,5 +63,16 @@ impl MatcherRequest {
     pub fn deposit(user: UserId, amount: Balance) -> Self {
         let req = Self::Deposit { user, amount };
         req
+    }
+
+    pub fn resolve(user_id: UserId, book_id: BookId, price: Price) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>)  {
+        let (response, recv) = oneshot::channel();
+        let req = Self::Resolve {
+            user_id,
+            book_id,
+            price,
+            response,
+        };
+        (req, recv)
     }
 }

@@ -2,7 +2,7 @@ use lobster::Side;
 use lobster::{BookEvent, Exchange};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
-use tracing::info;
+use tracing::{error, info};
 
 use crate::app_state::current_time_micros;
 
@@ -82,6 +82,15 @@ pub fn start_matcher_service(
                     }
                     MatcherRequest::Deposit { user, amount } => {
                         exchange.deposit(user, amount);
+                    }
+                    MatcherRequest::Resolve {
+                        user_id,
+                        book_id,
+                        price,
+                        response,
+                    } => {
+                        let event = exchange.resolve(timestamp, book_id, user_id, price);
+                        response.send(event).expect("Receiver dropped");
                     }
                 }
             }

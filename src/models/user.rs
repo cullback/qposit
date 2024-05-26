@@ -15,20 +15,20 @@ pub struct User {
 }
 
 impl User {
-    pub async fn get_by_id(db: &SqlitePool, id: UserId) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn get_by_id(db: &SqlitePool, id: UserId) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM 'user' WHERE id = ?")
             .bind(id)
-            .fetch_optional(db)
+            .fetch_one(db)
             .await
     }
 
     pub async fn get_by_username(
         db: &SqlitePool,
         username: &str,
-    ) -> Result<Option<Self>, sqlx::Error> {
+    ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM 'user' WHERE username = ?")
             .bind(username)
-            .fetch_optional(db)
+            .fetch_one(db)
             .await
     }
 
@@ -59,14 +59,19 @@ impl User {
         db: E,
         user_id: UserId,
         amount: Balance,
-    ) -> Result<u64, sqlx::Error> {
-        sqlx::query!(
+    ) -> Result<(), sqlx::Error> {
+        let result = sqlx::query!(
             "UPDATE user SET balance = balance + $1 WHERE id = $2",
             amount,
             user_id
         )
         .execute(db)
-        .await
-        .map(|row| row.rows_affected())
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(sqlx::Error::RowNotFound);
+        };
+
+        Ok(())
     }
 }

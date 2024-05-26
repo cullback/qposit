@@ -9,22 +9,22 @@ import requests
 import time
 import typing
 
-USER_ID = 3
+USER_ID = 1
 USERNAME = "admin"
 PASSWORD = "berlopletrople"
 AUTH = (USERNAME, PASSWORD)
 BOOKS = {
-    1: 0.55, # donald trump
-    # 2: 0.46, # joe biden
-    # 7: 0.23, # tim scott
-    # 8: 0.13, # elise stefanik
-    # 9: 0.15, # doug bourgum
-    # 11: 0.05, # J.D. Vance
-    # 10: 0.05, # marco rubio
-    # 17: 0.25, # new york rangers
+    3: 0.55, # donald trump
+    # 4: 0.46, # joe biden
+    # 9: 0.23, # tim scott
+    # 10: 0.13, # elise stefanik
+    # 11: 0.15, # doug bourgum
+    # 13: 0.05, # J.D. Vance
+    # 12: 0.05, # marco rubio
+    # 19: 0.25, # new york rangers
 }
-# URL = "http://localhost:3000/api/v1"
-URL = "http://qposit.com/api/v1"
+URL = "http://localhost:3000/api/v1"
+# URL = "http://qposit.com/api/v1"
 
 def probability_to_price(probability: float) -> int:
     return round(probability * 10_000)
@@ -116,7 +116,6 @@ def step_for_book(book_id: int) -> None:
 
     open_orders = get_open_orders()
     orders_to_cancel, orders_to_place = compare_orders(desired_orders, open_orders)
-    return
 
     for order_id in orders_to_cancel:
         resp = requests.delete(f"{URL}/orders/{order_id}", auth=AUTH)

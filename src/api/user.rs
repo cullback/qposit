@@ -1,8 +1,13 @@
 use askama_axum::IntoResponse;
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use lobster::UserId;
 use serde::Deserialize;
 use serde_json::json;
+use tracing::error;
 use utoipa::ToSchema;
 
 use crate::{
@@ -12,16 +17,15 @@ use crate::{
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DepositPayload {
-    pub user_id: UserId,
     pub amount: i64,
 }
 
-/// Submit order
+/// Deposit.
 ///
-/// Submit an order to the matching engine.
+/// Increase a users balance.
 #[utoipa::path(
     post,
-    path = "/deposit",
+    path = "/deposit/:user_id",
     security(
         ("basic_auth" = [])
     )
@@ -29,28 +33,33 @@ pub struct DepositPayload {
 pub async fn deposit(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
+    Path(user_id): Path<UserId>,
     Json(payload): Json<DepositPayload>,
 ) -> impl IntoResponse {
+    // this is a post request because it creates a new entry in transactions table.
     if user.username != "admin" {
         return Json(json!({"error": "not authorized"})).into_response();
     }
 
-    match User::deposit(&state.pool, payload.user_id, payload.amount)
-        .await
-        .map(|x| x == 1)
-    {
-        Ok(true) => {} // success
-        Ok(false) => return Json(json!({"error": "user not found"})).into_response(),
+    if payload.amount <= 0 {
+        return Json(json!({"error": "amount must be positive"})).into_response();
+    }
+
+    // deposit to database first
+    match User::deposit(&state.pool, user_id, payload.amount).await {
+        Ok(_) => {} // success
+        Err(sqlx::Error::RowNotFound) => {
+            return Json(json!({"error": "user not found"})).into_response()
+        }
         Err(e) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"error": format!("{}", e)})),
-            )
-                .into_response()
+            error!("Failed to deposit: {:?}", e);
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
     };
-    let req = MatcherRequest::deposit(payload.user_id, payload.amount);
+    let req = MatcherRequest::deposit(user_id, payload.amount);
     state.cmd_send.send(req).await.expect("Receiver dropped");
 
-    Json(json!({"success": "hi"})).into_response()
+    let user = User::get_by_id(&state.pool, user_id).await.unwrap();
+
+    Json(json!({"balance": user.balance + payload.amount})).into_response()
 }

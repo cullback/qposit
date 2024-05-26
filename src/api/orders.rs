@@ -198,7 +198,7 @@ pub async fn delete(
 /// Submit cancel request for specified order.
 #[utoipa::path(
     delete,
-    path = "/orders/:order_id",
+    path = "/orders/:id",
     responses(
         (status = 200, description = "Deleted all orders")
     ),

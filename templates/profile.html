@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ username }}</h1>
 
-<p>Balance: ${{ "{:.2}"|format(balance / 10000.0) }}</p>
+<p>Balance: {{ balance }}</p>
 
 {{ positions|safe }}
 

@@ -43,8 +43,8 @@ pub type UserId = u32;
 
 #[derive(Debug)]
 struct OrderOwner {
-    user: UserId,
-    book: BookId,
+    user_id: UserId,
+    book_id: BookId,
 }
 
 #[derive(Debug, Default)]
@@ -107,8 +107,8 @@ impl Exchange {
         self.order_owner.insert(
             order.id,
             OrderOwner {
-                user,
-                book: book_id,
+                user_id: user,
+                book_id,
             },
         );
     }
@@ -128,8 +128,9 @@ impl Exchange {
     /// - Returns `Err(RejectReason::InvalidPrice)` if the price is greater than `RESOLVE_PRICE`.
     pub fn resolve(
         &mut self,
-        time: Timestamp,
+        timestamp: Timestamp,
         book_id: BookId,
+        user_id: UserId,
         price: Price,
     ) -> Result<BookEvent, RejectReason> {
         if price > RESOLVE_PRICE {
@@ -140,7 +141,7 @@ impl Exchange {
             return Err(RejectReason::BookNotFound);
         };
         // cancel all orders in the book
-        self.order_owner.retain(|_, order| order.book != book_id);
+        self.order_owner.retain(|_, order| order.book_id != book_id);
 
         self.positions.retain(|&(user, book), position| {
             if book != book_id {
@@ -155,7 +156,7 @@ impl Exchange {
             false
         });
 
-        let event = BookEvent::resolve(time, book.next_tick, book_id, price);
+        let event = BookEvent::resolve(timestamp, book.next_tick, book_id, user_id, price);
         Ok(event)
     }
 
@@ -172,7 +173,7 @@ impl Exchange {
     /// Panics if the order causes a trade that overflows `Balance` or `Position`.
     pub fn submit_order(
         &mut self,
-        time: Timestamp,
+        timestamp: Timestamp,
         user: UserId,
         order: OrderRequest,
     ) -> Result<BookEvent, RejectReason> {
@@ -203,8 +204,8 @@ impl Exchange {
             self.order_owner.insert(
                 id,
                 OrderOwner {
-                    user,
-                    book: order.book,
+                    user_id: user,
+                    book_id: order.book,
                 },
             );
         }
@@ -212,7 +213,7 @@ impl Exchange {
         let tick = book.next_tick;
         book.next_tick = book.next_tick.wrapping_add(1);
         let event = BookEvent {
-            time,
+            time: timestamp,
             tick,
             book: order.book,
             user,
@@ -245,12 +246,12 @@ impl Exchange {
     /// does not belong to the user.
     pub fn cancel_order(
         &mut self,
-        time: Timestamp,
+        timestamp: Timestamp,
         user: UserId,
         id: OrderId,
     ) -> Result<BookEvent, RejectReason> {
         let book_id = match self.order_owner.entry(id) {
-            Entry::Occupied(entry) if entry.get().user == user => entry.remove().book,
+            Entry::Occupied(entry) if entry.get().user_id == user => entry.remove().book_id,
             _ => return Err(RejectReason::OrderNotFound),
         };
 
@@ -259,14 +260,16 @@ impl Exchange {
             .get_mut(&book_id)
             .ok_or(RejectReason::BookNotFound)?; // infallible
 
+        // update available balance
         let order = book.inner.remove(id).ok_or(RejectReason::OrderNotFound)?; // infallible
-        let event = BookEvent::remove(time, book.next_tick, book_id, user, id);
-        book.next_tick = book.next_tick.wrapping_add(1);
-
         let available = self.available.entry(user).or_default();
         let position = self.positions.entry((user, book_id)).or_default();
         let cost = trade_cost(*position, order.quantity, order.price, order.side);
         *available += cost;
+
+        let event = BookEvent::remove(timestamp, book.next_tick, book_id, user, id);
+        book.next_tick = book.next_tick.wrapping_add(1);
+
         Ok(event)
     }
 
@@ -287,7 +290,7 @@ impl Exchange {
 
         *position += signed_quantity;
 
-        let maker_id = self.order_owner[&fill.id].user;
+        let maker_id = self.order_owner[&fill.id].user_id;
         let balance = self.balances.entry(maker_id).or_default();
         let available = self.available.entry(maker_id).or_default();
         let position = self.positions.entry((maker_id, book)).or_default();
@@ -575,8 +578,8 @@ mod tests {
         assert_eq!(exch.positions[&(bob, book)], -3);
         assert_eq!(exch.positions[&(cat, book)], 3);
 
-        let event = exch.resolve(time, book, 7000);
-        assert_eq!(event, Ok(BookEvent::resolve(time, 2, book, 7000)));
+        let event = exch.resolve(time, book, bob, 7000);
+        assert_eq!(event, Ok(BookEvent::resolve(time, 2, book, bob, 7000)));
         assert!(!exch.positions.contains_key(&(bob, book)));
         assert!(!exch.positions.contains_key(&(cat, book)));
         assert_eq!(exch.balances[&bob], 91000);

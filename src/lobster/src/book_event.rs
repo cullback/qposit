@@ -23,6 +23,7 @@ pub enum Action {
     Add(Order),
     Remove { id: OrderId },
     Resolve { price: Price },
+    AddBook,
 }
 
 impl BookEvent {
@@ -84,13 +85,30 @@ impl BookEvent {
 
     /// Constructs a resolve event.
     #[must_use]
-    pub const fn resolve(time: Timestamp, tick: Tick, book: BookId, price: Price) -> Self {
+    pub const fn resolve(
+        time: Timestamp,
+        tick: Tick,
+        book: BookId,
+        user: UserId,
+        price: Price,
+    ) -> Self {
         Self {
             time,
             tick,
             book,
-            user: 0,
+            user,
             action: Action::Resolve { price },
+        }
+    }
+
+    #[must_use]
+    pub const fn add_book(time: Timestamp, tick: Tick, book: BookId, user: UserId) -> Self {
+        Self {
+            time,
+            tick,
+            book,
+            user,
+            action: Action::AddBook,
         }
     }
 }

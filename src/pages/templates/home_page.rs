@@ -3,6 +3,8 @@ use lobster::BookId;
 
 use crate::models::{book::Book, market::Market};
 
+use super::format_price_to_string;
+
 struct BookView {
     id: BookId,
     market_id: i64,
@@ -14,16 +16,16 @@ struct BookView {
 impl From<Book> for BookView {
     fn from(book: Book) -> Self {
         let mid_price = match (book.best_bid_price, book.best_ask_price) {
-            (Some(bid), Some(ask)) => format!("{:.2}", (bid + ask) as f32 / 200.0),
-            (Some(bid), None) => format!("{:.2}", bid as f32 / 100.0),
-            (None, Some(ask)) => format!("{:.2}", ask as f32 / 100.0),
+            (Some(bid), Some(ask)) => format_price_to_string((bid + ask) / 2),
+            (Some(bid), None) => format_price_to_string(bid),
+            (None, Some(ask)) => format_price_to_string(ask),
             _ => "N/A".to_string(),
         };
         Self {
             id: book.id,
             market_id: book.market_id,
             title: book.title,
-            last_trade_price: format!("{:.2}", book.last_trade_price.unwrap_or(0) as f32 / 100.0),
+            last_trade_price: format_price_to_string(book.last_trade_price.unwrap_or(0)),
             mid_price,
         }
     }

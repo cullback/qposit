@@ -1,5 +1,6 @@
 use lobster::{BookId, Timestamp, UserId};
 use lobster::{OrderId, Price, Quantity, Side};
+use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
 
 #[derive(Debug, FromRow)]
@@ -27,22 +28,29 @@ impl From<&Order> for lobster::Order {
 }
 
 impl Order {
-    pub async fn insert<'c, E>(&self, db: E) -> Result<i64, sqlx::Error>
+    /// Inserts a new order into the database.
+    pub async fn new<E>(
+        db: &mut E,
+        created_at: Timestamp,
+        book_id: BookId,
+        user_id: UserId,
+        order: lobster::Order,
+    ) -> Result<i64, sqlx::Error>
     where
-        E: Executor<'c, Database = Sqlite>,
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
+        let is_buy = order.side.is_buy();
         sqlx::query!(
             "INSERT INTO 'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            self.id,
-            self.created_at,
-            self.book_id,
-            self.user_id,
-            self.quantity,
-            self.remaining,
-            self.price,
-            self.is_buy,
-            self.status,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open')",
+            order.id,
+            created_at,
+            book_id,
+            user_id,
+            order.quantity,
+            order.quantity,
+            order.price,
+            is_buy,
         )
         .execute(db)
         .await
@@ -86,5 +94,24 @@ impl Order {
         .bind(book)
         .fetch_all(db)
         .await
+    }
+
+    /// Sets the status of an order to cancelled.
+    pub async fn cancel_by_id<E>(db: &mut E, id: OrderId) -> Result<SqliteQueryResult, sqlx::Error>
+    where
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
+    {
+        sqlx::query!("UPDATE 'order' SET status = 'cancelled' WHERE id = ?", id)
+            .execute(db)
+            .await
+    }
+
+    pub async fn cancel_for_book<E>(db: &mut E, book: BookId) -> Result<SqliteQueryResult, sqlx::Error>
+    where
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
+    {
+        sqlx::query!("UPDATE 'order' SET status = 'cancelled' WHERE book_id = ? and status = 'open'", book)
+            .execute(db)
+            .await
     }
 }

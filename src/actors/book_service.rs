@@ -83,6 +83,7 @@ impl BookData {
             Action::Resolve { price } => {
                 self.last_price = Some(price);
             }
+            Action::AddBook => {}
         }
     }
 }
@@ -103,6 +104,10 @@ impl BookService {
     }
 
     fn on_event(&mut self, event: BookEvent) -> OrderBook {
+        if matches!(event.action, Action::AddBook) {
+            models::book::Book::get(self.db)
+            self.books.insert(event.book, BookData::default());
+        }
         let book = self.books.get_mut(&event.book).unwrap();
         book.on_event(event);
         (&*book).into()

@@ -89,10 +89,9 @@ pub async fn post(
             .await;
 
             let initial_amount = 10000 * 500; // TODO
-            let rows_affected = User::deposit(&state.pool, user_id, initial_amount)
+            User::deposit(&state.pool, user_id, initial_amount)
                 .await
                 .unwrap();
-            assert_eq!(rows_affected, 1);
             let req = MatcherRequest::deposit(user_id, initial_amount);
             state.cmd_send.send(req).await.unwrap();
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()

@@ -3,6 +3,8 @@ use lobster::{BookId, UserId};
 use lobster::{OrderId, Price, Quantity};
 use sqlx::SqlitePool;
 
+use super::format_price_to_string;
+
 #[derive(sqlx::FromRow)]
 struct Order {
     market_title: String,
@@ -35,8 +37,8 @@ impl From<Order> for OrderAsHtml {
             id: order.id,
             quantity: order.quantity,
             remaining: order.remaining,
-            price: format!("{:.2}", order.price as f32 / 100.0),
-            side: if order.is_buy { "Buy" } else { "Sell" }.to_string(),
+            price: format_price_to_string(order.price),
+            side: if order.is_buy { "Yes" } else { "No" }.to_string(),
             status: order.status,
         }
     }

@@ -43,6 +43,7 @@ pub enum Action {
     Resolve {
         price: u16,
     },
+    AddBook,
 }
 
 impl From<lobster::BookEvent> for BookEvent {
@@ -61,6 +62,7 @@ impl From<lobster::BookEvent> for BookEvent {
                 },
                 lobster::Action::Remove { id } => Action::Remove { id },
                 lobster::Action::Resolve { price } => Action::Resolve { price },
+                lobster::Action::AddBook => Action::AddBook,
             },
         }
     }

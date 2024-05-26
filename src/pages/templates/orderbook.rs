@@ -4,6 +4,8 @@ use lobster::{Order, Price, Quantity};
 
 use crate::actors::book_service::BookData;
 
+use super::format_price_to_string;
+
 #[derive(Debug, Clone)]
 struct PriceLevel {
     pub price: String,
@@ -14,7 +16,7 @@ struct PriceLevel {
 impl PriceLevel {
     pub fn new(price: Price, quantity: Quantity, cumulative_value: u32) -> Self {
         Self {
-            price: format!("{:.2}", f32::from(price) / 100.0),
+            price: format_price_to_string(price),
             quantity: quantity.to_string(),
             value: format!("{:.2}", f64::from(cumulative_value) / 10000.0),
         }
@@ -66,12 +68,12 @@ pub struct OrderBook {
 
 impl From<&BookData> for OrderBook {
     fn from(book: &BookData) -> Self {
-        let last_price = format!("{:.2}", book.last_price.unwrap_or(0) as f32 / 100.0);
+        let last_price = format_price_to_string(book.last_price.unwrap_or(0));
         let volume = format!("{:.2}", book.volume as f32 / 10000.0);
         let mid_price = match (book.best_bid_price, book.best_ask_price) {
-            (Some(bid), Some(ask)) => format!("{:.2}", (bid + ask) as f32 / 200.0),
-            (Some(bid), None) => format!("{:.2}", bid as f32 / 100.0),
-            (None, Some(ask)) => format!("{:.2}", ask as f32 / 100.0),
+            (Some(bid), Some(ask)) => format_price_to_string((bid + ask) / 2),
+            (Some(bid), None) => format_price_to_string(bid),
+            (None, Some(ask)) => format_price_to_string(ask),
             _ => "N/A".to_string(),
         };
         Self {

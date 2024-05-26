@@ -7,7 +7,6 @@
             <th scope="col">Quantity</th>
             <th scope="col">Price</th>
             <th scope="col">Type</th>
-            <th scope="col">Status</th>
             <th scope="col"></th>
         </tr>
     </thead>
@@ -19,7 +18,6 @@
             <td>{{ order.remaining }}</td>
             <td>{{ order.price }}</td>
             <td>{{ order.side }}</td>
-            <td>{{ order.status }}</td>
             <td><a hx-delete="/orders/{{order.id}}">Cancel</a></td>
         </tr>
         {% endfor %}

@@ -60,17 +60,20 @@ pub async fn create_session<'c, E: Executor<'c, Database = Sqlite>>(
 /// Checks a usernames+password combination using the database and returns the user if it is valid.
 /// Returns `None` if the user does not exist or the password is incorrect.
 async fn check_login(pool: &SqlitePool, username: &str, password: &str) -> Option<User> {
-    User::get_by_username(pool, username)
-        .await
-        .ok()
-        .flatten()
-        .and_then(|user| {
+    match User::get_by_username(pool, username).await {
+        Ok(user) => {
             let parsed_hash = PasswordHash::new(&user.password_hash).expect("Failed to parsh hash");
             Argon2::default()
                 .verify_password(password.as_bytes(), &parsed_hash)
                 .ok()
                 .map(|()| user)
-        })
+        }
+        Err(sqlx::Error::RowNotFound) => return None,
+        Err(err) => {
+            error!(err = ?err, "Failed to get user");
+            return None;
+        }
+    }
 }
 
 /// Authenticate user and create a new session id.
@@ -113,8 +116,8 @@ impl FromRequestParts<AppState> for SessionExtractor {
             }
         };
         let user = match User::get_by_id(&state.pool, session.user_id).await {
-            Ok(Some(user)) => user,
-            Ok(None) => return Ok(Self(None)),
+            Ok(user) => user,
+            Err(sqlx::Error::RowNotFound) => return Ok(Self(None)),
             Err(err) => {
                 warn!(err = ?err, "Failed to get user");
                 return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());

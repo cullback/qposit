@@ -3,6 +3,8 @@ use lobster::Price;
 use lobster::UserId;
 use sqlx::SqlitePool;
 
+use super::format_price_to_string;
+
 #[derive(sqlx::FromRow, Debug)]
 struct Position {
     market_title: String,
@@ -29,7 +31,7 @@ impl From<Position> for PositionAsHtml {
             book_title: position.book_title,
             side,
             position: format!("{}", position.position.abs()),
-            last_price: format!("{:.2}", position.last_price as f32 / 100.0),
+            last_price: format_price_to_string(position.last_price),
             market_value: format!("{:.2}", position.market_value as f32 / 10000.0),
         }
     }
