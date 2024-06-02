@@ -107,6 +107,7 @@ pub async fn post(
             best_bid_price: None,
             best_ask_price: None,
             last_trade_price: None,
+            volume: 0,
         };
         let book_id = BookId::try_from(book.insert(&state.pool).await.unwrap()).unwrap();
         let req = MatcherRequest::AddBook { book_id };

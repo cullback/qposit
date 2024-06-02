@@ -22,10 +22,7 @@ impl User {
             .await
     }
 
-    pub async fn get_by_username(
-        db: &SqlitePool,
-        username: &str,
-    ) -> Result<Self, sqlx::Error> {
+    pub async fn get_by_username(db: &SqlitePool, username: &str) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM 'user' WHERE username = ?")
             .bind(username)
             .fetch_one(db)

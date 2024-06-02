@@ -8,9 +8,7 @@ use lobster::BookId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
-use crate::actors::book_service::BookData;
 use crate::app_state::AppState;
-use crate::models;
 
 use super::templates::orderbook::OrderBook;
 
@@ -38,18 +36,18 @@ async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookP
         return;
     };
 
-    for &book_id in &books {
-        let book = models::book::Book::get(&state.pool, book_id).await.unwrap();
+    // for &book_id in &books {
+    //     let book = models::book::Book::get(&state.pool, book_id).await.unwrap();
 
-        let book = OrderBook::from(
-            &BookData::new(&state.pool, book_id, book.title, book.last_trade_price).await,
-        );
+    //     let book = OrderBook::from(
+    //         &BookData::new(&state.pool, book_id, book.title, book.last_trade_price).await,
+    //     );
 
-        let text = book.render().unwrap();
-        if socket.send(Message::Text(text)).await.is_err() {
-            return;
-        }
-    }
+    //     let text = book.render().unwrap();
+    //     if socket.send(Message::Text(text)).await.is_err() {
+    //         return;
+    //     }
+    // }
 
     loop {
         let event = state.book_receive.recv().await.expect("Sender dropped");
@@ -58,7 +56,7 @@ async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookP
             continue;
         }
 
-        let text = event.render().unwrap();
+        let text = OrderBook::from(&event).render().unwrap();
         if socket.send(Message::Text(text)).await.is_err() {
             return;
         }

@@ -7,7 +7,10 @@ use time::{
 };
 use tokio::sync::{broadcast, mpsc};
 
-use crate::{actors::matcher_request::MatcherRequest, pages::OrderBook};
+use crate::{
+    actors::{book_service::BookData, matcher_request::MatcherRequest},
+    pages::OrderBook,
+};
 
 pub struct AppState {
     pub pool: SqlitePool,
@@ -15,7 +18,7 @@ pub struct AppState {
     pub cmd_send: mpsc::Sender<MatcherRequest>,
     /// Receiving market data events.
     pub feed_receive: broadcast::Receiver<BookEvent>,
-    pub book_receive: broadcast::Receiver<OrderBook>,
+    pub book_receive: broadcast::Receiver<BookData>,
 }
 
 impl Clone for AppState {
@@ -34,7 +37,7 @@ impl AppState {
         pool: SqlitePool,
         cmd_send: mpsc::Sender<MatcherRequest>,
         feed_receive: broadcast::Receiver<BookEvent>,
-        book_receive: broadcast::Receiver<OrderBook>,
+        book_receive: broadcast::Receiver<BookData>,
     ) -> Self {
         Self {
             pool,

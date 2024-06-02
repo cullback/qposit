@@ -10,6 +10,7 @@ pub struct Book {
     pub last_trade_price: Option<Price>,
     pub best_bid_price: Option<Price>,
     pub best_ask_price: Option<Price>,
+    pub volume: i64,
 }
 
 impl Book {
@@ -37,7 +38,10 @@ impl Book {
                     SELECT MIN(price)
                     FROM 'order'
                     WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
-                ) AS best_ask_price
+                ) AS best_ask_price,
+                (
+                    SELECT SUM(quantity * price) FROM trade WHERE book.id = trade.book_id
+                ) AS volume
             FROM book
             WHERE book.id = ?;
             ",
@@ -87,7 +91,10 @@ impl Book {
                     SELECT MIN(price)
                     FROM 'order'
                     WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
-                ) AS best_ask_price
+                ) AS best_ask_price,
+                (
+                    SELECT SUM(quantity * price) FROM trade WHERE book.id = trade.book_id
+                ) AS volume
             FROM book
             WHERE book.market_id = ?;
             ",
@@ -121,7 +128,10 @@ impl Book {
                     SELECT MIN(price)
                     FROM 'order'
                     WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
-                ) AS best_ask_price
+                ) AS best_ask_price,
+                (
+                    SELECT SUM(quantity * price) FROM trade WHERE book.id = trade.book_id
+                ) AS volume
             FROM book
             ",
         )

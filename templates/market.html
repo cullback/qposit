@@ -11,11 +11,45 @@
 <hr>
 
 <div hx-ext="ws" ws-connect="/orderbook?books={{books}}">
-    {% for (book_id, order_form) in orderbooks %}
+    {% for (book, orderbook, order_form) in orderbooks %}
     <article>
         <details>
-            <div id="header-{{book_id}}"></div>
-            <div id="orderbook-{{book_id}}"></div>
+            <summary>
+                <h3 style="display:inline-block;">{{book.title}}</h3>
+                <div style="float: right;">
+                    <kbd id="mid_price-{{book.id}}">{{orderbook.last_price}}</kbd>
+                </div>
+                <br>
+                <small id="volume-{{book.id}}">${{orderbook.volume}} Bet</small>
+            </summary>
+            
+            <table id="orderbook-{{book.id}}">
+                <thead>
+                    <tr>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ask in orderbook.asks.iter().rev() %}
+                    <tr>
+                        <td class="pico-color-red-350">{{ask.price}}</td>
+                        <td>{{ask.quantity}}</td>
+                        <td>${{ask.value}}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for bid in orderbook.bids %}
+                    <tr>
+                        <td class="pico-color-green-350">{{bid.price}}</td>
+                        <td>{{bid.quantity}}</td>
+                        <td>${{bid.value}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
             {{order_form|safe}}
         </details>
     </article>

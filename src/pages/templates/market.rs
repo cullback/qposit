@@ -1,7 +1,12 @@
 use askama::Template;
 use lobster::BookId;
 
-use crate::{app_state::format_as_string, models::market::Market};
+use crate::{
+    actors::book_service::BookData,
+    app_state::format_as_string,
+    models::{book::Book, market::Market},
+    pages::OrderBook,
+};
 
 use super::order_form::OrderForm;
 
@@ -13,23 +18,26 @@ pub struct MarketPage {
     market: Market,
     /// Comma-separated list of book IDs
     books: String,
-    orderbooks: Vec<(BookId, OrderForm)>,
+    orderbooks: Vec<(Book, OrderBook, OrderForm)>,
 }
 
 impl MarketPage {
-    pub fn new(username: String, market: Market, books: Vec<BookId>) -> Self {
+    pub fn new(username: String, market: Market, books: Vec<(Book, BookData)>) -> Self {
         Self {
             username,
             expires_at: format_as_string(market.expires_at),
             market,
             books: books
                 .iter()
-                .map(|book| book.to_string())
+                .map(|(book, _)| book.id.to_string())
                 .collect::<Vec<_>>()
                 .join(","),
             orderbooks: books
                 .into_iter()
-                .map(|book| (book, OrderForm::new(book)))
+                .map(|(book, orderbook)| {
+                    let book_id = book.id;
+                    (book, OrderBook::from(&orderbook), OrderForm::new(book_id))
+                })
                 .collect(),
         }
     }

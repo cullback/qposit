@@ -106,12 +106,18 @@ impl Order {
             .await
     }
 
-    pub async fn cancel_for_book<E>(db: &mut E, book: BookId) -> Result<SqliteQueryResult, sqlx::Error>
+    pub async fn cancel_for_book<E>(
+        db: &mut E,
+        book: BookId,
+    ) -> Result<SqliteQueryResult, sqlx::Error>
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        sqlx::query!("UPDATE 'order' SET status = 'cancelled' WHERE book_id = ? and status = 'open'", book)
-            .execute(db)
-            .await
+        sqlx::query!(
+            "UPDATE 'order' SET status = 'cancelled' WHERE book_id = ? and status = 'open'",
+            book
+        )
+        .execute(db)
+        .await
     }
 }

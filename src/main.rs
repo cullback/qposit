@@ -6,7 +6,7 @@ mod authentication;
 mod models;
 mod pages;
 
-use crate::pages::OrderBook;
+use crate::actors::book_service::BookData;
 use app_state::AppState;
 use lobster::BookEvent;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
@@ -43,7 +43,7 @@ async fn main() {
 
     let (cmd_send, cmd_receive) = mpsc::channel(32);
     let (feed_send, feed_receive) = broadcast::channel::<BookEvent>(32);
-    let (book_send, book_receive) = broadcast::channel::<OrderBook>(32);
+    let (book_send, book_receive) = broadcast::channel::<BookData>(32);
 
     actors::writer::start_writer_service(pool.clone(), feed_receive.resubscribe());
     actors::matcher::start_matcher_service(pool.clone(), cmd_receive, feed_send);

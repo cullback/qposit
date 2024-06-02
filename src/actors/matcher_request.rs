@@ -65,7 +65,11 @@ impl MatcherRequest {
         req
     }
 
-    pub fn resolve(user_id: UserId, book_id: BookId, price: Price) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>)  {
+    pub fn resolve(
+        user_id: UserId,
+        book_id: BookId,
+        price: Price,
+    ) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>) {
         let (response, recv) = oneshot::channel();
         let req = Self::Resolve {
             user_id,

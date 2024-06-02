@@ -1,13 +1,14 @@
 use askama::Template;
 use lobster::BookId;
 use lobster::{Order, Price, Quantity};
+use tracing::error;
 
 use crate::actors::book_service::BookData;
 
 use super::format_price_to_string;
 
 #[derive(Debug, Clone)]
-struct PriceLevel {
+pub struct PriceLevel {
     pub price: String,
     pub quantity: String,
     pub value: String,
@@ -54,16 +55,18 @@ fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
     price_levels
 }
 
+/// Book data delivered over websocket feed.
+/// Needs to be applied against an already rendered book.
 #[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]
 pub struct OrderBook {
     pub book_id: BookId,
-    title: String,
-    last_price: String,
-    mid_price: String,
-    volume: String,
-    bids: Vec<PriceLevel>,
-    asks: Vec<PriceLevel>,
+    // title: String,
+    pub last_price: String,
+    pub mid_price: String,
+    pub volume: String,
+    pub bids: Vec<PriceLevel>,
+    pub asks: Vec<PriceLevel>,
 }
 
 impl From<&BookData> for OrderBook {
@@ -78,7 +81,7 @@ impl From<&BookData> for OrderBook {
         };
         Self {
             book_id: book.book_id,
-            title: book.title.clone(),
+            // title: String::new(), // this field is preserved and not updated in the template
             last_price,
             mid_price,
             volume,

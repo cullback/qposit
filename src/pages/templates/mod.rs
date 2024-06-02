@@ -3,13 +3,13 @@ use lobster::Price;
 pub mod about_page;
 pub mod home_page;
 pub mod login;
-pub mod market_page;
+pub mod market;
 pub mod open_orders;
 pub mod order_form;
 pub mod orderbook;
 pub mod positions;
-pub mod signup;
 pub mod profile;
+pub mod signup;
 
 /// Formats a price to a string with two decimals.
 /// No precision should be lossed.

@@ -1,4 +1,9 @@
-use super::templates::market_page::MarketPage;
+//! The page for a market.
+//!
+//! We load an initial snapshot of the page and then the websocket feed continuously updates it.
+use super::templates::market::MarketPage;
+use super::OrderBook;
+use crate::actors::book_service::BookData;
 use crate::app_state::AppState;
 use crate::models::market::Market;
 use crate::{authentication::SessionExtractor, models::book::Book};
@@ -6,7 +11,6 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Redirect;
-use lobster::BookId;
 
 pub async fn get(
     SessionExtractor(user): SessionExtractor,
@@ -23,13 +27,16 @@ pub async fn get(
 
     let books = Book::get_all_for_market(&state.pool, market.id)
         .await
-        .unwrap()
-        .iter()
-        .map(|book| book.id)
-        .collect::<Vec<BookId>>();
+        .unwrap();
+
+    let mut new_things = vec![];
+    for book in books {
+        let book_data = BookData::new(&state.pool, book.id, book.last_trade_price).await;
+        new_things.push((book, book_data));
+    }
 
     match user {
-        Some(user) => MarketPage::new(user.username, market, books).into_response(),
-        None => MarketPage::new(String::new(), market, books).into_response(),
+        Some(user) => MarketPage::new(user.username, market, new_things).into_response(),
+        None => MarketPage::new(String::new(), market, new_things).into_response(),
     }
 }

@@ -15,7 +15,7 @@ pub type Quantity = u32;
 /// Price in basis points.
 pub type Price = u16;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct OrderBook {
     /// Bids, sorted by price ascending
     bids: Vec<Order>,
