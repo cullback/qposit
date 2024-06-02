@@ -4,7 +4,7 @@
         <tr>
             <th scope="col">Market</th>
             <th scope="col">Book</th>
-            <th scope="col">Quantity</th>
+            <th scope="col">Quantity filled</th>
             <th scope="col">Price</th>
             <th scope="col">Type</th>
             <th scope="col"></th>
@@ -15,7 +15,7 @@
         <tr>
             <td>{{ order.market_title }}</td>
             <td>{{ order.book_title }} </td>
-            <td>{{ order.remaining }}</td>
+            <td>{{ order.quantity - order.remaining }}/{{order.quantity}}</td>
             <td>{{ order.price }}</td>
             <td>{{ order.side }}</td>
             <td><a hx-delete="/orders/{{order.id}}">Cancel</a></td>
