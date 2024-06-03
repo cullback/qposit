@@ -34,21 +34,26 @@ pub struct BookData {
     pub volume: u64,
 }
 
+pub fn build_from_orders(orders: &[models::order::Order]) -> lobster::OrderBook {
+    orders
+        .into_iter()
+        .map(|order| {
+            Order::new(
+                order.id,
+                order.remaining,
+                order.price,
+                Side::new(order.is_buy),
+            )
+        })
+        .collect()
+}
+
 impl BookData {
     pub async fn new(db: &SqlitePool, book_id: BookId, last_trade_price: Option<Price>) -> Self {
         let orders = models::order::Order::get_open_for_book(db, book_id)
             .await
             .unwrap();
-        let mut book = lobster::OrderBook::default();
-        for order in orders {
-            let order2 = Order::new(
-                order.id,
-                order.remaining,
-                order.price,
-                Side::new(order.is_buy),
-            );
-            assert!(book.add(order2).is_empty());
-        }
+        let book = build_from_orders(&orders);
 
         let volume = Book::get_volume(db, book_id).await.unwrap();
 

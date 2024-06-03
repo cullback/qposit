@@ -1,6 +1,7 @@
 use lobster::Price;
 
 pub mod about_page;
+pub mod book;
 pub mod home_page;
 pub mod login;
 pub mod market;

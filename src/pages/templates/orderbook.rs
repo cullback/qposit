@@ -1,7 +1,6 @@
 use askama::Template;
 use lobster::BookId;
 use lobster::{Order, Price, Quantity};
-use tracing::error;
 
 use crate::actors::book_service::BookData;
 
@@ -29,7 +28,7 @@ impl PriceLevel {
 /// # Arguments
 ///
 /// - `orders`: iterable of orders sorted from best price to worst price.
-fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
+pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
     let mut price_levels: Vec<PriceLevel> = Vec::new();
     let mut current_price: Option<Price> = None;
     let mut level_quantity = 0;
@@ -61,7 +60,6 @@ fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 #[template(path = "orderbook.html")]
 pub struct OrderBook {
     pub book_id: BookId,
-    // title: String,
     pub last_price: String,
     pub mid_price: String,
     pub volume: String,
@@ -81,7 +79,6 @@ impl From<&BookData> for OrderBook {
         };
         Self {
             book_id: book.book_id,
-            // title: String::new(), // this field is preserved and not updated in the template
             last_price,
             mid_price,
             volume,

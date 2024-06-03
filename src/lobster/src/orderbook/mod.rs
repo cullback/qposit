@@ -23,6 +23,16 @@ pub struct OrderBook {
     asks: Vec<Order>,
 }
 
+impl FromIterator<Order> for OrderBook {
+    fn from_iter<I: IntoIterator<Item = Order>>(iter: I) -> Self {
+        let mut book = OrderBook::default();
+        for order in iter {
+            assert!(book.add(order).is_empty());
+        }
+        book
+    }
+}
+
 impl OrderBook {
     /// Returns the number of open orders in the book.
     #[must_use]
