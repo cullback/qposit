@@ -51,31 +51,25 @@ pub async fn post(
     }
 
     let password_hash = generate_password_hash(&form.password);
-    let user = models::user::User {
-        id: 0,
-        username: form.username.clone(),
-        password_hash,
-        created_at: timestamp,
-        balance: 0,
-    };
-
     let mut tx = state.pool.begin().await.unwrap();
-    let user_id = match user.insert(&mut *tx).await {
-        Ok(user_id) => user_id,
-        Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
-            return signup::SignupForm::new(
-                form.username,
-                "Username already taken".to_string(),
-                String::new(),
-                String::new(),
-            )
-            .into_response();
-        }
-        Err(err) => {
-            warn!("internal server error {err}");
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-        }
-    };
+    let user_id =
+        match models::user::User::new(&mut *tx, &form.username, &password_hash, timestamp).await {
+            Ok(user_id) => user_id,
+            Err(sqlx::Error::Database(err)) if err.is_unique_violation() => {
+                return signup::SignupForm::new(
+                    form.username,
+                    "Username already taken".to_string(),
+                    String::new(),
+                    String::new(),
+                )
+                .into_response();
+            }
+            Err(err) => {
+                error!("internal server error {err}");
+                return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+            }
+        };
+
     match Invite::check_and_claim(&mut *tx, &form.invite_code, user_id).await {
         Ok(Some(_)) => {
             tx.commit().await.unwrap();

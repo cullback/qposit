@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS user(
     username        TEXT NOT NULL UNIQUE,
     password_hash   TEXT NOT NULL,
     created_at      INTEGER NOT NULL,
-    balance         INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0)
+    balance         INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0),
+    available       INTEGER NOT NULL DEFAULT 0 CHECK(available >= 0)
 );
 
 
