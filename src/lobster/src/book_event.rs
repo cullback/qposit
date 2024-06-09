@@ -102,12 +102,12 @@ impl BookEvent {
     }
 
     #[must_use]
-    pub const fn add_book(time: Timestamp, tick: Tick, book: BookId, user: UserId) -> Self {
+    pub const fn add_book(time: Timestamp, book: BookId) -> Self {
         Self {
             time,
-            tick,
+            tick: 0,
             book,
-            user,
+            user: 0,
             action: Action::AddBook,
         }
     }
