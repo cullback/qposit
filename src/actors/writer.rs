@@ -5,18 +5,16 @@
 //! Gets to do less work than the matching engine because all feed events
 //! are validated.
 use lobster::{
-    trade_cost, Action, Balance, BookEvent, BookId, Order, OrderBook, Side, Tick, Timestamp,
-    UserId, RESOLVE_PRICE,
+    Action, Balance, BookEvent, BookId, Order, OrderBook, PortfolioManager, Side, Tick, Timestamp,
+    UserId,
 };
 use lobster::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::models;
-
-use super::bootstrap_books;
 
 #[derive(Debug)]
 struct Trade {
@@ -35,44 +33,64 @@ struct Trade {
 
 #[derive(Debug)]
 struct OrderOwner {
-    user_id: UserId,
-    book_id: BookId,
+    pub user_id: UserId,
+    pub book_id: BookId,
 }
 
 struct State {
     db: SqlitePool,
     books: HashMap<BookId, OrderBook>,
-    positions: HashMap<(UserId, BookId), i32>,
     order_owner: HashMap<OrderId, OrderOwner>,
+    manager: PortfolioManager,
 }
 
 impl State {
     pub async fn new(db: SqlitePool) -> Self {
-        let orders = models::order::Order::get_open_orders(&db).await.unwrap();
-        let books = bootstrap_books(&db, orders.as_slice()).await;
-        let order_owner = orders
-            .iter()
-            .map(|order| {
-                (
-                    order.id,
-                    OrderOwner {
-                        user_id: order.user_id,
-                        book_id: order.book_id,
-                    },
-                )
-            })
-            .collect();
+        let mut balances: HashMap<UserId, Balance> = HashMap::new();
+        for user in models::user::User::get_with_nonzero_balances(&db)
+            .await
+            .unwrap()
+        {
+            balances.insert(user.id, user.balance);
+        }
 
-        let mut positions = HashMap::new();
+        let mut positions: HashMap<(UserId, BookId), i32> = HashMap::new();
         for position in models::position::Position::get_non_zero(&db).await.unwrap() {
             positions.insert((position.user_id, position.book_id), position.position);
+        }
+
+        let mut manager = PortfolioManager::new(&balances, &positions);
+
+        let mut books: HashMap<BookId, OrderBook> = HashMap::new();
+        for book in models::book::Book::get_active(&db).await.unwrap() {
+            books.insert(book.id, OrderBook::default());
+        }
+
+        let mut order_owner = HashMap::new();
+        for order_record in models::order::Order::get_open_orders(&db).await.unwrap() {
+            let order = lobster::Order::new(
+                order_record.id,
+                order_record.quantity,
+                order_record.price,
+                Side::new(order_record.is_buy),
+            );
+            order_owner.insert(
+                order_record.id,
+                OrderOwner {
+                    user_id: order_record.user_id,
+                    book_id: order_record.book_id,
+                },
+            );
+            manager.add_resting_order(order_record.user_id, order_record.book_id, order);
+            let book = books.get_mut(&order_record.book_id).unwrap();
+            assert!(book.add(order).is_empty());
         }
 
         Self {
             db,
             books,
-            positions,
             order_owner,
+            manager,
         }
     }
 
@@ -89,7 +107,9 @@ impl State {
             }
             Action::Remove { id } => self.on_remove(&mut *tx, event.book, id).await,
             Action::Resolve { price } => self.on_resolve(&mut *tx, event.book, price).await,
-            Action::AddBook { .. } => {}
+            Action::AddBook {} => {
+                self.books.insert(event.book, OrderBook::default());
+            }
         }
         tx.commit().await.unwrap();
     }
@@ -99,61 +119,51 @@ impl State {
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        let position = self
-            .positions
-            .entry((trade.taker_id, trade.book_id))
-            .or_default();
-        let taker_cost = trade_cost(*position, trade.quantity, trade.price, trade.side);
+        self.manager.on_trade(
+            trade.taker_id,
+            trade.maker_id,
+            trade.book_id,
+            trade.quantity,
+            trade.price,
+            trade.side,
+        );
 
-        let signed_quantity = match trade.side {
-            Side::Buy => trade.quantity as i32,
-            Side::Sell => -(trade.quantity as i32),
-        };
+        let taker_balance = self.manager.get_balance(trade.taker_id);
+        let maker_balance = self.manager.get_balance(trade.maker_id);
+        let taker_available = self.manager.get_available(trade.taker_id);
+        let maker_available = self.manager.get_available(trade.maker_id);
+        let taker_position = self.manager.get_position(trade.taker_id, trade.book_id);
+        let maker_position = self.manager.get_position(trade.maker_id, trade.book_id);
 
-        *position += signed_quantity;
+        sqlx::query!(
+            "
+            UPDATE user SET balance = ?, available = ? WHERE id = ?;
+            UPDATE user SET balance = ?, available = ? WHERE id = ?;
 
-        let position = self
-            .positions
-            .entry((trade.maker_id, trade.book_id))
-            .or_default();
-        let maker_cost = trade_cost(*position, trade.quantity, trade.price, !trade.side);
-        *position -= signed_quantity;
-
-        if trade.taker_id == trade.maker_id {
-            warn!(?trade, "self trade, not updating balance or position");
-        } else {
-            sqlx::query!(
-                "
-                UPDATE user SET balance = balance - ? WHERE id = ?;
-                UPDATE user SET balance = balance - ? WHERE id = ?;
-    
-                INSERT INTO position (user_id, book_id, position)
-                VALUES (?, ?, ?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position + ?;
-    
-                INSERT INTO position (user_id, book_id, position)
-                VALUES (?, ?, -?) ON CONFLICT (user_id, book_id) DO UPDATE SET position = position - ?;
-                ",
-                // update taker balance params
-                taker_cost,
-                trade.taker_id,
-                // update maker balance params
-                maker_cost,
-                trade.maker_id,
-                // update taker position params
-                trade.taker_id,
-                trade.book_id,
-                signed_quantity,
-                signed_quantity,
-                // update maker position params
-                trade.maker_id,
-                trade.book_id,
-                signed_quantity,
-                signed_quantity,
-            )
-            .execute(&mut *executor)
-            .await
-            .unwrap();
-        }
+            INSERT INTO position (user_id, book_id, position)
+            VALUES 
+                (?, ?, ?),
+                (?, ?, ?)
+            ON CONFLICT (user_id, book_id) DO UPDATE SET position = excluded.position;
+            ",
+            taker_balance,
+            taker_available,
+            trade.taker_id,
+            maker_balance,
+            maker_available,
+            trade.maker_id,
+            // update taker position params
+            trade.taker_id,
+            trade.book_id,
+            taker_position,
+            // update maker position params
+            trade.maker_id,
+            trade.book_id,
+            maker_position,
+        )
+        .execute(&mut *executor)
+        .await
+        .unwrap();
 
         // this is a separate query that runs regardless of self-match or not
         let is_buy = trade.side.is_buy();
@@ -162,15 +172,10 @@ impl State {
             INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
-            UPDATE 'order'
-            SET remaining = remaining - ?,
-            status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
-            WHERE id = ?;
-
-            UPDATE 'order'
-            SET remaining = remaining - ?,
-            status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
-            WHERE id = ?;
+            UPDATE 'order' SET
+                remaining = remaining - ?,
+                status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
+            WHERE id IN (?, ?);
             ",
             // trade
             trade.timestamp,
@@ -183,14 +188,11 @@ impl State {
             trade.quantity,
             trade.price,
             is_buy,
-            // update taker order
+            // update orders
             trade.quantity,
             trade.quantity,
             trade.taker_oid,
-            // update maker order
-            trade.quantity,
-            trade.quantity,
-            trade.maker_oid,
+            trade.maker_oid
         )
         .execute(&mut *executor)
         .await
@@ -204,7 +206,7 @@ impl State {
         tick: Tick,
         user_id: UserId,
         book_id: BookId,
-        order: Order,
+        mut order: Order,
     ) where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
@@ -212,10 +214,10 @@ impl State {
             .await
             .unwrap();
 
-        let book = self.books.get_mut(&book_id).unwrap();
-
         self.order_owner
             .insert(order.id, OrderOwner { user_id, book_id });
+
+        let book = self.books.get_mut(&book_id).unwrap();
         let fills = book.add(order);
         for fill in fills {
             let trade = Trade {
@@ -231,6 +233,25 @@ impl State {
                 side: order.side,
             };
             self.on_trade(&mut *transaction, trade).await;
+            order.quantity -= fill.quantity;
+            if fill.done {
+                self.order_owner.remove(&fill.id);
+            }
+        }
+        if order.quantity > 0 {
+            self.manager.add_resting_order(user_id, book_id, order);
+            self.order_owner
+                .insert(order.id, OrderOwner { user_id, book_id });
+
+            let available = self.manager.get_available(user_id);
+            sqlx::query!(
+                "UPDATE user SET available = ? WHERE id = ?",
+                available,
+                user_id
+            )
+            .execute(&mut *transaction)
+            .await
+            .unwrap();
         }
     }
 
@@ -238,13 +259,26 @@ impl State {
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        let book = self.books.get_mut(&book_id).unwrap();
-        assert!(book.remove(id).is_some());
-        self.order_owner.remove(&id);
-
         models::order::Order::cancel_by_id(transaction, id)
             .await
             .unwrap();
+
+        let book = self.books.get_mut(&book_id).unwrap();
+        let order = book.remove(id).unwrap();
+
+        let owner_info = self.order_owner.remove(&id).unwrap();
+        self.manager
+            .remove_order(owner_info.user_id, book_id, order);
+        let available = self.manager.get_available(owner_info.user_id);
+
+        sqlx::query!(
+            "UPDATE user SET available = ? WHERE id = ?",
+            available,
+            owner_info.user_id
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
     }
 
     async fn on_resolve<E>(&mut self, transaction: &mut E, book_id: BookId, price: Price)
@@ -258,29 +292,23 @@ impl State {
             .await
             .unwrap();
 
-        for ((user_id, book_id), position) in self.positions.iter_mut() {
-            let change = if *position >= 0 {
-                Balance::from(price) * Balance::from(*position)
-            } else {
-                Balance::from(RESOLVE_PRICE - price) * -Balance::from(*position)
-            };
+        models::position::Position::delete_for_book(transaction, book_id)
+            .await
+            .unwrap();
 
+        for user_id in self.manager.resolve(book_id, price) {
+            let balance = self.manager.get_balance(user_id);
+            let available = self.manager.get_available(user_id);
             sqlx::query!(
-                "
-                DELETE FROM 'position' WHERE book_id = ? and user_id = ?;
-                UPDATE user SET balance = balance + ? WHERE id = ?;
-                ",
-                book_id,
-                user_id,
-                change,
-                user_id,
+                "UPDATE user SET balance = ?, available = ? WHERE id = ?",
+                balance,
+                available,
+                user_id
             )
             .execute(&mut *transaction)
             .await
             .unwrap();
         }
-
-        self.positions.retain(|&(_, book), _| book != book_id);
     }
 }
 

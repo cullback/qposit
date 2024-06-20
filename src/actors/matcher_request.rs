@@ -26,7 +26,6 @@ pub enum MatcherRequest {
         amount: Balance,
     },
     Resolve {
-        user_id: UserId,
         book_id: BookId,
         price: Price,
         response: oneshot::Sender<Result<BookEvent, RejectReason>>,
@@ -66,13 +65,11 @@ impl MatcherRequest {
     }
 
     pub fn resolve(
-        user_id: UserId,
         book_id: BookId,
         price: Price,
     ) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>) {
         let (response, recv) = oneshot::channel();
         let req = Self::Resolve {
-            user_id,
             book_id,
             price,
             response,

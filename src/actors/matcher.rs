@@ -1,5 +1,7 @@
-use lobster::Side;
-use lobster::{BookEvent, Exchange};
+use std::collections::HashMap;
+
+use lobster::{Balance, Side, UserId};
+use lobster::{BookEvent, BookId, Exchange};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::{error, info};
@@ -14,29 +16,39 @@ use crate::models::{book::Book, order::Order, position::Position, user::User};
 async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     let next_order_id = Order::get_next_order_id(db).await;
 
-    let mut engine = lobster::Exchange::new(next_order_id);
-
+    let mut balances: HashMap<UserId, Balance> = HashMap::new();
     for user in User::get_with_nonzero_balances(db).await.unwrap() {
-        engine.deposit(user.id, user.balance);
+        balances.insert(user.id, user.balance);
     }
 
+    let mut books: Vec<BookId> = Vec::new();
     for book in Book::get_active(db).await.unwrap() {
-        engine.add_book(book.id);
+        books.push(book.id);
     }
 
+    let mut positions: HashMap<(UserId, BookId), i32> = HashMap::new();
     for position in Position::get_non_zero(db).await.unwrap() {
-        engine.set_position(position.user_id, position.book_id, position.position);
+        positions.insert((position.user_id, position.book_id), position.position);
     }
 
-    for order in Order::get_open_orders(db).await.unwrap() {
-        let order2 = lobster::Order::new(
-            order.id,
-            order.quantity,
-            order.price,
-            Side::new(order.is_buy),
+    let mut orders: Vec<(UserId, BookId, lobster::Order)> = Vec::new();
+    for order_record in Order::get_open_orders(db).await.unwrap() {
+        let order = lobster::Order::new(
+            order_record.id,
+            order_record.quantity,
+            order_record.price,
+            Side::new(order_record.is_buy),
         );
-        engine.init_order(order.user_id, order.book_id, order2);
+        orders.push((order_record.user_id, order_record.book_id, order));
     }
+
+    let engine = lobster::Exchange::from_state(
+        next_order_id,
+        &balances,
+        &positions,
+        orders.as_slice(),
+        books.as_slice(),
+    );
 
     engine
 }
@@ -78,18 +90,18 @@ pub fn start_matcher_service(
                         response.send(res).expect("Receiver dropped");
                     }
                     MatcherRequest::AddBook { book_id } => {
-                        exchange.add_book(book_id);
+                        let event = exchange.add_book(timestamp, book_id).unwrap();
+                        market_data.send(event).expect("Receiver dropped");
                     }
                     MatcherRequest::Deposit { user, amount } => {
                         exchange.deposit(user, amount);
                     }
                     MatcherRequest::Resolve {
-                        user_id,
                         book_id,
                         price,
                         response,
                     } => {
-                        let event = exchange.resolve(timestamp, book_id, user_id, price);
+                        let event = exchange.resolve(timestamp, book_id, price);
                         response.send(event).expect("Receiver dropped");
                     }
                 }

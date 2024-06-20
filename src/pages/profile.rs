@@ -13,12 +13,12 @@ pub async fn get(
         return Redirect::to("/").into_response();
     };
 
-    let page = profile::Profile::new(
-        user.username,
-        user.balance,
-        positions::Positions::build(&state.pool, user.id).await,
-        open_orders::OpenOrders::build(&state.pool, user.id).await,
-    );
+    let user_id = user.id;
 
-    page.into_response()
+    profile::Profile::new(
+        user,
+        positions::Positions::build(&state.pool, user_id).await,
+        open_orders::OpenOrders::build(&state.pool, user_id).await,
+    )
+    .into_response()
 }

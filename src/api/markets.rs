@@ -99,17 +99,7 @@ pub async fn post(
     };
 
     for book in market.books {
-        let book = Book {
-            id: 0,
-            market_id,
-            title: book,
-            value: None,
-            best_bid_price: None,
-            best_ask_price: None,
-            last_trade_price: None,
-            volume: 0,
-        };
-        let book_id = BookId::try_from(book.insert(&state.pool).await.unwrap()).unwrap();
+        let book_id = Book::new(&state.pool, market_id, book).await.unwrap();
         let req = MatcherRequest::AddBook { book_id };
         state.cmd_send.send(req).await.unwrap();
     }

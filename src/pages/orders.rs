@@ -113,6 +113,7 @@ pub async fn post(
                 RejectReason::InvalidQuantity => "Error: Invalid quantity",
                 RejectReason::InsufficientFunds => "Error: Insufficient funds",
                 RejectReason::OrderNotFound => "Error: Order not found",
+                RejectReason::BookAlreadyExists => "Error: Book already exists",
             };
             OrderForm::with_messages(
                 book,

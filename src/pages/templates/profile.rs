@@ -1,5 +1,6 @@
 use askama::Template;
-use lobster::Balance;
+
+use crate::models::user::User;
 
 use super::{open_orders, positions};
 
@@ -8,20 +9,21 @@ use super::{open_orders, positions};
 pub struct Profile {
     username: String,
     balance: String,
+    available: String,
     positions: positions::Positions,
     open_orders: open_orders::OpenOrders,
 }
 
 impl Profile {
     pub fn new(
-        username: String,
-        balance: Balance,
+        user: User,
         positions: positions::Positions,
         open_orders: open_orders::OpenOrders,
     ) -> Self {
         Self {
-            username,
-            balance: format!("${:.2}", balance as f32 / 10000.0),
+            username: user.username,
+            balance: format!("${:.2}", user.balance as f32 / 10000.0),
+            available: format!("${:.2}", user.available as f32 / 10000.0),
             positions,
             open_orders,
         }

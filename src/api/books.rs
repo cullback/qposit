@@ -40,7 +40,7 @@ pub async fn patch(
     }
 
     if let Some(price) = payload.price {
-        let (cmd, recv) = MatcherRequest::resolve(user.id, book_id, price);
+        let (cmd, recv) = MatcherRequest::resolve(book_id, price);
         state.cmd_send.send(cmd).await.unwrap();
         let response = recv.await.unwrap();
         return match response {
