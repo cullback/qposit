@@ -4,9 +4,9 @@ mod login;
 mod markets;
 mod orderbook;
 mod orders;
-mod profile;
 mod signup;
 mod templates;
+mod users;
 pub use templates::orderbook::OrderBook;
 
 use axum::{
@@ -51,7 +51,8 @@ pub fn router(state: AppState) -> Router {
         .route("/htmx.ws.js", get(get_htmx_ws))
         .route("/", get(home::get))
         .route("/about", get(about::get))
-        .route("/profile", get(profile::get))
+        // .route("/profile", get(profile::get))
+        .route("/users/:username", get(users::get))
         .route(
             "/login",
             get(login::get).post(login::post).delete(login::delete),
