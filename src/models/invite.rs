@@ -3,6 +3,7 @@ use sqlx::{Executor, Sqlite};
 use lobster::{Timestamp, UserId};
 
 #[derive(sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct Invite {
     pub id: i64,
     pub code: String,

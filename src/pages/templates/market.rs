@@ -1,11 +1,11 @@
 use askama::Template;
 
 use crate::{
-    app_state::format_as_string,
+    actors::book_service::BookData,
     models::{book::Book, market::Market},
 };
 
-use super::book::BookHtml;
+use super::{book::BookHtml, format_timestamp_as_string};
 
 #[derive(Template)]
 #[template(path = "market.html")]
@@ -13,16 +13,16 @@ pub struct MarketPage {
     username: String,
     expires_at: String,
     market: Market,
-    /// Comma-separated list of book IDs
+    /// Comma-separated list of book IDs TODO
     books: String,
     orderbooks: Vec<BookHtml>,
 }
 
 impl MarketPage {
-    pub fn new(username: String, market: Market, books: Vec<(Book, lobster::OrderBook)>) -> Self {
+    pub fn new(username: String, market: Market, books: Vec<(Book, BookData)>) -> Self {
         Self {
             username,
-            expires_at: format_as_string(market.expires_at),
+            expires_at: format_timestamp_as_string(market.expires_at),
             market,
             books: books
                 .iter()
@@ -31,7 +31,7 @@ impl MarketPage {
                 .join(","),
             orderbooks: books
                 .into_iter()
-                .map(|(book, orderbook)| BookHtml::new(book, orderbook))
+                .map(|(book, orderbook)| BookHtml::new(book, &orderbook))
                 .collect(),
         }
     }

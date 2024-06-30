@@ -1,4 +1,8 @@
-use lobster::Price;
+use lobster::{Price, Timestamp};
+use time::{
+    macros::{format_description, offset},
+    OffsetDateTime,
+};
 
 pub mod about_page;
 pub mod book;
@@ -18,9 +22,32 @@ pub fn format_price_to_string(price: Price) -> String {
     format!("{:.2}¢", price as f32 / 100.0)
 }
 
+pub fn mid_to_string(bid: Option<Price>, ask: Option<Price>) -> String {
+    match (bid, ask) {
+        (Some(bid), Some(ask)) => format_price_to_string((bid + ask) / 2),
+        (Some(bid), None) => format_price_to_string(bid),
+        (None, Some(ask)) => format_price_to_string(ask),
+        _ => "N/A".to_string(),
+    }
+}
+
+/// Pretty prints a timestamp as a string.
+/// e.g. November 10, 2020 12:00:00
+pub fn format_timestamp_as_string(timestamp: Timestamp) -> String {
+    let date = OffsetDateTime::from_unix_timestamp_nanos(i128::from(timestamp * 1000)).unwrap();
+    // convert to eastern time
+    let date = date.to_offset(offset!(-5));
+
+    let format = format_description!(
+        "[weekday], [month repr:long] [day padding:none], [year] at [hour]:[minute]:[second]"
+    );
+    date.format(&format).unwrap()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::format_price_to_string;
+    use super::format_timestamp_as_string;
 
     #[test]
     fn test_format_price_to_string() {
@@ -30,5 +57,12 @@ mod tests {
         assert_eq!(format_price_to_string(101), "1.01¢");
         assert_eq!(format_price_to_string(10000), "100.00¢");
         assert_eq!(format_price_to_string(10001), "100.01¢");
+    }
+
+    #[test]
+    fn test_timestamp_format() {
+        let timestamp = 1730829600_000000;
+        let formatted = format_timestamp_as_string(timestamp);
+        assert_eq!(formatted, "Tuesday, November 5, 2024 at 13:00:00");
     }
 }

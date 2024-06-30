@@ -2,8 +2,7 @@
 //!
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
 use super::templates::market::MarketPage;
-use super::OrderBook;
-use crate::actors::book_service::{build_from_orders, BookData};
+use crate::actors::book_service::BookData;
 use crate::app_state::AppState;
 use crate::models;
 use crate::models::market::Market;
@@ -32,11 +31,11 @@ pub async fn get(
 
     let mut new_things = vec![];
     for book in books {
-        let orders = models::order::Order::get_open_for_book(&state.pool, book.id)
+        let orderbook = models::order::Order::build_orderbook(&state.pool, book.id)
             .await
             .unwrap();
-        let orderbook = build_from_orders(&orders);
-        new_things.push((book, orderbook));
+        let book_data = BookData::new2(&book, orderbook);
+        new_things.push((book, book_data));
     }
 
     match user {

@@ -7,21 +7,20 @@
 //! broadcast to all clients.
 //!
 //! - volume
-//! - last price, mid price
+//! - last price
 //! - best bid, best ask
 //! - order book state
 //!
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every event.
-use lobster::{Action, BookEvent, BookId};
-use lobster::{Order, Price, Side};
+use lobster::Price;
+use lobster::{Action, Balance, BookEvent, BookId};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tracing::info;
 
 use crate::models;
-use crate::models::book::Book;
 
 /// Snapshot of the latest order book data to be rendered.
 #[derive(Debug, Clone)]
@@ -31,39 +30,18 @@ pub struct BookData {
     pub best_bid_price: Option<Price>,
     pub best_ask_price: Option<Price>,
     pub last_price: Option<Price>,
-    pub volume: u64,
-}
-
-pub fn build_from_orders(orders: &[models::order::Order]) -> lobster::OrderBook {
-    orders
-        .into_iter()
-        .map(|order| {
-            Order::new(
-                order.id,
-                order.remaining,
-                order.price,
-                Side::new(order.is_buy),
-            )
-        })
-        .collect()
+    pub volume: Balance,
 }
 
 impl BookData {
-    pub async fn new(db: &SqlitePool, book_id: BookId, last_trade_price: Option<Price>) -> Self {
-        let orders = models::order::Order::get_open_for_book(db, book_id)
-            .await
-            .unwrap();
-        let book = build_from_orders(&orders);
-
-        let volume = Book::get_volume(db, book_id).await.unwrap();
-
+    pub fn new2(event: &models::book::Book, orderbook: lobster::OrderBook) -> Self {
         Self {
-            book_id,
-            best_bid_price: book.best_bid().map(|x| x.price),
-            best_ask_price: book.best_ask().map(|x| x.price),
-            inner: book,
-            last_price: last_trade_price,
-            volume,
+            book_id: event.id,
+            best_bid_price: orderbook.best_bid().map(|x| x.price),
+            best_ask_price: orderbook.best_ask().map(|x| x.price),
+            inner: orderbook,
+            last_price: event.last_trade_price,
+            volume: event.volume,
         }
     }
 
@@ -83,7 +61,7 @@ impl BookData {
             Action::Add(order) => {
                 let fills = self.inner.add(order);
                 for fill in fills {
-                    self.volume += u64::from(fill.quantity) * u64::from(fill.price);
+                    self.volume += Balance::from(fill.quantity) * Balance::from(fill.price);
                     self.last_price = Some(fill.price);
                 }
                 self.best_bid_price = self.inner.best_bid().map(|x| x.price);
@@ -97,7 +75,7 @@ impl BookData {
             Action::Resolve { price } => {
                 self.last_price = Some(price);
             }
-            Action::AddBook => {}
+            Action::AddBook => todo!(),
         }
     }
 }
@@ -110,8 +88,12 @@ impl BookService {
     pub async fn new(db: &SqlitePool) -> Self {
         let mut books = HashMap::new();
         for book in models::book::Book::get_active(db).await.unwrap() {
-            let book_data = BookData::new(db, book.id, book.last_trade_price).await;
-            books.insert(book.id, book_data);
+            let book_id = book.id;
+            let orderbook = models::order::Order::build_orderbook(db, book.id)
+                .await
+                .unwrap();
+            let book_data = BookData::new2(&book, orderbook);
+            books.insert(book_id, book_data);
         }
 
         Self { books }

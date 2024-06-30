@@ -4,7 +4,7 @@ use lobster::{Balance, Side, UserId};
 use lobster::{BookEvent, BookId, Exchange};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
-use tracing::{error, info};
+use tracing::info;
 
 use crate::app_state::current_time_micros;
 

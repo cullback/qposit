@@ -120,4 +120,27 @@ impl Order {
         .execute(db)
         .await
     }
+
+    pub async fn build_orderbook(
+        db: &SqlitePool,
+        book_id: BookId,
+    ) -> Result<lobster::OrderBook, sqlx::Error> {
+        let orders = Order::get_open_for_book(db, book_id).await?;
+        let orderbook = build_from_orders(&orders);
+        Ok(orderbook)
+    }
+}
+
+fn build_from_orders(orders: &[Order]) -> lobster::OrderBook {
+    orders
+        .into_iter()
+        .map(|order| {
+            lobster::Order::new(
+                order.id,
+                order.remaining,
+                order.price,
+                Side::new(order.is_buy),
+            )
+        })
+        .collect()
 }

@@ -2,7 +2,7 @@ use super::templates::{open_orders, positions, profile};
 use crate::{app_state::AppState, authentication::SessionExtractor, models};
 use axum::{
     extract::{Path, State},
-    response::{IntoResponse, Redirect},
+    response::IntoResponse,
 };
 
 pub async fn get(

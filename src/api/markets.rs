@@ -4,7 +4,6 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use lobster::BookId;
 use serde::Deserialize;
 use serde_json::json;
 use utoipa::ToSchema;

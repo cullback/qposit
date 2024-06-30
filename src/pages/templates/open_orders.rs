@@ -6,6 +6,7 @@ use sqlx::SqlitePool;
 use super::format_price_to_string;
 
 #[derive(sqlx::FromRow)]
+#[allow(dead_code)]
 struct Order {
     market_title: String,
     book_title: String,
@@ -26,6 +27,7 @@ struct OrderAsHtml {
     remaining: Quantity,
     price: String,
     side: String,
+    #[allow(dead_code)]
     status: String,
 }
 

@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ username }}</h1>
+
+<hgroup>
+    <h1>{{ username }}</h1>
+    <p>Joined {{ created_at }}</p>
+</hgroup>
 
 <p>Balance: {{ balance }}</p>
 <p>Available: {{ available }}</p>

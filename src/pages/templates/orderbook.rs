@@ -4,7 +4,7 @@ use lobster::{Order, Price, Quantity};
 
 use crate::actors::book_service::BookData;
 
-use super::format_price_to_string;
+use super::{format_price_to_string, mid_to_string};
 
 #[derive(Debug, Clone)]
 pub struct PriceLevel {
@@ -58,6 +58,7 @@ pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 /// Needs to be applied against an already rendered book.
 #[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]
+#[allow(dead_code)]
 pub struct OrderBook {
     pub book_id: BookId,
     pub last_price: String,
@@ -71,12 +72,7 @@ impl From<&BookData> for OrderBook {
     fn from(book: &BookData) -> Self {
         let last_price = format_price_to_string(book.last_price.unwrap_or(0));
         let volume = format!("{:.2}", book.volume as f32 / 10000.0);
-        let mid_price = match (book.best_bid_price, book.best_ask_price) {
-            (Some(bid), Some(ask)) => format_price_to_string((bid + ask) / 2),
-            (Some(bid), None) => format_price_to_string(bid),
-            (None, Some(ask)) => format_price_to_string(ask),
-            _ => "N/A".to_string(),
-        };
+        let mid_price = mid_to_string(book.best_bid_price, book.best_ask_price);
         Self {
             book_id: book.book_id,
             last_price,
