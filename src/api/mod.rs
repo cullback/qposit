@@ -9,6 +9,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::app_state::AppState;
 
+mod api_error;
 mod books;
 mod feed;
 mod markets;

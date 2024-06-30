@@ -20,7 +20,7 @@ use crate::{
 };
 use crate::{api::order_request::OrderRequest, authentication::OptionalBasicAuth};
 
-use super::feed::BookEvent;
+use super::{api_error::ApiJson, feed::BookEvent};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct OrderResponse {
@@ -142,7 +142,7 @@ pub enum TimeInForce {
 pub async fn post(
     State(state): State<AppState>,
     BasicAuthExtractor(user): BasicAuthExtractor,
-    Json(order): Json<OrderRequest>,
+    ApiJson(order): ApiJson<OrderRequest>,
 ) -> Response {
     let (req, recv) = MatcherRequest::submit(user.id, order.into());
     state.cmd_send.send(req).await.expect("Receiver dropped");

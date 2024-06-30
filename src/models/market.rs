@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
 use lobster::Timestamp;
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Deserialize, Serialize)]
 pub struct Market {
     pub id: i64,
     pub slug: String,

@@ -36,19 +36,6 @@ async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookP
         return;
     };
 
-    // for &book_id in &books {
-    //     let book = models::book::Book::get(&state.pool, book_id).await.unwrap();
-
-    //     let book = OrderBook::from(
-    //         &BookData::new(&state.pool, book_id, book.title, book.last_trade_price).await,
-    //     );
-
-    //     let text = book.render().unwrap();
-    //     if socket.send(Message::Text(text)).await.is_err() {
-    //         return;
-    //     }
-    // }
-
     loop {
         let event = state.book_receive.recv().await.expect("Sender dropped");
 

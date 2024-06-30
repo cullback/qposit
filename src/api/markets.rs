@@ -33,6 +33,7 @@ pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
             .await
             .unwrap();
         resp.push(json!({
+            "slug": market.slug,
             "title": market.title,
             "description": market.description,
             "created_at": market.created_at,
@@ -104,5 +105,10 @@ pub async fn post(
         state.cmd_send.send(req).await.unwrap();
     }
 
-    StatusCode::CREATED.into_response()
+    let blah = models::market::Market::get_by_slug(&state.pool, &slug)
+        .await
+        .unwrap()
+        .unwrap();
+
+    return (StatusCode::CREATED, Json(blah)).into_response();
 }
