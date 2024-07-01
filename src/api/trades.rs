@@ -6,24 +6,33 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use sqlx::QueryBuilder;
 use tracing::error;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::app_state::AppState;
 
 /// A trade.
 #[derive(Debug, Serialize, ToSchema, FromRow)]
 pub struct Trade {
+    /// The ID of the trade.
     pub id: i64,
     /// The timestamp of when the trade was created.
     pub created_at: i64,
     pub tick: u32,
+    /// The event ID.
     pub event_id: u32,
+    /// The taker's user ID.
     pub taker_id: u32,
+    /// The maker's user ID.
     pub maker_id: u32,
+    /// The taker's order ID.
     pub taker_oid: i64,
+    /// The maker's order ID.
     pub maker_oid: i64,
+    /// The quantity of the trade.
     pub quantity: u32,
+    /// The price of the trade.
     pub price: u16,
+    /// True if the taker is buying.
     pub is_buy: bool,
 }
 
@@ -31,7 +40,7 @@ const fn default_limit() -> u32 {
     100
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
 pub struct TradeParams {
     pub event_id: Option<u32>,
     pub user_id: Option<u32>,
@@ -48,9 +57,10 @@ pub struct TradeParams {
 /// that timestamp.
 #[utoipa::path(
     get,
-    path = "/trades",
+    path = "/api/v1/trades",
+    params(TradeParams),
     responses(
-        (status = 200, description = "Success")
+        (status = 200, description = "Success", body = [Trade])
     )
 )]
 pub async fn get(State(state): State<AppState>, params: Query<TradeParams>) -> Response {

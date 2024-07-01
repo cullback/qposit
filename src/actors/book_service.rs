@@ -3,7 +3,7 @@
 //! The book service tracks state of all events and streams price-level orderbooks
 //! to the front end UI.
 //!
-//! Every BookEvent represents a change in the order book state that needs to be
+//! Every BookUpdate represents a change in the order book state that needs to be
 //! broadcast to all clients.
 //!
 //! - volume
@@ -75,7 +75,7 @@ impl EventData {
             Action::Resolve { price } => {
                 self.last_price = Some(price);
             }
-            Action::AddBook => todo!(),
+            Action::AddEvent => todo!(),
         }
     }
 }
@@ -100,7 +100,7 @@ impl EventService {
     }
 
     fn on_event(&mut self, event: BookUpdate) -> EventData {
-        if matches!(event.action, Action::AddBook) {
+        if matches!(event.action, Action::AddEvent) {
             self.events
                 .insert(event.book, EventData::new_default(event.book));
         }

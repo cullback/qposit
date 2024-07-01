@@ -6,27 +6,28 @@ use axum::{
 };
 use lobster::EventId;
 use serde::Deserialize;
-use serde_json::json;
 use utoipa::ToSchema;
 
 use crate::actors::matcher_request::MatcherRequest;
-use crate::api::feed::BookEvent;
+use crate::api::feed::BookUpdate;
 use crate::{app_state::AppState, authentication::BasicAuthExtractor};
 
 use super::api_error::ApiError;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct EventPatchPayload {
-    /// If this is set, we resolve the book
+    /// If set, resolves the event to the given price.
+    #[schema(minimum = 0, maximum = 10000)]
     price: Option<u16>,
 }
 
 /// Modify an event.
 #[utoipa::path(
     patch,
-    path = "/events/:id",
+    path = "/api/v1/events/:id",
+    request_body = EventPatchPayload,
     responses(
-        (status = 200, description = "Book successfully modified", body = [EventPatchPayload])
+        (status = 200, description = "Event modified successfully", body = BookUpdate)
     )
 )]
 pub async fn patch(
@@ -48,7 +49,7 @@ pub async fn patch(
             .unwrap()
             .map_err(|err| ApiError::MatcherRequest(err));
         return match response {
-            Ok(event) => Json(BookEvent::from(event)).into_response(),
+            Ok(event) => Json(BookUpdate::from(event)).into_response(),
             Err(err) => err.into_response(),
         };
     }

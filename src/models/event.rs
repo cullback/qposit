@@ -1,16 +1,18 @@
-use lobster::{Balance, EventId, Price};
+use lobster::EventId;
+use serde::Serialize;
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
+use utoipa::ToSchema;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Serialize, ToSchema)]
 pub struct Event {
-    pub id: EventId,
+    pub id: u32,
     pub market_id: i64,
     pub title: String,
-    pub value: Option<Price>,
-    pub last_trade_price: Option<Price>,
-    pub best_bid_price: Option<Price>,
-    pub best_ask_price: Option<Price>,
-    pub volume: Balance,
+    pub value: Option<u16>,
+    pub last_trade_price: Option<u16>,
+    pub best_bid_price: Option<u16>,
+    pub best_ask_price: Option<u16>,
+    pub volume: i64,
 }
 
 impl Event {

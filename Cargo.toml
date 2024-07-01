@@ -25,6 +25,7 @@ argon2 = "0.5.3"
 lobster = { path = "../lobster" }
 
 utoipa = { version = "4", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "*", features = ["axum"] }
-utoipa-redoc = { version = "*", features = ["axum"] }
-utoipa-rapidoc = { version = "*", features = ["axum"] }
+# utoipa-swagger-ui = { version = "*", features = ["axum"] }
+# utoipa-redoc = { version = "*", features = ["axum"] }
+# utoipa-rapidoc = { version = "*", features = ["axum"] }
+utoipa-scalar = { version = "*", features = ["axum"] }

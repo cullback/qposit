@@ -2,12 +2,9 @@ use axum::{
     routing::{delete, get, patch, post},
     Router,
 };
-use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::Redoc;
-use utoipa_redoc::Servable;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_scalar::{Scalar, Servable as ScalarServable};
 
-use crate::app_state::AppState;
+use crate::{app_state::AppState, models};
 
 mod api_error;
 mod events;
@@ -42,15 +39,24 @@ use utoipa::{
         schemas(
             order_request::OrderRequest,
             orders::TimeInForce,
-            orders::OrderResponse,
-            markets::Market,
+            markets::MarketPost,
+            markets::MarketResponse,
             trades::Trade,
             events::EventPatchPayload,
+            feed::BookUpdate,
+            feed::Action,
+            models::order::Order,
+            models::market::Market,
+            models::event::Event,
+            trades::Trade,
         ),
     ),
     modifiers(&SecurityAddon),
     tags(
-        (name = "QPosit", description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS).")
+        (
+        name = "QPosit",
+        description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS)."
+        )
     ),
 )]
 
@@ -84,9 +90,7 @@ pub fn router(state: AppState) -> Router {
         .route("/feed", get(feed::get));
 
     Router::new()
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
+        .merge(Scalar::with_url("/scalar", ApiDoc::openapi()))
         .nest("/api/v1", apiv1)
         .with_state(state)
 }

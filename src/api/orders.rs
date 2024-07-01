@@ -6,11 +6,11 @@ use axum::{
 };
 use lobster::Action;
 use lobster::OrderId;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::QueryBuilder;
 use tracing::error;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     actors::matcher_request::MatcherRequest,
@@ -22,41 +22,14 @@ use crate::{api::order_request::OrderRequest, authentication::OptionalBasicAuth}
 
 use super::{
     api_error::{ApiError, ApiJson},
-    feed::BookEvent,
+    feed::BookUpdate,
 };
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct OrderResponse {
-    id: i64,
-    created_at: i64,
-    event: u32,
-    user: u32,
-    quantity: u32,
-    remaining: u32,
-    price: u16,
-    is_buy: bool,
-}
-
-impl From<models::order::Order> for OrderResponse {
-    fn from(value: models::order::Order) -> Self {
-        Self {
-            id: value.id,
-            created_at: value.created_at,
-            event: value.event_id,
-            user: value.user_id,
-            quantity: value.quantity,
-            remaining: value.remaining,
-            price: value.price,
-            is_buy: value.is_buy,
-        }
-    }
-}
 
 const fn default_limit() -> u32 {
     100
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
 pub struct GetOrderParams {
     pub event_id: Option<u32>,
     pub user_id: Option<u32>,
@@ -70,9 +43,10 @@ pub struct GetOrderParams {
 /// Get orders according to query parameters.
 #[utoipa::path(
     get,
-    path = "/orders",
+    path = "/api/v1/orders",
+    params(GetOrderParams),
     responses(
-        (status = 200, description = "Get an active order")
+        (status = 200, description = "List of orders", body = [Order])
     ),
     security(
         (),
@@ -109,10 +83,7 @@ pub async fn get(
         }
     };
 
-    let resp = orders
-        .into_iter()
-        .map(OrderResponse::from)
-        .collect::<Vec<_>>();
+    let resp = orders.into_iter().collect::<Vec<_>>();
     Json(resp).into_response()
 }
 
@@ -134,9 +105,10 @@ pub enum TimeInForce {
 /// Submit an order to the matching engine.
 #[utoipa::path(
     post,
-    path = "/orders",
+    path = "/api/v1/orders",
+    request_body = OrderRequest,
     responses(
-        (status = 200, description = "Order successfully submitted", body = [OrderRequest])
+        (status = 200, description = "Order successfully submitted", body = BookUpdate)
     ),
     security(
         ("basic_auth" = [])
@@ -155,17 +127,17 @@ pub async fn post(
         .map_err(|err| ApiError::MatcherRequest(err));
 
     match response {
-        Ok(event) => Json(BookEvent::from(event)).into_response(),
+        Ok(event) => Json(BookUpdate::from(event)).into_response(),
         Err(err) => err.into_response(),
     }
 }
 
-/// Cancel orders
+/// Cancel all orders
 ///
-/// Submit cancel rerquest for specified orders.
+/// Submit cancel request for all orders
 #[utoipa::path(
     delete,
-    path = "/orders",
+    path = "/api/v1/orders",
     responses(
         (status = 200, description = "Selected orders cancelled succesfully")
     )
@@ -204,7 +176,10 @@ pub async fn delete(
 /// Submit cancel request for specified order.
 #[utoipa::path(
     delete,
-    path = "/orders/:id",
+    path = "/api/v1/orders/:id",
+    params(
+        ("id" = i64, Path, description = "Order ID")
+    ),
     responses(
         (status = 200, description = "Deleted all orders")
     ),

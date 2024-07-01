@@ -107,7 +107,7 @@ impl State {
             }
             Action::Remove { id } => self.on_remove(&mut *tx, event.book, id).await,
             Action::Resolve { price } => self.on_resolve(&mut *tx, event.book, price).await,
-            Action::AddBook {} => {
+            Action::AddEvent {} => {
                 self.orderbooks.insert(event.book, OrderBook::default());
             }
         }

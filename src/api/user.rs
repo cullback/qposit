@@ -25,7 +25,7 @@ pub struct DepositPayload {
 /// Increase a users balance.
 #[utoipa::path(
     post,
-    path = "/deposit/:user_id",
+    path = "/api/v1/deposit/:user_id",
     security(
         ("basic_auth" = [])
     )

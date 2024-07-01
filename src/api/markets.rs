@@ -4,7 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use utoipa::ToSchema;
 
@@ -12,44 +12,39 @@ use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
     authentication::BasicAuthExtractor,
-    models::{self, event::Event},
+    models::{event::Event, market::Market},
 };
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MarketResponse {
+    #[serde(flatten)]
+    pub market: Market,
+    pub events: Vec<Event>,
+}
 
 #[utoipa::path(
     get,
-    path = "/markets",
+    path = "/api/v1/markets",
     responses(
-        (status = 200, description = "Market successfully created")
+        (status = 200, description = "Market successfully created", body = [MarketResponse])
     )
 )]
 pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
-    let markets = models::market::Market::get_active_markets(&state.pool)
-        .await
-        .unwrap();
+    let markets = Market::get_active_markets(&state.pool).await.unwrap();
     let mut resp = vec![];
     for market in markets {
         let events = Event::get_all_for_market(&state.pool, market.id)
             .await
             .unwrap();
-        resp.push(json!({
-            "slug": market.slug,
-            "title": market.title,
-            "description": market.description,
-            "created_at": market.created_at,
-            "expires_at": market.expires_at,
-            "events": events.iter().map(|b| json!({
-                "id": b.id.to_string(),
-                "title": b.title,
-                "value": b.value,
-                "last_trade_price": b.last_trade_price,
-            })).collect::<Vec<_>>(),
-        }));
+
+        let market = MarketResponse { market, events };
+        resp.push(market);
     }
     Json(resp).into_response()
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct Market {
+#[derive(Deserialize, ToSchema, Serialize)]
+pub struct MarketPost {
     /// The title of the market.
     title: String,
     /// The description of the market.
@@ -66,16 +61,17 @@ pub struct Market {
 /// Creates the associated events as well.
 #[utoipa::path(
     post,
-    path = "/markets",
+    path = "/api/v1/markets",
+    request_body = MarketPost,
     responses(
-        (status = 200, description = "Market successfully created", body = [Market])
+        (status = 200, description = "Market successfully created", body = MarketResponse),
     )
 )]
 pub async fn post(
     BasicAuthExtractor(user): BasicAuthExtractor,
     State(state): State<AppState>,
     Path(slug): Path<String>,
-    Json(market): Json<Market>,
+    Json(market): Json<MarketPost>,
 ) -> impl IntoResponse {
     // TODO: make this a transaction
     if user.username != "admin" {
@@ -83,7 +79,7 @@ pub async fn post(
         return StatusCode::FORBIDDEN.into_response();
     }
 
-    let record = models::market::Market {
+    let record = Market {
         id: 0,
         slug: slug.clone(),
         title: market.title,
@@ -109,10 +105,13 @@ pub async fn post(
         state.cmd_send.send(req).await.unwrap();
     }
 
-    let blah = models::market::Market::get_by_slug(&state.pool, &slug)
+    let market = Market::get_by_slug(&state.pool, &slug).await.unwrap();
+
+    let events = Event::get_all_for_market(&state.pool, market.id)
         .await
-        .unwrap()
         .unwrap();
 
-    return (StatusCode::CREATED, Json(blah)).into_response();
+    let market = MarketResponse { market, events };
+
+    return (StatusCode::CREATED, Json(market)).into_response();
 }

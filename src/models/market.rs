@@ -1,24 +1,24 @@
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
-use lobster::Timestamp;
+use utoipa::ToSchema;
 
-#[derive(sqlx::FromRow, Deserialize, Serialize)]
+#[derive(sqlx::FromRow, Debug, Deserialize, Serialize, ToSchema)]
 pub struct Market {
     pub id: i64,
     pub slug: String,
     pub title: String,
     pub description: String,
     pub status: String,
-    pub created_at: Timestamp,
-    pub expires_at: Timestamp,
+    pub created_at: i64,
+    pub expires_at: i64,
 }
 
 impl Market {
-    pub async fn get_by_slug(db: &SqlitePool, slug: &str) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn get_by_slug(db: &SqlitePool, slug: &str) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM 'market' WHERE slug = ?")
             .bind(slug)
-            .fetch_optional(db)
+            .fetch_one(db)
             .await
     }
     pub async fn get_active_markets(db: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {

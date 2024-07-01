@@ -13,13 +13,13 @@ use crate::app_state::AppState;
 
 /// Book update event.
 #[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct BookEvent {
+pub struct BookUpdate {
     /// The timestamp this event ocurred at.
     pub time: i64,
     /// Per-book tick sequence number of this event.
     pub tick: u32,
-    /// The market this event ocurred on.
-    pub book: u32,
+    /// The event associated with this book update.
+    pub event: u32,
     /// The user that caused the event. 0 implies unknown.
     pub user: u32,
     /// The type of action that ocurred.
@@ -27,7 +27,7 @@ pub struct BookEvent {
     pub action: Action,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum Action {
@@ -46,12 +46,12 @@ pub enum Action {
     AddBook,
 }
 
-impl From<lobster::BookUpdate> for BookEvent {
+impl From<lobster::BookUpdate> for BookUpdate {
     fn from(event: lobster::BookUpdate) -> Self {
         Self {
             time: event.time,
             tick: event.tick,
-            book: event.book,
+            event: event.book,
             user: event.user,
             action: match event.action {
                 lobster::Action::Add(order) => Action::Add {
@@ -62,15 +62,16 @@ impl From<lobster::BookUpdate> for BookEvent {
                 },
                 lobster::Action::Remove { id } => Action::Remove { id },
                 lobster::Action::Resolve { price } => Action::Resolve { price },
-                lobster::Action::AddBook => Action::AddBook,
+                lobster::Action::AddEvent => Action::AddBook,
             },
         }
     }
 }
 
+/// Subscribe to market data feed.
 #[utoipa::path(
     get,
-    path = "/feed",
+    path = "/api/v1/feed",
     responses(
         (status = 200, description = "Subscribe to market data feed")
     )
@@ -81,9 +82,9 @@ pub async fn get(State(state): State<AppState>, ws: WebSocketUpgrade) -> Respons
 
 async fn handle_socket(mut state: AppState, mut socket: WebSocket) {
     loop {
-        let event = state.feed_receive.recv().await.expect("Sender dropped");
-        let event = BookEvent::from(event);
-        let text = serde_json::to_string(&event).expect("failed to serialize");
+        let update = state.feed_receive.recv().await.expect("Sender dropped");
+        let update = BookUpdate::from(update);
+        let text = serde_json::to_string(&update).expect("failed to serialize");
         socket.send(Message::Text(text)).await.unwrap();
     }
 }

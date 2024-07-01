@@ -17,12 +17,10 @@ pub async fn get(
     Path(slug): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let Ok(market) = Market::get_by_slug(&state.pool, &slug).await else {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    };
-
-    let Some(market) = market else {
-        return Redirect::to("/404").into_response();
+    let market = match Market::get_by_slug(&state.pool, &slug).await {
+        Ok(market) => market,
+        Err(sqlx::Error::RowNotFound) => return Redirect::to("/404").into_response(),
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
 
     let events = Event::get_all_for_market(&state.pool, market.id)

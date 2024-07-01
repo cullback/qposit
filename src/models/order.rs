@@ -1,17 +1,19 @@
 use lobster::{EventId, Timestamp, UserId};
-use lobster::{OrderId, Price, Quantity, Side};
+use lobster::{OrderId, Side};
+use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
+use utoipa::ToSchema;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Serialize, ToSchema)]
 pub struct Order {
-    pub id: OrderId,
-    pub created_at: Timestamp,
-    pub event_id: EventId,
-    pub user_id: UserId,
-    pub quantity: Quantity,
-    pub remaining: Quantity,
-    pub price: Price,
+    pub id: i64,
+    pub created_at: i64,
+    pub event_id: u32,
+    pub user_id: u32,
+    pub quantity: u32,
+    pub remaining: u32,
+    pub price: u16,
     pub is_buy: bool,
     pub status: String,
 }
