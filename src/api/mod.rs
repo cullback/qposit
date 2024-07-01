@@ -90,7 +90,7 @@ pub fn router(state: AppState) -> Router {
         .route("/feed", get(feed::get));
 
     Router::new()
-        .merge(Scalar::with_url("/scalar", ApiDoc::openapi()))
+        .merge(Scalar::with_url("/docs", ApiDoc::openapi()))
         .nest("/api/v1", apiv1)
         .with_state(state)
 }
