@@ -13,10 +13,10 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 use tracing::{error, warn};
 
+use super::auth::{self, SessionExtractor};
 use super::templates::signup;
 use crate::actors::matcher_request::MatcherRequest;
 use crate::app_state::{current_time_micros, AppState};
-use crate::authentication::{self, SessionExtractor};
 use crate::models;
 use crate::models::invite::Invite;
 use crate::models::user::User;
@@ -73,7 +73,7 @@ pub async fn post(
     match Invite::check_and_claim(&mut *tx, &form.invite_code, user_id).await {
         Ok(Some(_)) => {
             tx.commit().await.unwrap();
-            let cookie = authentication::create_session(
+            let cookie = auth::create_session(
                 &state.pool,
                 user_id,
                 timestamp,

@@ -12,16 +12,16 @@ use sqlx::QueryBuilder;
 use tracing::error;
 use utoipa::{IntoParams, ToSchema};
 
+use crate::api::order_request::OrderRequest;
 use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
-    authentication::BasicAuthExtractor,
     models::{self, order::Order},
 };
-use crate::{api::order_request::OrderRequest, authentication::OptionalBasicAuth};
 
 use super::{
     api_error::{ApiError, ApiJson},
+    auth::{BasicAuthExtractor, OptionalBasicAuth},
     feed::BookUpdate,
 };
 

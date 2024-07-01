@@ -2,7 +2,6 @@
 mod actors;
 mod api;
 mod app_state;
-mod authentication;
 mod models;
 mod pages;
 

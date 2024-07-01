@@ -1,5 +1,3 @@
-use argon2::PasswordVerifier;
-use argon2::{Argon2, PasswordHash};
 use axum::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
@@ -7,13 +5,12 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum_extra::extract::{cookie::Cookie, cookie::SameSite, CookieJar};
-use axum_extra::headers::authorization::Basic;
-use axum_extra::headers::{Authorization, UserAgent};
-use axum_extra::TypedHeader;
+use axum_extra::headers::UserAgent;
 use sqlx::{Executor, Sqlite, SqlitePool};
-use tracing::{error, warn};
+use tracing::warn;
 
 use crate::app_state::AppState;
+use crate::models;
 use crate::models::session::Session;
 use crate::models::user::User;
 use lobster::Timestamp;
@@ -57,25 +54,6 @@ pub async fn create_session<'c, E: Executor<'c, Database = Sqlite>>(
     build_session_cookie(&id)
 }
 
-/// Checks a usernames+password combination using the database and returns the user if it is valid.
-/// Returns `None` if the user does not exist or the password is incorrect.
-async fn check_login(pool: &SqlitePool, username: &str, password: &str) -> Option<User> {
-    match User::get_by_username(pool, username).await {
-        Ok(user) => {
-            let parsed_hash = PasswordHash::new(&user.password_hash).expect("Failed to parsh hash");
-            Argon2::default()
-                .verify_password(password.as_bytes(), &parsed_hash)
-                .ok()
-                .map(|()| user)
-        }
-        Err(sqlx::Error::RowNotFound) => return None,
-        Err(err) => {
-            error!(err = ?err, "Failed to get user");
-            return None;
-        }
-    }
-}
-
 /// Authenticate user and create a new session id.
 pub async fn login(
     db: &SqlitePool,
@@ -85,7 +63,7 @@ pub async fn login(
     ip_address: String,
     user_agent: UserAgent,
 ) -> Option<Cookie<'static>> {
-    let user = check_login(db, username, password).await?;
+    let user = models::user::User::check_login(db, username, password).await?;
 
     let cookie = create_session(db, user.id, time, ip_address, user_agent).await;
     Some(cookie)
@@ -125,47 +103,5 @@ impl FromRequestParts<AppState> for SessionExtractor {
         };
 
         Ok(Self(Some(user)))
-    }
-}
-
-pub struct BasicAuthExtractor(pub User);
-
-#[async_trait]
-impl FromRequestParts<AppState> for BasicAuthExtractor {
-    type Rejection = Response;
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let Ok(TypedHeader(Authorization(x))) =
-            TypedHeader::<Authorization<Basic>>::from_request_parts(parts, state).await
-        else {
-            return Err(StatusCode::UNAUTHORIZED.into_response());
-        };
-        match check_login(&state.pool, x.username(), x.password()).await {
-            Some(user) => Ok(Self(user)),
-            None => Err(StatusCode::UNAUTHORIZED.into_response()),
-        }
-    }
-}
-
-pub struct OptionalBasicAuth(pub Option<User>);
-
-#[async_trait]
-impl FromRequestParts<AppState> for OptionalBasicAuth {
-    type Rejection = Response;
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let Ok(TypedHeader(Authorization(header))) =
-            TypedHeader::<Authorization<Basic>>::from_request_parts(parts, state).await
-        else {
-            return Ok(Self(None));
-        };
-        let user = check_login(&state.pool, header.username(), header.password()).await;
-        Ok(Self(user))
     }
 }

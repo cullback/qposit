@@ -10,9 +10,10 @@ use utoipa::ToSchema;
 
 use crate::actors::matcher_request::MatcherRequest;
 use crate::api::feed::BookUpdate;
-use crate::{app_state::AppState, authentication::BasicAuthExtractor};
+use crate::app_state::AppState;
 
 use super::api_error::ApiError;
+use super::auth::BasicAuthExtractor;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct EventPatchPayload {

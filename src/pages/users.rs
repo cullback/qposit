@@ -1,5 +1,8 @@
-use super::templates::{open_orders, positions, profile};
-use crate::{app_state::AppState, authentication::SessionExtractor, models};
+use super::{
+    auth::SessionExtractor,
+    templates::{open_orders, positions, profile},
+};
+use crate::{app_state::AppState, models};
 use axum::{
     extract::{Path, State},
     response::IntoResponse,

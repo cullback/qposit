@@ -15,11 +15,13 @@ use tracing::info;
 
 use crate::{
     app_state::{current_time_micros, AppState},
-    authentication::{self, SessionExtractor},
     models::session::Session,
 };
 
-use super::templates::login;
+use super::{
+    auth::{self, SessionExtractor},
+    templates::login,
+};
 
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
     match user {
@@ -43,7 +45,7 @@ pub async fn post(
 ) -> impl IntoResponse {
     let timestamp = current_time_micros();
 
-    match authentication::login(
+    match auth::login(
         &state.pool,
         &form.username,
         &form.password,

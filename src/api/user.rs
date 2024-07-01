@@ -10,10 +10,9 @@ use serde_json::json;
 use tracing::error;
 use utoipa::ToSchema;
 
-use crate::{
-    actors::matcher_request::MatcherRequest, app_state::AppState,
-    authentication::BasicAuthExtractor, models::user::User,
-};
+use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, models::user::User};
+
+use super::auth::BasicAuthExtractor;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DepositPayload {

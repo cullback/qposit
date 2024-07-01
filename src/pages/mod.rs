@@ -1,4 +1,5 @@
 mod about;
+mod auth;
 mod home;
 mod login;
 mod markets;
@@ -7,6 +8,7 @@ mod orders;
 mod signup;
 mod templates;
 mod users;
+
 pub use templates::orderbook::OrderBook;
 
 use axum::{

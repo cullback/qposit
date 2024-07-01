@@ -1,5 +1,4 @@
-use super::templates::about_page::AboutPage;
-use crate::authentication::SessionExtractor;
+use super::{auth::SessionExtractor, templates::about_page::AboutPage};
 use axum::response::IntoResponse;
 
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {

@@ -11,9 +11,10 @@ use utoipa::ToSchema;
 use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
-    authentication::BasicAuthExtractor,
     models::{event::Event, market::Market},
 };
+
+use super::auth::BasicAuthExtractor;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct MarketResponse {

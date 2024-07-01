@@ -1,9 +1,13 @@
+use argon2::Argon2;
+use argon2::PasswordHash;
+use argon2::PasswordVerifier;
 use lobster::Balance;
 use lobster::Timestamp;
 use lobster::UserId;
 use sqlx::Executor;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
+use tracing::error;
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct User {
@@ -76,5 +80,25 @@ impl User {
         };
 
         Ok(())
+    }
+
+    /// Checks a usernames+password combination using the database and returns the user if it is valid.
+    /// Returns `None` if the user does not exist or the password is incorrect.
+    pub async fn check_login(pool: &SqlitePool, username: &str, password: &str) -> Option<User> {
+        match User::get_by_username(pool, username).await {
+            Ok(user) => {
+                let parsed_hash =
+                    PasswordHash::new(&user.password_hash).expect("Failed to parsh hash");
+                Argon2::default()
+                    .verify_password(password.as_bytes(), &parsed_hash)
+                    .ok()
+                    .map(|()| user)
+            }
+            Err(sqlx::Error::RowNotFound) => return None,
+            Err(err) => {
+                error!(err = ?err, "Failed to get user");
+                return None;
+            }
+        }
     }
 }

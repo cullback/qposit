@@ -1,12 +1,13 @@
 //! The page for a market.
 //!
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
+use super::auth::SessionExtractor;
 use super::templates::market::MarketPage;
 use crate::actors::book_service::EventData;
 use crate::app_state::AppState;
 use crate::models;
+use crate::models::event::Event;
 use crate::models::market::Market;
-use crate::{authentication::SessionExtractor, models::event::Event};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;

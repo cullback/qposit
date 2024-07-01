@@ -7,11 +7,13 @@ use utoipa_scalar::{Scalar, Servable as ScalarServable};
 use crate::{app_state::AppState, models};
 
 mod api_error;
+mod auth;
 mod events;
 mod feed;
 mod markets;
 mod order_request;
 mod orders;
+mod positions;
 mod trades;
 mod user;
 
@@ -34,6 +36,7 @@ use utoipa::{
         feed::get,
         events::patch,
         trades::get,
+        positions::get,
     ),
     components(
         schemas(
@@ -48,6 +51,7 @@ use utoipa::{
             models::order::Order,
             models::market::Market,
             models::event::Event,
+            models::position::Position,
             trades::Trade,
         ),
     ),
@@ -59,8 +63,7 @@ use utoipa::{
         )
     ),
 )]
-
-pub struct ApiDoc;
+struct ApiDoc;
 
 struct SecurityAddon;
 
@@ -77,17 +80,18 @@ impl Modify for SecurityAddon {
 
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
+        .route("/deposit/:id", post(user::deposit))
+        .route("/events/:id", patch(events::patch))
+        .route("/feed", get(feed::get))
+        .route("/markets", get(markets::get))
+        .route("/markets/:slug", post(markets::post))
         .route(
             "/orders",
             get(orders::get).post(orders::post).delete(orders::delete),
         )
         .route("/orders/:id", delete(orders::delete_by_id))
-        .route("/markets/:slug", post(markets::post))
-        .route("/markets", get(markets::get))
-        .route("/trades", get(trades::get))
-        .route("/events/:id", patch(events::patch))
-        .route("/deposit/:id", post(user::deposit))
-        .route("/feed", get(feed::get));
+        .route("/positions", get(positions::get))
+        .route("/trades", get(trades::get));
 
     Router::new()
         .merge(Scalar::with_url("/docs", ApiDoc::openapi()))

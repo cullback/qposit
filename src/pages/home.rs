@@ -1,7 +1,8 @@
+use super::auth::SessionExtractor;
 use super::templates::home_page::HomePage;
 use crate::app_state::AppState;
+use crate::models::event::Event;
 use crate::models::market::Market;
-use crate::{authentication::SessionExtractor, models::event::Event};
 use axum::extract::State;
 use axum::response::IntoResponse;
 

@@ -23,6 +23,7 @@ pub enum ApiError {
     // The request body contained invalid JSON
     JsonRejection(JsonRejection),
     MatcherRequest(lobster::RejectReason),
+    Authentication,
 }
 
 impl IntoResponse for ApiError {
@@ -39,6 +40,7 @@ impl IntoResponse for ApiError {
                 (rejection.status(), rejection.body_text())
             }
             ApiError::MatcherRequest(reason) => (StatusCode::OK, format!("{reason:?}")),
+            ApiError::Authentication => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
         };
         (status, ApiJson(ErrorResponse { error: message })).into_response()
     }
