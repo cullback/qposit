@@ -4,6 +4,7 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::Executor;
 use sqlx::Sqlite;
+use sqlx::SqliteExecutor;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 

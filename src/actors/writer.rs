@@ -8,28 +8,14 @@ use lobster::{
     Action, Balance, BookUpdate, EventId, Order, OrderBook, PortfolioManager, Side, Tick,
     Timestamp, UserId,
 };
-use lobster::{OrderId, Price, Quantity};
+use lobster::{OrderId, Price};
 use sqlx::{Executor, Sqlite, SqlitePool};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tracing::info;
 
 use crate::models;
-
-#[derive(Debug)]
-struct Trade {
-    timestamp: Timestamp,
-    tick: Tick,
-    event_id: EventId,
-    taker_id: UserId,
-    maker_id: UserId,
-    taker_oid: OrderId,
-    maker_oid: OrderId,
-    quantity: Quantity,
-    price: Price,
-    /// Taker side
-    side: Side,
-}
+use crate::models::trade::Trade;
 
 #[derive(Debug)]
 struct OrderOwner {
@@ -125,7 +111,7 @@ impl State {
             trade.event_id,
             trade.quantity,
             trade.price,
-            trade.side,
+            Side::new(trade.is_buy),
         );
 
         let taker_balance = self.manager.get_balance(trade.taker_id);
@@ -165,29 +151,15 @@ impl State {
         .await
         .unwrap();
 
-        // this is a separate query that runs regardless of self-match or not
-        let is_buy = trade.side.is_buy();
+        trade.insert(executor).await.unwrap();
+
         sqlx::query!(
             "
-            INSERT INTO trade (created_at, tick, event_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-
             UPDATE 'order' SET
                 remaining = remaining - ?,
                 status = CASE WHEN remaining - ? = 0 THEN 'filled' ELSE 'open' END
             WHERE id IN (?, ?);
             ",
-            // trade
-            trade.timestamp,
-            trade.tick,
-            trade.event_id,
-            trade.taker_id,
-            trade.maker_id,
-            trade.taker_oid,
-            trade.maker_oid,
-            trade.quantity,
-            trade.price,
-            is_buy,
             // update orders
             trade.quantity,
             trade.quantity,
@@ -221,7 +193,8 @@ impl State {
         let fills = book.add(order);
         for fill in fills {
             let trade = Trade {
-                timestamp: time,
+                id: 0,
+                created_at: time,
                 tick,
                 event_id,
                 taker_id: user_id,
@@ -230,7 +203,7 @@ impl State {
                 maker_oid: fill.id,
                 quantity: fill.quantity,
                 price: fill.price,
-                side: order.side,
+                is_buy: order.side.is_buy(),
             };
             self.on_trade(&mut *transaction, trade).await;
             order.quantity -= fill.quantity;
