@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS market(
 );
 
 
-CREATE TABLE IF NOT EXISTS book(
+CREATE TABLE IF NOT EXISTS event(
     id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     market_id   INTEGER NOT NULL,
     title       TEXT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS book(
 CREATE TABLE IF NOT EXISTS "order"(
     id          INTEGER PRIMARY KEY,
     created_at  INTEGER NOT NULL,
-    book_id     INTEGER NOT NULL,
+    event_id     INTEGER NOT NULL,
     user_id     INTEGER NOT NULL,
     quantity    INTEGER NOT NULL CHECK (quantity > 0),
     remaining   INTEGER NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS "order"(
         status IN ('open', 'filled', 'cancelled')
     ),
     FOREIGN KEY (user_id) REFERENCES user(id),
-    FOREIGN KEY (book_id) REFERENCES book(id)
+    FOREIGN KEY (event_id) REFERENCES event(id)
 );
 
 
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS trade(
     id          INTEGER NOT NULL PRIMARY KEY,
     created_at  INTEGER NOT NULL,
     tick        INTEGER NOT NULL,
-    book_id     INTEGER NOT NULL,
+    event_id     INTEGER NOT NULL,
     taker_id    INTEGER NOT NULL,
     maker_id    INTEGER NOT NULL,
     taker_oid   INTEGER NOT NULL,
@@ -80,17 +80,17 @@ CREATE TABLE IF NOT EXISTS trade(
     quantity    INTEGER NOT NULL,
     price       INTEGER NOT NULL,
     is_buy      INTEGER NOT NULL CHECK (is_buy IN (0, 1)),
-    FOREIGN KEY (book_id) REFERENCES book(id),
+    FOREIGN KEY (event_id) REFERENCES event(id),
     FOREIGN KEY (taker_id) REFERENCES 'order'(id),
     FOREIGN KEY (maker_id) REFERENCES 'order'(id)
 );
 
 
 CREATE TABLE IF NOT EXISTS position(
-    book_id     INTEGER NOT NULL,
+    event_id     INTEGER NOT NULL,
     user_id     INTEGER NOT NULL,
     position    INTEGER NOT NULL,
-    FOREIGN KEY (book_id) REFERENCES book(id),
+    FOREIGN KEY (event_id) REFERENCES event(id),
     FOREIGN KEY (user_id) REFERENCES user(id),
-    PRIMARY KEY (book_id, user_id)
+    PRIMARY KEY (event_id, user_id)
 );

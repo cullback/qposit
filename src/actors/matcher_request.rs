@@ -1,4 +1,4 @@
-use lobster::{Balance, BookEvent, BookId, OrderRequest, RejectReason, UserId};
+use lobster::{Balance, EventId, MatcherResult, OrderRequest, UserId};
 use lobster::{OrderId, Price};
 use tokio::sync::oneshot;
 
@@ -10,33 +10,30 @@ pub enum MatcherRequest {
         user: UserId,
         order: OrderRequest,
         /// Response to the client
-        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
+        response: oneshot::Sender<MatcherResult>,
     },
     CancelOrder {
         user: UserId,
         order: OrderId,
         /// Response to the client
-        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
+        response: oneshot::Sender<MatcherResult>,
     },
-    AddBook {
-        book_id: BookId,
+    AddEvent {
+        event_id: EventId,
     },
     Deposit {
         user: UserId,
         amount: Balance,
     },
     Resolve {
-        book_id: BookId,
+        event_id: EventId,
         price: Price,
-        response: oneshot::Sender<Result<BookEvent, RejectReason>>,
+        response: oneshot::Sender<MatcherResult>,
     },
 }
 
 impl MatcherRequest {
-    pub fn submit(
-        user: UserId,
-        order: OrderRequest,
-    ) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>) {
+    pub fn submit(user: UserId, order: OrderRequest) -> (Self, oneshot::Receiver<MatcherResult>) {
         let (response, recv) = oneshot::channel();
         let req = Self::SubmitOrder {
             user,
@@ -46,10 +43,7 @@ impl MatcherRequest {
         (req, recv)
     }
 
-    pub fn cancel(
-        user: UserId,
-        order: OrderId,
-    ) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>) {
+    pub fn cancel(user: UserId, order: OrderId) -> (Self, oneshot::Receiver<MatcherResult>) {
         let (response, recv) = oneshot::channel();
         let req = Self::CancelOrder {
             user,
@@ -64,13 +58,10 @@ impl MatcherRequest {
         req
     }
 
-    pub fn resolve(
-        book_id: BookId,
-        price: Price,
-    ) -> (Self, oneshot::Receiver<Result<BookEvent, RejectReason>>) {
+    pub fn resolve(event_id: EventId, price: Price) -> (Self, oneshot::Receiver<MatcherResult>) {
         let (response, recv) = oneshot::channel();
         let req = Self::Resolve {
-            book_id,
+            event_id,
             price,
             response,
         };

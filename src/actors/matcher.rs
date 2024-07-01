@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use lobster::{Balance, Side, UserId};
-use lobster::{BookEvent, BookId, Exchange};
+use lobster::{BookUpdate, EventId, Exchange};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -10,7 +10,7 @@ use crate::app_state::current_time_micros;
 
 use super::matcher_request::MatcherRequest;
 
-use crate::models::{book::Book, order::Order, position::Position, user::User};
+use crate::models::{event::Event, order::Order, position::Position, user::User};
 
 /// Initializes the in-memory exchange data from the database.
 async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
@@ -21,17 +21,17 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
         balances.insert(user.id, user.balance);
     }
 
-    let mut books: Vec<BookId> = Vec::new();
-    for book in Book::get_active(db).await.unwrap() {
-        books.push(book.id);
+    let mut events: Vec<EventId> = Vec::new();
+    for event in Event::get_active(db).await.unwrap() {
+        events.push(event.id);
     }
 
-    let mut positions: HashMap<(UserId, BookId), i32> = HashMap::new();
+    let mut positions: HashMap<(UserId, EventId), i32> = HashMap::new();
     for position in Position::get_non_zero(db).await.unwrap() {
-        positions.insert((position.user_id, position.book_id), position.position);
+        positions.insert((position.user_id, position.event_id), position.position);
     }
 
-    let mut orders: Vec<(UserId, BookId, lobster::Order)> = Vec::new();
+    let mut orders: Vec<(UserId, EventId, lobster::Order)> = Vec::new();
     for order_record in Order::get_open_orders(db).await.unwrap() {
         let order = lobster::Order::new(
             order_record.id,
@@ -39,7 +39,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
             order_record.price,
             Side::new(order_record.is_buy),
         );
-        orders.push((order_record.user_id, order_record.book_id, order));
+        orders.push((order_record.user_id, order_record.event_id, order));
     }
 
     let engine = lobster::Exchange::from_state(
@@ -47,7 +47,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
         &balances,
         &positions,
         orders.as_slice(),
-        books.as_slice(),
+        events.as_slice(),
     );
 
     engine
@@ -56,7 +56,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
 pub fn start_matcher_service(
     db: SqlitePool,
     mut recv: mpsc::Receiver<MatcherRequest>,
-    market_data: broadcast::Sender<BookEvent>,
+    market_data: broadcast::Sender<BookUpdate>,
 ) {
     tokio::spawn({
         async move {
@@ -89,19 +89,19 @@ pub fn start_matcher_service(
                         }
                         response.send(res).expect("Receiver dropped");
                     }
-                    MatcherRequest::AddBook { book_id } => {
-                        let event = exchange.add_book(timestamp, book_id).unwrap();
+                    MatcherRequest::AddEvent { event_id } => {
+                        let event = exchange.add_event(timestamp, event_id).unwrap();
                         market_data.send(event).expect("Receiver dropped");
                     }
                     MatcherRequest::Deposit { user, amount } => {
                         exchange.deposit(user, amount);
                     }
                     MatcherRequest::Resolve {
-                        book_id,
+                        event_id,
                         price,
                         response,
                     } => {
-                        let event = exchange.resolve(timestamp, book_id, price);
+                        let event = exchange.resolve(timestamp, event_id, price);
                         response.send(event).expect("Receiver dropped");
                     }
                 }

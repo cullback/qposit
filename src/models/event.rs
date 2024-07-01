@@ -1,9 +1,9 @@
-use lobster::{Balance, BookId, Price};
+use lobster::{Balance, EventId, Price};
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
 
 #[derive(Debug, FromRow)]
-pub struct Book {
-    pub id: BookId,
+pub struct Event {
+    pub id: EventId,
     pub market_id: i64,
     pub title: String,
     pub value: Option<Price>,
@@ -13,21 +13,21 @@ pub struct Book {
     pub volume: Balance,
 }
 
-impl Book {
+impl Event {
     pub async fn new<'c, E: Executor<'c, Database = Sqlite>>(
         db: E,
         market_id: i64,
         title: String,
-    ) -> Result<BookId, sqlx::Error> {
+    ) -> Result<EventId, sqlx::Error> {
         sqlx::query!(
-            "INSERT INTO book (market_id, title)
+            "INSERT INTO event (market_id, title)
             VALUES (?, ?)",
             market_id,
             title,
         )
         .execute(db)
         .await
-        .map(|row| row.last_insert_rowid() as BookId)
+        .map(|row| row.last_insert_rowid() as EventId)
     }
 
     pub async fn get_all_for_market(
@@ -37,32 +37,32 @@ impl Book {
         sqlx::query_as::<_, Self>(
             "
             SELECT
-                book.id,
-                book.market_id,
-                book.title,
-                book.value,
+                event.id,
+                event.market_id,
+                event.title,
+                event.value,
                 (
                     SELECT trade.price
                     FROM trade
-                    WHERE trade.book_id = book.id
+                    WHERE trade.event_id = event.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
                 ) AS last_trade_price,
                 (
                     SELECT MAX(price)
                     FROM 'order'
-                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
+                    WHERE 'order'.event_id = event.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
                 ) AS best_bid_price,
                 (
                     SELECT MIN(price)
                     FROM 'order'
-                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
+                    WHERE 'order'.event_id = event.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
                 ) AS best_ask_price,
                 (
-                    SELECT SUM(quantity * price) FROM trade WHERE book.id = trade.book_id
+                    SELECT SUM(quantity * price) FROM trade WHERE event.id = trade.event_id
                 ) AS volume
-            FROM book
-            WHERE book.market_id = ?;
+            FROM event
+            WHERE event.market_id = ?;
             ",
         )
         .bind(market)
@@ -74,31 +74,31 @@ impl Book {
         sqlx::query_as::<_, Self>(
             "
             SELECT
-                book.id,
-                book.market_id,
-                book.title,
-                book.value,
+                event.id,
+                event.market_id,
+                event.title,
+                event.value,
                 (
                     SELECT trade.price
                     FROM trade
-                    WHERE trade.book_id = book.id
+                    WHERE trade.event_id = event.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
                 ) as last_trade_price,
                 (
                     SELECT MAX(price)
                     FROM 'order'
-                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
+                    WHERE 'order'.event_id = event.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
                 ) AS best_bid_price,
                 (
                     SELECT MIN(price)
                     FROM 'order'
-                    WHERE 'order'.book_id = book.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
+                    WHERE 'order'.event_id = event.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
                 ) AS best_ask_price,
                 (
-                    SELECT SUM(quantity * price) FROM trade WHERE book.id = trade.book_id
+                    SELECT SUM(quantity * price) FROM trade WHERE event.id = trade.event_id
                 ) AS volume
-            FROM book
+            FROM event
             ",
         )
         .fetch_all(db)

@@ -1,7 +1,7 @@
 use super::templates::home_page::HomePage;
 use crate::app_state::AppState;
 use crate::models::market::Market;
-use crate::{authentication::SessionExtractor, models::book::Book};
+use crate::{authentication::SessionExtractor, models::event::Event};
 use axum::extract::State;
 use axum::response::IntoResponse;
 
@@ -13,10 +13,10 @@ pub async fn get(
 
     let mut markets = Vec::new();
     for market in active_markets {
-        let books = Book::get_all_for_market(&state.pool, market.id)
+        let events = Event::get_all_for_market(&state.pool, market.id)
             .await
             .unwrap();
-        markets.push((market, books));
+        markets.push((market, events));
     }
 
     match user {

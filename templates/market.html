@@ -11,7 +11,7 @@
 
 <hr>
 
-<div hx-ext="ws" ws-connect="/orderbook?books={{books}}">
+<div hx-ext="ws" ws-connect="/orderbook?events={{events}}">
     {% for orderbook in orderbooks %}
     {{orderbook|safe}}
     {% endfor %}

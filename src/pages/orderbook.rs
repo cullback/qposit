@@ -4,7 +4,7 @@ use askama::Template;
 use askama_axum::IntoResponse;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Query, State, WebSocketUpgrade};
-use lobster::BookId;
+use lobster::EventId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -13,25 +13,25 @@ use crate::app_state::AppState;
 use super::templates::orderbook::OrderBook;
 
 #[derive(Debug, Deserialize, ToSchema)]
-pub struct BookParams {
+pub struct EventParams {
     /// The id of the book to get messages for
-    pub books: String,
+    pub events: String,
 }
 
 pub async fn get(
     State(state): State<AppState>,
-    Query(params): Query<BookParams>,
+    Query(params): Query<EventParams>,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
     ws.on_upgrade(|socket| handle_socket(state, socket, params))
 }
 
-async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookParams) {
-    let Ok(books) = params
-        .books
+async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: EventParams) {
+    let Ok(events) = params
+        .events
         .split(',')
         .map(|x| x.parse())
-        .collect::<Result<HashSet<BookId>, _>>()
+        .collect::<Result<HashSet<EventId>, _>>()
     else {
         return;
     };
@@ -39,7 +39,7 @@ async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: BookP
     loop {
         let event = state.book_receive.recv().await.expect("Sender dropped");
 
-        if !books.contains(&event.book_id) {
+        if !events.contains(&event.event_id) {
             continue;
         }
 

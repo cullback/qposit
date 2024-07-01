@@ -12,7 +12,7 @@ use crate::{
     actors::matcher_request::MatcherRequest,
     app_state::AppState,
     authentication::BasicAuthExtractor,
-    models::{self, book::Book},
+    models::{self, event::Event},
 };
 
 #[utoipa::path(
@@ -28,7 +28,7 @@ pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
         .unwrap();
     let mut resp = vec![];
     for market in markets {
-        let books = Book::get_all_for_market(&state.pool, market.id)
+        let events = Event::get_all_for_market(&state.pool, market.id)
             .await
             .unwrap();
         resp.push(json!({
@@ -37,7 +37,7 @@ pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
             "description": market.description,
             "created_at": market.created_at,
             "expires_at": market.expires_at,
-            "books": books.iter().map(|b| json!({
+            "events": events.iter().map(|b| json!({
                 "id": b.id.to_string(),
                 "title": b.title,
                 "value": b.value,
@@ -50,15 +50,20 @@ pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
 
 #[derive(Deserialize, ToSchema)]
 pub struct Market {
+    /// The title of the market.
     title: String,
+    /// The description of the market.
     description: String,
+    /// The time at which the market was created.
     created_at: i64,
+    /// The time at which the market will expire.
     expires_at: i64,
-    books: Vec<String>,
+    /// The titles for the events.
+    events: Vec<String>,
 }
 
 /// Posts a new market to the exchange.
-/// Creates the associated books as well.
+/// Creates the associated events as well.
 #[utoipa::path(
     post,
     path = "/markets",
@@ -98,9 +103,9 @@ pub async fn post(
         }
     };
 
-    for book in market.books {
-        let book_id = Book::new(&state.pool, market_id, book).await.unwrap();
-        let req = MatcherRequest::AddBook { book_id };
+    for event in market.events {
+        let event_id = Event::new(&state.pool, market_id, event).await.unwrap();
+        let req = MatcherRequest::AddEvent { event_id };
         state.cmd_send.send(req).await.unwrap();
     }
 

@@ -1,8 +1,8 @@
 use askama::Template;
-use lobster::BookId;
+use lobster::EventId;
 use lobster::{Order, Price, Quantity};
 
-use crate::actors::book_service::BookData;
+use crate::actors::book_service::EventData;
 
 use super::{format_price_to_string, mid_to_string};
 
@@ -60,7 +60,7 @@ pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 #[template(path = "orderbook.html")]
 #[allow(dead_code)]
 pub struct OrderBook {
-    pub book_id: BookId,
+    pub event_id: EventId,
     pub last_price: String,
     pub mid_price: String,
     pub volume: String,
@@ -68,18 +68,18 @@ pub struct OrderBook {
     pub asks: Vec<PriceLevel>,
 }
 
-impl From<&BookData> for OrderBook {
-    fn from(book: &BookData) -> Self {
-        let last_price = format_price_to_string(book.last_price.unwrap_or(0));
-        let volume = format!("{:.2}", book.volume as f32 / 10000.0);
-        let mid_price = mid_to_string(book.best_bid_price, book.best_ask_price);
+impl From<&EventData> for OrderBook {
+    fn from(event: &EventData) -> Self {
+        let last_price = format_price_to_string(event.last_price.unwrap_or(0));
+        let volume = format!("{:.2}", event.volume as f32 / 10000.0);
+        let mid_price = mid_to_string(event.best_bid_price, event.best_ask_price);
         Self {
-            book_id: book.book_id,
+            event_id: event.event_id,
             last_price,
             mid_price,
             volume,
-            bids: do_side(book.inner.bids()),
-            asks: do_side(book.inner.asks()),
+            bids: do_side(event.book.bids()),
+            asks: do_side(event.book.asks()),
         }
     }
 }

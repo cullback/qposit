@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 pub struct OrderRequest {
     /// The id of the book to submit the order to.
     #[schema(minimum = 1)]
-    pub book: u32,
+    pub event: u32,
     /// The number of contracts to buy or sell.
     #[schema(minimum = 1)]
     pub quantity: u32,
@@ -24,7 +24,7 @@ pub struct OrderRequest {
 impl From<OrderRequest> for lobster::OrderRequest {
     fn from(req: OrderRequest) -> Self {
         Self {
-            book: req.book,
+            event: req.event,
             quantity: req.quantity,
             price: req.price,
             side: Side::new(req.is_buy),

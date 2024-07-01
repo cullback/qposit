@@ -29,7 +29,7 @@ This market will be resolved however I please.',
 );
 
 
-INSERT INTO book(id, market_id, title) VALUES
+INSERT INTO event(id, market_id, title) VALUES
     (1, 1, 'Option A'),
     (2, 1, 'Option B');
 

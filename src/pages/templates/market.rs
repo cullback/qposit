@@ -1,8 +1,8 @@
 use askama::Template;
 
 use crate::{
-    actors::book_service::BookData,
-    models::{book::Book, market::Market},
+    actors::book_service::EventData,
+    models::{event::Event, market::Market},
 };
 
 use super::{book::BookHtml, format_timestamp_as_string};
@@ -13,23 +13,23 @@ pub struct MarketPage {
     username: String,
     expires_at: String,
     market: Market,
-    /// Comma-separated list of book IDs TODO
-    books: String,
+    /// Comma-separated list of event IDs TODO
+    events: String,
     orderbooks: Vec<BookHtml>,
 }
 
 impl MarketPage {
-    pub fn new(username: String, market: Market, books: Vec<(Book, BookData)>) -> Self {
+    pub fn new(username: String, market: Market, events: Vec<(Event, EventData)>) -> Self {
         Self {
             username,
             expires_at: format_timestamp_as_string(market.expires_at),
             market,
-            books: books
+            events: events
                 .iter()
                 .map(|(book, _)| book.id.to_string())
                 .collect::<Vec<_>>()
                 .join(","),
-            orderbooks: books
+            orderbooks: events
                 .into_iter()
                 .map(|(book, orderbook)| BookHtml::new(book, &orderbook))
                 .collect(),

@@ -10,7 +10,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::app_state::AppState;
 
 mod api_error;
-mod books;
+mod events;
 mod feed;
 mod markets;
 mod order_request;
@@ -35,11 +35,18 @@ use utoipa::{
         orders::delete_by_id,
         markets::post,
         feed::get,
-        books::patch,
+        events::patch,
         trades::get,
     ),
     components(
-        schemas(order_request::OrderRequest, orders::TimeInForce, orders::OrderResponse, markets::Market, trades::Trade),
+        schemas(
+            order_request::OrderRequest,
+            orders::TimeInForce,
+            orders::OrderResponse,
+            markets::Market,
+            trades::Trade,
+            events::EventPatchPayload,
+        ),
     ),
     modifiers(&SecurityAddon),
     tags(
@@ -72,7 +79,7 @@ pub fn router(state: AppState) -> Router {
         .route("/markets/:slug", post(markets::post))
         .route("/markets", get(markets::get))
         .route("/trades", get(trades::get))
-        .route("/books/:id", patch(books::patch))
+        .route("/events/:id", patch(events::patch))
         .route("/deposit/:id", post(user::deposit))
         .route("/feed", get(feed::get));
 

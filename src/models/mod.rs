@@ -1,4 +1,4 @@
-pub mod book;
+pub mod event;
 pub mod invite;
 pub mod market;
 pub mod order;

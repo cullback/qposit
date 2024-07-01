@@ -1,4 +1,4 @@
-use lobster::{BookId, Timestamp, UserId};
+use lobster::{EventId, Timestamp, UserId};
 use lobster::{OrderId, Price, Quantity, Side};
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
@@ -7,7 +7,7 @@ use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
 pub struct Order {
     pub id: OrderId,
     pub created_at: Timestamp,
-    pub book_id: BookId,
+    pub event_id: EventId,
     pub user_id: UserId,
     pub quantity: Quantity,
     pub remaining: Quantity,
@@ -32,7 +32,7 @@ impl Order {
     pub async fn new<E>(
         db: &mut E,
         created_at: Timestamp,
-        book_id: BookId,
+        event_id: EventId,
         user_id: UserId,
         order: lobster::Order,
     ) -> Result<i64, sqlx::Error>
@@ -41,11 +41,11 @@ impl Order {
     {
         let is_buy = order.side.is_buy();
         sqlx::query!(
-            "INSERT INTO 'order' (id, created_at, book_id, user_id, quantity, remaining, price, is_buy, status)
+            "INSERT INTO 'order' (id, created_at, event_id, user_id, quantity, remaining, price, is_buy, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open')",
             order.id,
             created_at,
-            book_id,
+            event_id,
             user_id,
             order.quantity,
             order.quantity,
@@ -83,15 +83,15 @@ impl Order {
         .await
     }
 
-    /// Returns the open orders of a book from lowest price to highest price.
-    pub async fn get_open_for_book(
+    /// Returns the open orders of an event from lowest price to highest price.
+    pub async fn get_open_for_event(
         db: &SqlitePool,
-        book: BookId,
+        event_id: EventId,
     ) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as::<_, Self>(
-            "SELECT * FROM 'order' WHERE status = 'open' and book_id = ? ORDER BY price ASC, created_at ASC",
+            "SELECT * FROM 'order' WHERE status = 'open' and event_id = ? ORDER BY price ASC, created_at ASC",
         )
-        .bind(book)
+        .bind(event_id)
         .fetch_all(db)
         .await
     }
@@ -106,16 +106,16 @@ impl Order {
             .await
     }
 
-    pub async fn cancel_for_book<E>(
+    pub async fn cancel_for_event<E>(
         db: &mut E,
-        book: BookId,
+        event_id: EventId,
     ) -> Result<SqliteQueryResult, sqlx::Error>
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
         sqlx::query!(
-            "UPDATE 'order' SET status = 'cancelled' WHERE book_id = ? and status = 'open'",
-            book
+            "UPDATE 'order' SET status = 'cancelled' WHERE event_id = ? and status = 'open'",
+            event_id
         )
         .execute(db)
         .await
@@ -123,9 +123,9 @@ impl Order {
 
     pub async fn build_orderbook(
         db: &SqlitePool,
-        book_id: BookId,
+        event_id: EventId,
     ) -> Result<lobster::OrderBook, sqlx::Error> {
-        let orders = Order::get_open_for_book(db, book_id).await?;
+        let orders = Order::get_open_for_event(db, event_id).await?;
         let orderbook = build_from_orders(&orders);
         Ok(orderbook)
     }

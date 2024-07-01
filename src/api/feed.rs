@@ -46,8 +46,8 @@ pub enum Action {
     AddBook,
 }
 
-impl From<lobster::BookEvent> for BookEvent {
-    fn from(event: lobster::BookEvent) -> Self {
+impl From<lobster::BookUpdate> for BookEvent {
+    fn from(event: lobster::BookUpdate) -> Self {
         Self {
             time: event.time,
             tick: event.tick,

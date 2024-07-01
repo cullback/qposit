@@ -1,21 +1,21 @@
 use askama::Template;
-use lobster::BookId;
+use lobster::EventId;
 
-use crate::models::{book::Book, market::Market};
+use crate::models::{event::Event, market::Market};
 
 use super::{format_price_to_string, mid_to_string};
 
 #[allow(dead_code)]
 struct BookView {
-    id: BookId,
+    id: EventId,
     market_id: i64,
     title: String,
     last_trade_price: String,
     mid_price: String,
 }
 
-impl From<Book> for BookView {
-    fn from(book: Book) -> Self {
+impl From<Event> for BookView {
+    fn from(book: Event) -> Self {
         Self {
             id: book.id,
             market_id: book.market_id,
@@ -35,14 +35,14 @@ pub struct HomePage {
 }
 
 impl HomePage {
-    pub fn new(username: String, markets: Vec<(Market, Vec<Book>)>) -> Self {
+    pub fn new(username: String, markets: Vec<(Market, Vec<Event>)>) -> Self {
         Self {
             username,
             markets: markets
                 .into_iter()
-                .map(|(market, books)| {
-                    let books = books.into_iter().map(BookView::from).collect();
-                    (market, books)
+                .map(|(market, events)| {
+                    let events = events.into_iter().map(BookView::from).collect();
+                    (market, events)
                 })
                 .collect(),
         }

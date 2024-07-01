@@ -1,4 +1,4 @@
-use lobster::BookId;
+use lobster::EventId;
 use lobster::UserId;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::Executor;
@@ -8,7 +8,7 @@ use sqlx::SqlitePool;
 #[derive(sqlx::FromRow, Debug)]
 pub struct Position {
     pub user_id: UserId,
-    pub book_id: BookId,
+    pub event_id: EventId,
     pub position: i32,
 }
 
@@ -19,14 +19,14 @@ impl Position {
             .await
     }
 
-    pub async fn delete_for_book<E>(
+    pub async fn delete_for_event<E>(
         pool: &mut E,
-        book: BookId,
+        event_id: EventId,
     ) -> Result<SqliteQueryResult, sqlx::Error>
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        sqlx::query!("DELETE FROM position WHERE book_id = ?", book)
+        sqlx::query!("DELETE FROM position WHERE event_id = ?", event_id)
             .execute(pool)
             .await
     }

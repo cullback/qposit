@@ -1,10 +1,10 @@
 use askama::Template;
-use lobster::BookId;
+use lobster::EventId;
 
 #[derive(Template, Debug, Clone)]
 #[template(path = "order_form.html")]
 pub struct OrderForm {
-    book_id: BookId,
+    event_id: EventId,
     quantity: String,
     price: String,
     quantity_message: String,
@@ -13,9 +13,9 @@ pub struct OrderForm {
 }
 
 impl OrderForm {
-    pub fn new(book_id: BookId) -> Self {
+    pub fn new(event_id: EventId) -> Self {
         Self {
-            book_id,
+            event_id,
             quantity: String::new(),
             price: String::new(),
             quantity_message: String::new(),
@@ -24,7 +24,7 @@ impl OrderForm {
         }
     }
     pub const fn with_messages(
-        book_id: BookId,
+        event_id: EventId,
         quantity: String,
         price: String,
         quantity_message: String,
@@ -32,7 +32,7 @@ impl OrderForm {
         message: String,
     ) -> Self {
         Self {
-            book_id,
+            event_id,
             quantity,
             price,
             quantity_message,

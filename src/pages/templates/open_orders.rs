@@ -1,5 +1,5 @@
 use askama::Template;
-use lobster::{BookId, UserId};
+use lobster::{EventId, UserId};
 use lobster::{OrderId, Price, Quantity};
 use sqlx::SqlitePool;
 
@@ -11,7 +11,7 @@ struct Order {
     market_title: String,
     book_title: String,
     id: OrderId,
-    book_id: BookId,
+    event_id: EventId,
     quantity: Quantity,
     remaining: Quantity,
     price: Price,
@@ -59,14 +59,14 @@ impl OpenOrders {
                 SELECT
                     (
                         SELECT market.title FROM market WHERE market.id = (
-                            SELECT book.market_id FROM book WHERE book.id = 'order'.book_id
+                            SELECT book.market_id FROM book WHERE book.id = 'order'.event_id
                         )
                     ) as market_title,
                     (
-                        SELECT book.title FROM book WHERE book.id = 'order'.book_id
+                        SELECT book.title FROM book WHERE book.id = 'order'.event_id
                     ) as book_title,
                     id,
-                    book_id,
+                    event_id,
                     quantity,
                     remaining,
                     price,

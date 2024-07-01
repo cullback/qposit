@@ -2,11 +2,11 @@
 //!
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
 use super::templates::market::MarketPage;
-use crate::actors::book_service::BookData;
+use crate::actors::book_service::EventData;
 use crate::app_state::AppState;
 use crate::models;
 use crate::models::market::Market;
-use crate::{authentication::SessionExtractor, models::book::Book};
+use crate::{authentication::SessionExtractor, models::event::Event};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -25,16 +25,16 @@ pub async fn get(
         return Redirect::to("/404").into_response();
     };
 
-    let books = Book::get_all_for_market(&state.pool, market.id)
+    let events = Event::get_all_for_market(&state.pool, market.id)
         .await
         .unwrap();
 
     let mut new_things = vec![];
-    for book in books {
+    for book in events {
         let orderbook = models::order::Order::build_orderbook(&state.pool, book.id)
             .await
             .unwrap();
-        let book_data = BookData::new2(&book, orderbook);
+        let book_data = EventData::new2(&book, orderbook);
         new_things.push((book, book_data));
     }
 

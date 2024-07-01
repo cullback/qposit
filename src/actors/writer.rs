@@ -5,8 +5,8 @@
 //! Gets to do less work than the matching engine because all feed events
 //! are validated.
 use lobster::{
-    Action, Balance, BookEvent, BookId, Order, OrderBook, PortfolioManager, Side, Tick, Timestamp,
-    UserId,
+    Action, Balance, BookUpdate, EventId, Order, OrderBook, PortfolioManager, Side, Tick,
+    Timestamp, UserId,
 };
 use lobster::{OrderId, Price, Quantity};
 use sqlx::{Executor, Sqlite, SqlitePool};
@@ -20,7 +20,7 @@ use crate::models;
 struct Trade {
     timestamp: Timestamp,
     tick: Tick,
-    book_id: BookId,
+    event_id: EventId,
     taker_id: UserId,
     maker_id: UserId,
     taker_oid: OrderId,
@@ -34,12 +34,12 @@ struct Trade {
 #[derive(Debug)]
 struct OrderOwner {
     pub user_id: UserId,
-    pub book_id: BookId,
+    pub event_id: EventId,
 }
 
 struct State {
     db: SqlitePool,
-    books: HashMap<BookId, OrderBook>,
+    orderbooks: HashMap<EventId, OrderBook>,
     order_owner: HashMap<OrderId, OrderOwner>,
     manager: PortfolioManager,
 }
@@ -54,16 +54,16 @@ impl State {
             balances.insert(user.id, user.balance);
         }
 
-        let mut positions: HashMap<(UserId, BookId), i32> = HashMap::new();
+        let mut positions: HashMap<(UserId, EventId), i32> = HashMap::new();
         for position in models::position::Position::get_non_zero(&db).await.unwrap() {
-            positions.insert((position.user_id, position.book_id), position.position);
+            positions.insert((position.user_id, position.event_id), position.position);
         }
 
         let mut manager = PortfolioManager::new(&balances, &positions);
 
-        let mut books: HashMap<BookId, OrderBook> = HashMap::new();
-        for book in models::book::Book::get_active(&db).await.unwrap() {
-            books.insert(book.id, OrderBook::default());
+        let mut orderbooks: HashMap<EventId, OrderBook> = HashMap::new();
+        for book in models::event::Event::get_active(&db).await.unwrap() {
+            orderbooks.insert(book.id, OrderBook::default());
         }
 
         let mut order_owner = HashMap::new();
@@ -78,23 +78,23 @@ impl State {
                 order_record.id,
                 OrderOwner {
                     user_id: order_record.user_id,
-                    book_id: order_record.book_id,
+                    event_id: order_record.event_id,
                 },
             );
-            manager.add_resting_order(order_record.user_id, order_record.book_id, order);
-            let book = books.get_mut(&order_record.book_id).unwrap();
+            manager.add_resting_order(order_record.user_id, order_record.event_id, order);
+            let book = orderbooks.get_mut(&order_record.event_id).unwrap();
             assert!(book.add(order).is_empty());
         }
 
         Self {
             db,
-            books,
+            orderbooks,
             order_owner,
             manager,
         }
     }
 
-    async fn on_event(&mut self, event: BookEvent) {
+    async fn on_event(&mut self, event: BookUpdate) {
         info!(?event);
 
         let mut tx = self.db.begin().await.unwrap();
@@ -108,7 +108,7 @@ impl State {
             Action::Remove { id } => self.on_remove(&mut *tx, event.book, id).await,
             Action::Resolve { price } => self.on_resolve(&mut *tx, event.book, price).await,
             Action::AddBook {} => {
-                self.books.insert(event.book, OrderBook::default());
+                self.orderbooks.insert(event.book, OrderBook::default());
             }
         }
         tx.commit().await.unwrap();
@@ -122,7 +122,7 @@ impl State {
         self.manager.on_trade(
             trade.taker_id,
             trade.maker_id,
-            trade.book_id,
+            trade.event_id,
             trade.quantity,
             trade.price,
             trade.side,
@@ -132,19 +132,19 @@ impl State {
         let maker_balance = self.manager.get_balance(trade.maker_id);
         let taker_available = self.manager.get_available(trade.taker_id);
         let maker_available = self.manager.get_available(trade.maker_id);
-        let taker_position = self.manager.get_position(trade.taker_id, trade.book_id);
-        let maker_position = self.manager.get_position(trade.maker_id, trade.book_id);
+        let taker_position = self.manager.get_position(trade.taker_id, trade.event_id);
+        let maker_position = self.manager.get_position(trade.maker_id, trade.event_id);
 
         sqlx::query!(
             "
             UPDATE user SET balance = ?, available = ? WHERE id = ?;
             UPDATE user SET balance = ?, available = ? WHERE id = ?;
 
-            INSERT INTO position (user_id, book_id, position)
+            INSERT INTO position (user_id, event_id, position)
             VALUES 
                 (?, ?, ?),
                 (?, ?, ?)
-            ON CONFLICT (user_id, book_id) DO UPDATE SET position = excluded.position;
+            ON CONFLICT (user_id, event_id) DO UPDATE SET position = excluded.position;
             ",
             taker_balance,
             taker_available,
@@ -154,11 +154,11 @@ impl State {
             trade.maker_id,
             // update taker position params
             trade.taker_id,
-            trade.book_id,
+            trade.event_id,
             taker_position,
             // update maker position params
             trade.maker_id,
-            trade.book_id,
+            trade.event_id,
             maker_position,
         )
         .execute(&mut *executor)
@@ -169,7 +169,7 @@ impl State {
         let is_buy = trade.side.is_buy();
         sqlx::query!(
             "
-            INSERT INTO trade (created_at, tick, book_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
+            INSERT INTO trade (created_at, tick, event_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
             UPDATE 'order' SET
@@ -180,7 +180,7 @@ impl State {
             // trade
             trade.timestamp,
             trade.tick,
-            trade.book_id,
+            trade.event_id,
             trade.taker_id,
             trade.maker_id,
             trade.taker_oid,
@@ -205,25 +205,25 @@ impl State {
         time: Timestamp,
         tick: Tick,
         user_id: UserId,
-        book_id: BookId,
+        event_id: EventId,
         mut order: Order,
     ) where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        models::order::Order::new(&mut *transaction, time, book_id, user_id, order)
+        models::order::Order::new(&mut *transaction, time, event_id, user_id, order)
             .await
             .unwrap();
 
         self.order_owner
-            .insert(order.id, OrderOwner { user_id, book_id });
+            .insert(order.id, OrderOwner { user_id, event_id });
 
-        let book = self.books.get_mut(&book_id).unwrap();
+        let book = self.orderbooks.get_mut(&event_id).unwrap();
         let fills = book.add(order);
         for fill in fills {
             let trade = Trade {
                 timestamp: time,
                 tick,
-                book_id,
+                event_id,
                 taker_id: user_id,
                 maker_id: self.order_owner[&fill.id].user_id,
                 taker_oid: order.id,
@@ -239,9 +239,9 @@ impl State {
             }
         }
         if order.quantity > 0 {
-            self.manager.add_resting_order(user_id, book_id, order);
+            self.manager.add_resting_order(user_id, event_id, order);
             self.order_owner
-                .insert(order.id, OrderOwner { user_id, book_id });
+                .insert(order.id, OrderOwner { user_id, event_id });
 
             let available = self.manager.get_available(user_id);
             sqlx::query!(
@@ -255,7 +255,7 @@ impl State {
         }
     }
 
-    async fn on_remove<E>(&mut self, transaction: &mut E, book_id: BookId, id: OrderId)
+    async fn on_remove<E>(&mut self, transaction: &mut E, event_id: EventId, id: OrderId)
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
@@ -263,12 +263,12 @@ impl State {
             .await
             .unwrap();
 
-        let book = self.books.get_mut(&book_id).unwrap();
+        let book = self.orderbooks.get_mut(&event_id).unwrap();
         let order = book.remove(id).unwrap();
 
         let owner_info = self.order_owner.remove(&id).unwrap();
         self.manager
-            .remove_order(owner_info.user_id, book_id, order);
+            .remove_order(owner_info.user_id, event_id, order);
         let available = self.manager.get_available(owner_info.user_id);
 
         sqlx::query!(
@@ -281,22 +281,23 @@ impl State {
         .unwrap();
     }
 
-    async fn on_resolve<E>(&mut self, transaction: &mut E, book_id: BookId, price: Price)
+    async fn on_resolve<E>(&mut self, transaction: &mut E, event_id: EventId, price: Price)
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        self.books.remove(&book_id).unwrap();
-        self.order_owner.retain(|_, order| order.book_id != book_id);
+        self.orderbooks.remove(&event_id).unwrap();
+        self.order_owner
+            .retain(|_, order| order.event_id != event_id);
 
-        models::order::Order::cancel_for_book(transaction, book_id)
+        models::order::Order::cancel_for_event(transaction, event_id)
             .await
             .unwrap();
 
-        models::position::Position::delete_for_book(transaction, book_id)
+        models::position::Position::delete_for_event(transaction, event_id)
             .await
             .unwrap();
 
-        for user_id in self.manager.resolve(book_id, price) {
+        for user_id in self.manager.resolve(event_id, price) {
             let balance = self.manager.get_balance(user_id);
             let available = self.manager.get_available(user_id);
             sqlx::query!(
@@ -312,7 +313,7 @@ impl State {
     }
 }
 
-pub fn start_writer_service(db: SqlitePool, mut feed: broadcast::Receiver<BookEvent>) {
+pub fn start_writer_service(db: SqlitePool, mut feed: broadcast::Receiver<BookUpdate>) {
     tokio::spawn({
         async move {
             info!("Starting writer service...");

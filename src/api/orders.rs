@@ -20,13 +20,16 @@ use crate::{
 };
 use crate::{api::order_request::OrderRequest, authentication::OptionalBasicAuth};
 
-use super::{api_error::ApiJson, feed::BookEvent};
+use super::{
+    api_error::{ApiError, ApiJson},
+    feed::BookEvent,
+};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct OrderResponse {
     id: i64,
     created_at: i64,
-    book: u32,
+    event: u32,
     user: u32,
     quantity: u32,
     remaining: u32,
@@ -39,7 +42,7 @@ impl From<models::order::Order> for OrderResponse {
         Self {
             id: value.id,
             created_at: value.created_at,
-            book: value.book_id,
+            event: value.event_id,
             user: value.user_id,
             quantity: value.quantity,
             remaining: value.remaining,
@@ -55,7 +58,7 @@ const fn default_limit() -> u32 {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct GetOrderParams {
-    pub book_id: Option<u32>,
+    pub event_id: Option<u32>,
     pub user_id: Option<u32>,
     pub before: Option<i64>,
     #[serde(default = "default_limit")]
@@ -83,9 +86,9 @@ pub async fn get(
 ) -> Response {
     let mut query = QueryBuilder::new("SELECT * from 'order' WHERE status = 'open'");
 
-    if let Some(book_id) = params.book_id {
-        query.push(" AND book_id = ");
-        query.push_bind(book_id);
+    if let Some(event_id) = params.event_id {
+        query.push(" AND event_id = ");
+        query.push_bind(event_id);
     }
     if let Some(user_id) = params.user_id {
         query.push(" AND user_id = ");
@@ -146,11 +149,14 @@ pub async fn post(
 ) -> Response {
     let (req, recv) = MatcherRequest::submit(user.id, order.into());
     state.cmd_send.send(req).await.expect("Receiver dropped");
-    let response = recv.await.expect("Sender dropped");
+    let response = recv
+        .await
+        .expect("Sender dropped")
+        .map_err(|err| ApiError::MatcherRequest(err));
 
     match response {
         Ok(event) => Json(BookEvent::from(event)).into_response(),
-        Err(err) => Json(json!({"error": format!("{err:?}")})).into_response(),
+        Err(err) => err.into_response(),
     }
 }
 
@@ -178,7 +184,7 @@ pub async fn delete(
         let (req, recv) = MatcherRequest::cancel(user.id, order.id);
         state.cmd_send.send(req).await.expect("Receiver dropped");
         let resp = recv.await.expect("Sender dropped");
-        if let Ok(lobster::BookEvent {
+        if let Ok(lobster::BookUpdate {
             time: _,
             tick: _,
             book: _,
@@ -217,7 +223,7 @@ pub async fn delete_by_id(
     state.cmd_send.send(req).await.expect("Receiver dropped");
     let resp = recv.await.expect("Sender dropped");
 
-    if let Ok(lobster::BookEvent {
+    if let Ok(lobster::BookUpdate {
         time: _,
         tick: _,
         book: _,

@@ -5,7 +5,7 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use lobster::{Action, BookEvent, BookId, RejectReason};
+use lobster::{Action, BookUpdate, EventId, RejectReason};
 use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
@@ -22,7 +22,7 @@ pub enum OrderType {
 
 #[derive(Debug, Deserialize)]
 pub struct PostOrder {
-    book: BookId,
+    book: EventId,
     quantity: String,
     // may be empty on market orders
     #[serde(default)]
@@ -78,7 +78,7 @@ pub async fn post(
     };
 
     let req = lobster::OrderRequest {
-        book: form.book,
+        event: form.book,
         quantity,
         price,
         side: Side::new(form.is_buy),
@@ -93,7 +93,7 @@ pub async fn post(
     let response = recv.await.expect("Sender dropped");
 
     match response {
-        Ok(BookEvent {
+        Ok(BookUpdate {
             action: Action::Add(order),
             ..
         }) => OrderForm::with_messages(

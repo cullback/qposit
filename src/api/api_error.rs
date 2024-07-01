@@ -1,5 +1,6 @@
 use axum::{
     extract::{rejection::JsonRejection, FromRequest},
+    http::StatusCode,
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
@@ -21,6 +22,7 @@ where
 pub enum ApiError {
     // The request body contained invalid JSON
     JsonRejection(JsonRejection),
+    MatcherRequest(lobster::RejectReason),
 }
 
 impl IntoResponse for ApiError {
@@ -36,6 +38,7 @@ impl IntoResponse for ApiError {
                 // This error is caused by bad user input so don't log it
                 (rejection.status(), rejection.body_text())
             }
+            ApiError::MatcherRequest(reason) => (StatusCode::OK, format!("{reason:?}")),
         };
         (status, ApiJson(ErrorResponse { error: message })).into_response()
     }

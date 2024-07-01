@@ -17,7 +17,7 @@ pub struct Trade {
     /// The timestamp of when the trade was created.
     pub created_at: i64,
     pub tick: u32,
-    pub book_id: u32,
+    pub event_id: u32,
     pub taker_id: u32,
     pub maker_id: u32,
     pub taker_oid: i64,
@@ -33,7 +33,7 @@ const fn default_limit() -> u32 {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct TradeParams {
-    pub book_id: Option<u32>,
+    pub event_id: Option<u32>,
     pub user_id: Option<u32>,
     pub before: Option<i64>,
     #[serde(default = "default_limit")]
@@ -56,9 +56,9 @@ pub struct TradeParams {
 pub async fn get(State(state): State<AppState>, params: Query<TradeParams>) -> Response {
     let mut query = QueryBuilder::new("SELECT * from trade WHERE 1=1");
 
-    if let Some(book_id) = params.book_id {
-        query.push(" AND book_id = ");
-        query.push_bind(book_id);
+    if let Some(event_id) = params.event_id {
+        query.push(" AND event_id = ");
+        query.push_bind(event_id);
     }
     if let Some(user_id) = params.user_id {
         query.push(" AND (taker_id = ");

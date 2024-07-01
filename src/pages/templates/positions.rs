@@ -50,19 +50,19 @@ impl Positions {
                 SELECT
                     (
                         SELECT market.title FROM market WHERE market.id = (
-                            SELECT book.market_id FROM book WHERE book.id = position.book_id
+                            SELECT book.market_id FROM book WHERE book.id = position.event_id
                         )
                     ) as market_title,
                     (
-                        SELECT book.title FROM book WHERE book.id = position.book_id
+                        SELECT book.title FROM book WHERE book.id = position.event_id
                     ) as book_title,
                     position.position,
                     (
-                        SELECT trade.price FROM trade WHERE trade.book_id = position.book_id ORDER BY trade.id DESC LIMIT 1
+                        SELECT trade.price FROM trade WHERE trade.event_id = position.event_id ORDER BY trade.id DESC LIMIT 1
                     ) AS last_price,
                     (
                         SELECT trade.price * ABS(position.position)
-                        FROM trade WHERE trade.book_id = position.book_id ORDER BY trade.id DESC LIMIT 1
+                        FROM trade WHERE trade.event_id = position.event_id ORDER BY trade.id DESC LIMIT 1
                     ) AS market_value
                 FROM position WHERE user_id = ? AND position.position != 0
                 ",
