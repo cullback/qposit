@@ -40,7 +40,9 @@ impl IntoResponse for ApiError {
                 (rejection.status(), rejection.body_text())
             }
             ApiError::MatcherRequest(reason) => (StatusCode::OK, format!("{reason:?}")),
-            ApiError::Authentication => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+            ApiError::Authentication => {
+                (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())
+            }
         };
         (status, ApiJson(ErrorResponse { error: message })).into_response()
     }

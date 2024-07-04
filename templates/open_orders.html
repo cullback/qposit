@@ -15,7 +15,7 @@
         {% for order in orders %}
         <tr>
             <td>{{ order.market_title }}</td>
-            <td>{{ order.book_title }} </td>
+            <td>{{ order.event_title }} </td>
             <td>{{ order.quantity - order.remaining }}/{{order.quantity}}</td>
             <td>{{ order.price }}</td>
             <td>{{ order.side }}</td>

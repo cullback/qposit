@@ -102,6 +102,9 @@ pub fn start_matcher_service(
                         response,
                     } => {
                         let event = exchange.resolve(timestamp, event_id, price);
+                        if let Ok(event) = event.clone() {
+                            market_data.send(event).expect("Receiver dropped");
+                        }
                         response.send(event).expect("Receiver dropped");
                     }
                 }

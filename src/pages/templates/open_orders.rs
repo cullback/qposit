@@ -9,7 +9,7 @@ use super::format_price_to_string;
 #[allow(dead_code)]
 struct Order {
     market_title: String,
-    book_title: String,
+    event_title: String,
     id: OrderId,
     event_id: EventId,
     quantity: Quantity,
@@ -21,7 +21,7 @@ struct Order {
 
 struct OrderAsHtml {
     market_title: String,
-    book_title: String,
+    event_title: String,
     id: OrderId,
     quantity: Quantity,
     remaining: Quantity,
@@ -35,7 +35,7 @@ impl From<Order> for OrderAsHtml {
     fn from(order: Order) -> Self {
         Self {
             market_title: order.market_title,
-            book_title: order.book_title,
+            event_title: order.event_title,
             id: order.id,
             quantity: order.quantity,
             remaining: order.remaining,
@@ -59,12 +59,12 @@ impl OpenOrders {
                 SELECT
                     (
                         SELECT market.title FROM market WHERE market.id = (
-                            SELECT book.market_id FROM book WHERE book.id = 'order'.event_id
+                            SELECT event.market_id FROM event WHERE event.id = 'order'.event_id
                         )
                     ) as market_title,
                     (
-                        SELECT book.title FROM book WHERE book.id = 'order'.event_id
-                    ) as book_title,
+                        SELECT event.title FROM event WHERE event.id = 'order'.event_id
+                    ) as event_title,
                     id,
                     event_id,
                     quantity,

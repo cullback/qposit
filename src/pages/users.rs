@@ -9,7 +9,7 @@ use axum::{
 };
 
 pub async fn get(
-    SessionExtractor(user): SessionExtractor,
+    SessionExtractor(logged_in_user): SessionExtractor,
     Path(username): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
@@ -20,6 +20,7 @@ pub async fn get(
     let user_id = user.id;
 
     profile::Profile::new(
+        logged_in_user,
         user,
         positions::Positions::build(&state.pool, user_id).await,
         open_orders::OpenOrders::build(&state.pool, user_id).await,

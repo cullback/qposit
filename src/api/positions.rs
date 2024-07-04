@@ -1,9 +1,15 @@
 use askama_axum::IntoResponse;
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Query, State},
+    Json,
+};
 
-use crate::{app_state::AppState, models::position::Position};
+use crate::{
+    app_state::AppState,
+    models::position::{Position, PositionParams},
+};
 
-use super::auth::BasicAuthExtractor;
+use super::auth::OptionalBasicAuth;
 
 /// Get user info.
 #[utoipa::path(
@@ -14,10 +20,10 @@ use super::auth::BasicAuthExtractor;
     )
 )]
 pub async fn get(
-    BasicAuthExtractor(user): BasicAuthExtractor,
+    OptionalBasicAuth(user): OptionalBasicAuth,
     State(state): State<AppState>,
+    Query(params): Query<PositionParams>,
 ) -> impl IntoResponse {
-    let positions = Position::get_for_user(&state.pool, user.id).await.unwrap();
-
-    Json(positions).into_response()
+    let positions = Position::get(&state.pool, params).await.unwrap();
+    Json(positions)
 }

@@ -8,7 +8,7 @@ use super::format_price_to_string;
 #[derive(sqlx::FromRow, Debug)]
 struct Position {
     market_title: String,
-    book_title: String,
+    event_title: String,
     position: i32,
     last_price: Price,
     market_value: u32,
@@ -16,7 +16,7 @@ struct Position {
 
 struct PositionAsHtml {
     market_title: String,
-    book_title: String,
+    event_title: String,
     side: String,
     position: String,
     last_price: String,
@@ -28,7 +28,7 @@ impl From<Position> for PositionAsHtml {
         let side = if position.position >= 0 { "Yes" } else { "No" }.to_string();
         Self {
             market_title: position.market_title,
-            book_title: position.book_title,
+            event_title: position.event_title,
             side,
             position: format!("{}", position.position.abs()),
             last_price: format_price_to_string(position.last_price),
@@ -50,12 +50,12 @@ impl Positions {
                 SELECT
                     (
                         SELECT market.title FROM market WHERE market.id = (
-                            SELECT book.market_id FROM book WHERE book.id = position.event_id
+                            SELECT event.market_id FROM event WHERE event.id = position.event_id
                         )
                     ) as market_title,
                     (
-                        SELECT book.title FROM book WHERE book.id = position.event_id
-                    ) as book_title,
+                        SELECT event.title FROM event WHERE event.id = position.event_id
+                    ) as event_title,
                     position.position,
                     (
                         SELECT trade.price FROM trade WHERE trade.event_id = position.event_id ORDER BY trade.id DESC LIMIT 1

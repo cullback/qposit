@@ -1,4 +1,4 @@
-use lobster::{Price, Timestamp};
+use lobster::{Balance, Price, Timestamp};
 use time::{
     macros::{format_description, offset},
     OffsetDateTime,
@@ -20,6 +20,10 @@ pub mod signup;
 /// No precision should be lossed.
 pub fn format_price_to_string(price: Price) -> String {
     format!("{:.2}¢", price as f32 / 100.0)
+}
+
+pub fn format_balance_to_dollars(balance: Balance) -> String {
+    format!("${:.2}", balance as f32 / 10000.0)
 }
 
 pub fn mid_to_string(bid: Option<Price>, ask: Option<Price>) -> String {
