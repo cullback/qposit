@@ -75,7 +75,7 @@ impl MarketData {
             Action::Resolve { price } => {
                 self.last_price = Some(price);
             }
-            Action::AddEvent => todo!(),
+            Action::AddMarket => { }, // nothing to do here
         }
     }
 }
@@ -100,7 +100,7 @@ impl EventService {
     }
 
     fn on_event(&mut self, market: BookUpdate) -> MarketData {
-        if matches!(market.action, Action::AddEvent) {
+        if matches!(market.action, Action::AddMarket) {
             self.markets
                 .insert(market.book, MarketData::new_default(market.book));
         }
