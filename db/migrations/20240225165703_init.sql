@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS event(
     slug        TEXT NOT NULL UNIQUE,
     title       TEXT NOT NULL CHECK (length(title) <= 50),
     description TEXT NOT NULL,
-    status      TEXT NOT NULL CHECK (status IN ('active', 'resolved')),
     created_at  INTEGER NOT NULL,
     expires_at  INTEGER NOT NULL
 );

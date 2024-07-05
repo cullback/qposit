@@ -86,7 +86,6 @@ pub async fn post(
         slug: slug.clone(),
         title: event.title,
         description: event.description,
-        status: "active".to_owned(),
         created_at: event.created_at,
         expires_at: event.expires_at,
     };
