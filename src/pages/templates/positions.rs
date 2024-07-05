@@ -1,8 +1,10 @@
 use askama::Template;
+use lobster::Balance;
 use lobster::Price;
 use lobster::UserId;
 use sqlx::SqlitePool;
 
+use super::format_balance_to_dollars;
 use super::format_price_to_string;
 
 #[derive(sqlx::FromRow, Debug)]
@@ -11,7 +13,7 @@ struct Position {
     event_title: String,
     position: i32,
     last_price: Price,
-    market_value: u32,
+    market_value: Balance,
 }
 
 struct PositionAsHtml {
@@ -32,7 +34,7 @@ impl From<Position> for PositionAsHtml {
             side,
             position: format!("{}", position.position.abs()),
             last_price: format_price_to_string(position.last_price),
-            market_value: format!("{:.2}", position.market_value as f32 / 10000.0),
+            market_value: format_balance_to_dollars(position.market_value),
         }
     }
 }

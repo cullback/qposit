@@ -1,8 +1,8 @@
 use askama::Template;
-use lobster::MarketId;
+use lobster::{Balance, MarketId};
 use lobster::{Order, Price, Quantity};
 
-use super::format_price_to_string;
+use super::{format_balance_to_dollars, format_price_to_string};
 
 #[derive(Debug, Clone)]
 pub struct PriceLevel {
@@ -12,11 +12,11 @@ pub struct PriceLevel {
 }
 
 impl PriceLevel {
-    pub fn new(price: Price, quantity: Quantity, cumulative_value: u32) -> Self {
+    pub fn new(price: Price, quantity: Quantity, cumulative_value: Balance) -> Self {
         Self {
             price: format_price_to_string(price),
             quantity: quantity.to_string(),
-            value: format!("{:.2}", f64::from(cumulative_value) / 10000.0),
+            value: format_balance_to_dollars(cumulative_value),
         }
     }
 }
@@ -30,18 +30,18 @@ pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
     let mut price_levels: Vec<PriceLevel> = Vec::new();
     let mut current_price: Option<Price> = None;
     let mut level_quantity = 0;
-    let mut cumulative_value = 0;
+    let mut cumulative_value: Balance = 0;
 
     for order in orders {
         if current_price == Some(order.price) {
             level_quantity += order.quantity;
-            cumulative_value += order.quantity * Quantity::from(order.price);
+            cumulative_value += Balance::from(order.quantity) * Balance::from(order.price);
         } else {
             if let Some(price) = current_price {
                 price_levels.push(PriceLevel::new(price, level_quantity, cumulative_value));
             }
             level_quantity = order.quantity;
-            cumulative_value += order.quantity * Quantity::from(order.price);
+            cumulative_value += Balance::from(order.quantity) * Balance::from(order.price);
             current_price = Some(order.price);
         }
     }
