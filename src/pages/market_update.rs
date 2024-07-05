@@ -10,11 +10,11 @@ use utoipa::ToSchema;
 
 use crate::app_state::AppState;
 
-use super::templates::orderbook::OrderBook;
+use super::templates::market_update::MarketUpdate;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct EventParams {
-    /// The id of the book to get messages for
+    /// The comma separated ids of the markets to get messages for
     pub markets: String,
 }
 
@@ -43,7 +43,7 @@ async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: Event
             continue;
         }
 
-        let text = OrderBook::from(&market).render().unwrap();
+        let text = MarketUpdate::from(&market).render().unwrap();
         if socket.send(Message::Text(text)).await.is_err() {
             return;
         }

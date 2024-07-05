@@ -3,13 +3,13 @@ mod auth;
 mod events;
 mod home;
 mod login;
-mod orderbook;
+mod market_update;
 mod orders;
 mod signup;
 mod templates;
 mod users;
 
-pub use templates::orderbook::OrderBook;
+pub use templates::market_update::MarketUpdate;
 
 use axum::{
     http::header,
@@ -71,6 +71,6 @@ pub fn router(state: AppState) -> Router {
         .route("/events/:slug", get(events::get))
         .route("/orders", post(orders::post))
         .route("/orders/:order_id", delete(orders::delete_by_id))
-        .route("/orderbook", get(orderbook::get))
+        .route("/orderbook", get(market_update::get))
         .with_state(state)
 }

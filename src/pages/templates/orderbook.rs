@@ -2,9 +2,7 @@ use askama::Template;
 use lobster::MarketId;
 use lobster::{Order, Price, Quantity};
 
-use crate::actors::book_service::MarketData;
-
-use super::{display_price, format_balance_to_dollars, format_price_to_string};
+use super::format_price_to_string;
 
 #[derive(Debug, Clone)]
 pub struct PriceLevel {
@@ -60,27 +58,16 @@ pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 #[template(path = "orderbook.html")]
 pub struct OrderBook {
     pub market_id: MarketId,
-    pub display_price: String,
-    pub volume: String,
     pub bids: Vec<PriceLevel>,
     pub asks: Vec<PriceLevel>,
 }
 
-impl From<&MarketData> for OrderBook {
-    fn from(market: &MarketData) -> Self {
-        let volume = format_balance_to_dollars(market.volume);
-        let display_price = display_price(
-            market.best_bid,
-            market.best_ask,
-            market.last_price,
-            market.outcome,
-        );
+impl OrderBook {
+    pub fn new(market_id: MarketId, orderbook: &lobster::OrderBook) -> Self {
         Self {
-            market_id: market.market_id,
-            display_price,
-            volume,
-            bids: do_side(market.book.bids()),
-            asks: do_side(market.book.asks()),
+            market_id,
+            bids: do_side(orderbook.bids()),
+            asks: do_side(orderbook.asks()),
         }
     }
 }
