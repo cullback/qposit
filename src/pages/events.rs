@@ -1,9 +1,9 @@
-//! The page for a market.
+//! The page for a event.
 //!
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
 use super::auth::SessionExtractor;
-use super::templates::market::MarketPage;
-use crate::actors::book_service::EventData;
+use super::templates::event::EventPage;
+use crate::actors::book_service::MarketData;
 use crate::app_state::AppState;
 use crate::models;
 use crate::models::event::Event;
@@ -18,27 +18,27 @@ pub async fn get(
     Path(slug): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let market = match Market::get_by_slug(&state.pool, &slug).await {
-        Ok(market) => market,
+    let event = match Event::get_by_slug(&state.pool, &slug).await {
+        Ok(event) => event,
         Err(sqlx::Error::RowNotFound) => return Redirect::to("/404").into_response(),
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
 
-    let events = Event::get_all_for_market(&state.pool, market.id)
+    let markets = Market::get_all_for_event(&state.pool, event.id)
         .await
         .unwrap();
 
     let mut new_things = vec![];
-    for book in events {
-        let orderbook = models::order::Order::build_orderbook(&state.pool, book.id)
+    for market in markets {
+        let orderbook = models::order::Order::build_orderbook(&state.pool, market.id)
             .await
             .unwrap();
-        let book_data = EventData::new2(&book, orderbook);
-        new_things.push((book, book_data));
+        let book_data = MarketData::new(&market, orderbook);
+        new_things.push((market, book_data));
     }
 
     match user {
-        Some(user) => MarketPage::new(user.username, market, new_things).into_response(),
-        None => MarketPage::new(String::new(), market, new_things).into_response(),
+        Some(user) => EventPage::new(user.username, event, new_things).into_response(),
+        None => EventPage::new(String::new(), event, new_things).into_response(),
     }
 }

@@ -1,8 +1,8 @@
 mod about;
 mod auth;
+mod events;
 mod home;
 mod login;
-mod markets;
 mod orderbook;
 mod orders;
 mod signup;
@@ -61,7 +61,7 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/login/:session_id", delete(login::delete_by_id))
         .route("/signup", get(signup::get).post(signup::post))
-        .route("/markets/:slug", get(markets::get))
+        .route("/events/:slug", get(events::get))
         .route("/orders", post(orders::post))
         .route("/orders/:order_id", delete(orders::delete_by_id))
         .route("/orderbook", get(orderbook::get))

@@ -1,6 +1,6 @@
 //! # Book Service
 //!
-//! The book service tracks state of all events and streams price-level orderbooks
+//! The book service tracks state of all markets and streams price-level orderbooks
 //! to the front end UI.
 //!
 //! Every BookUpdate represents a change in the order book state that needs to be
@@ -12,9 +12,9 @@
 //! - order book state
 //!
 //! TODO: update state more efficiently
-//! - track price levels individually instead of updating everything on every event.
+//! - track price levels individually instead of updating everything on every market.
 use lobster::Price;
-use lobster::{Action, Balance, BookUpdate, EventId};
+use lobster::{Action, Balance, BookUpdate, MarketId};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -24,8 +24,8 @@ use crate::models;
 
 /// Snapshot of the latest order book data to be rendered.
 #[derive(Debug, Clone)]
-pub struct EventData {
-    pub event_id: EventId,
+pub struct MarketData {
+    pub market_id: MarketId,
     pub book: lobster::OrderBook,
     pub best_bid_price: Option<Price>,
     pub best_ask_price: Option<Price>,
@@ -33,21 +33,21 @@ pub struct EventData {
     pub volume: Balance,
 }
 
-impl EventData {
-    pub fn new2(event: &models::event::Event, orderbook: lobster::OrderBook) -> Self {
+impl MarketData {
+    pub fn new(market: &models::market::Market, orderbook: lobster::OrderBook) -> Self {
         Self {
-            event_id: event.id,
+            market_id: market.id,
             best_bid_price: orderbook.best_bid().map(|x| x.price),
             best_ask_price: orderbook.best_ask().map(|x| x.price),
             book: orderbook,
-            last_price: event.last_trade_price,
-            volume: event.volume,
+            last_price: market.last_trade_price,
+            volume: market.volume,
         }
     }
 
-    pub fn new_default(event_id: EventId) -> Self {
+    pub fn new_default(market_id: MarketId) -> Self {
         Self {
-            event_id,
+            market_id,
             book: lobster::OrderBook::default(),
             best_bid_price: None,
             best_ask_price: None,
@@ -56,8 +56,8 @@ impl EventData {
         }
     }
 
-    pub fn on_event(&mut self, event: BookUpdate) {
-        match event.action {
+    pub fn on_event(&mut self, market: BookUpdate) {
+        match market.action {
             Action::Add(order) => {
                 let fills = self.book.add(order);
                 for fill in fills {
@@ -81,31 +81,31 @@ impl EventData {
 }
 
 struct EventService {
-    events: HashMap<EventId, EventData>,
+    markets: HashMap<MarketId, MarketData>,
 }
 
 impl EventService {
     pub async fn new(db: &SqlitePool) -> Self {
-        let mut events = HashMap::new();
-        for event in models::event::Event::get_active(db).await.unwrap() {
-            let event_id = event.id;
-            let orderbook = models::order::Order::build_orderbook(db, event.id)
+        let mut markets = HashMap::new();
+        for market in models::market::Market::get_active(db).await.unwrap() {
+            let market_id = market.id;
+            let orderbook = models::order::Order::build_orderbook(db, market.id)
                 .await
                 .unwrap();
-            let book_data = EventData::new2(&event, orderbook);
-            events.insert(event_id, book_data);
+            let book_data = MarketData::new(&market, orderbook);
+            markets.insert(market_id, book_data);
         }
 
-        Self { events }
+        Self { markets }
     }
 
-    fn on_event(&mut self, event: BookUpdate) -> EventData {
-        if matches!(event.action, Action::AddEvent) {
-            self.events
-                .insert(event.book, EventData::new_default(event.book));
+    fn on_event(&mut self, market: BookUpdate) -> MarketData {
+        if matches!(market.action, Action::AddEvent) {
+            self.markets
+                .insert(market.book, MarketData::new_default(market.book));
         }
-        let book = self.events.get_mut(&event.book).unwrap();
-        book.on_event(event);
+        let book = self.markets.get_mut(&market.book).unwrap();
+        book.on_event(market);
         book.clone()
     }
 }
@@ -113,15 +113,15 @@ impl EventService {
 pub fn start_book_service(
     db: SqlitePool,
     mut feed: broadcast::Receiver<BookUpdate>,
-    book_stream: broadcast::Sender<EventData>,
+    book_stream: broadcast::Sender<MarketData>,
 ) {
     tokio::spawn({
         async move {
             info!("Starting book service...");
             let mut state = EventService::new(&db).await;
 
-            while let Ok(event) = feed.recv().await {
-                let orderbook = state.on_event(event);
+            while let Ok(market) = feed.recv().await {
+                let orderbook = state.on_event(market);
                 book_stream.send(orderbook).unwrap();
             }
         }

@@ -30,7 +30,7 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
     },
 
     /**
-     * onEvent handles all events passed to this extension.
+     * onEvent handles all markets passed to this extension.
      *
      * @param {string} name
      * @param {Event} evt
@@ -117,12 +117,12 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
       return htmx.createWebSocket(wssSource)
     })
 
-    socketWrapper.addEventListener('message', function(event) {
+    socketWrapper.addEventListener('message', function(market) {
       if (maybeCloseWebSocketSource(socketElt)) {
         return
       }
 
-      var response = event.data
+      var response = market.data
       if (!api.triggerEvent(socketElt, 'htmx:wsBeforeMessage', {
         message: response,
         socketWrapper: socketWrapper.publicInterface
@@ -159,7 +159,7 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
    * @property {number} retryCount
    * @property {(message: string, sendElt: Element) => void} sendImmediately sendImmediately sends message regardless of websocket connection state
    * @property {(message: string, sendElt: Element) => void} send
-   * @property {(event: string, handler: Function) => void} addEventListener
+   * @property {(market: string, handler: Function) => void} addEventListener
    * @property {() => void} handleQueuedMessages
    * @property {() => void} init
    * @property {() => void} close
@@ -177,18 +177,18 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
       retryCount: 0,
 
       /** @type {Object<string, Function[]>} */
-      events: {},
+      markets: {},
 
-      addEventListener: function(event, handler) {
+      addEventListener: function(market, handler) {
         if (this.socket) {
-          this.socket.addEventListener(event, handler)
+          this.socket.addEventListener(market, handler)
         }
 
-        if (!this.events[event]) {
-          this.events[event] = []
+        if (!this.markets[market]) {
+          this.markets[market] = []
         }
 
-        this.events[event].push(handler)
+        this.markets[market].push(handler)
       },
 
       sendImmediately: function(message, sendElt) {
@@ -233,20 +233,20 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
           this.socket.close()
         }
 
-        // Create a new WebSocket and event handlers
+        // Create a new WebSocket and market handlers
         /** @type {WebSocket} */
         var socket = socketFunc()
 
-        // The event.type detail is added for interface conformance with the
-        // other two lifecycle events (open and close) so a single handler method
+        // The market.type detail is added for interface conformance with the
+        // other two lifecycle markets (open and close) so a single handler method
         // can handle them polymorphically, if required.
-        api.triggerEvent(socketElt, 'htmx:wsConnecting', { event: { type: 'connecting' } })
+        api.triggerEvent(socketElt, 'htmx:wsConnecting', { market: { type: 'connecting' } })
 
         this.socket = socket
 
         socket.onopen = function(e) {
           wrapper.retryCount = 0
-          api.triggerEvent(socketElt, 'htmx:wsOpen', { event: e, socketWrapper: wrapper.publicInterface })
+          api.triggerEvent(socketElt, 'htmx:wsOpen', { market: e, socketWrapper: wrapper.publicInterface })
           wrapper.handleQueuedMessages()
         }
 
@@ -261,9 +261,9 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
             }, delay)
           }
 
-          // Notify client code that connection has been closed. Client code can inspect `event` field
+          // Notify client code that connection has been closed. Client code can inspect `market` field
           // to determine whether closure has been valid or abnormal
-          api.triggerEvent(socketElt, 'htmx:wsClose', { event: e, socketWrapper: wrapper.publicInterface })
+          api.triggerEvent(socketElt, 'htmx:wsClose', { market: e, socketWrapper: wrapper.publicInterface })
         }
 
         socket.onerror = function(e) {
@@ -271,9 +271,9 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
           maybeCloseWebSocketSource(socketElt)
         }
 
-        var events = this.events
-        Object.keys(events).forEach(function(k) {
-          events[k].forEach(function(e) {
+        var markets = this.markets
+        Object.keys(markets).forEach(function(k) {
+          markets[k].forEach(function(e) {
             socket.addEventListener(k, e)
           })
         })
@@ -320,7 +320,7 @@ This extension adds support for WebSockets to htmx.  See /www/extensions/ws.md f
   }
 
   /**
-   * processWebSocketSend adds event listeners to the <form> element so that
+   * processWebSocketSend adds market listeners to the <form> element so that
    * messages can be sent to the WebSocket server when the form is submitted.
    * @param {HTMLElement} socketElt
    * @param {HTMLElement} sendElt

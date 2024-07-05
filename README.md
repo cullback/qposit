@@ -1,6 +1,6 @@
 # QPosit
 
-QPosit is a prediction market platform.
+QPosit is a prediction event platform.
 
 ## Tech stack
 

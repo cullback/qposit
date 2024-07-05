@@ -3,6 +3,7 @@ use axum::{
     Router,
 };
 use utoipa_scalar::{Scalar, Servable as ScalarServable};
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{app_state::AppState, models};
 
@@ -32,24 +33,24 @@ use utoipa::{
         orders::post,
         orders::delete,
         orders::delete_by_id,
-        markets::post,
         feed::get,
-        events::patch,
         trades::get,
         positions::get,
+        events::post,
+        markets::patch,
     ),
     components(
         schemas(
             order_request::OrderRequest,
             orders::TimeInForce,
-            markets::MarketPost,
-            markets::MarketResponse,
-            events::EventPatchPayload,
+            events::EventPost,
+            events::EventResponse,
+            markets::MarketPatchPayload,
             feed::BookUpdate,
             feed::Action,
             models::order::Order,
-            models::market::Market,
             models::event::Event,
+            models::market::Market,
             models::position::Position,
             models::trade::Trade,
         ),
@@ -58,7 +59,15 @@ use utoipa::{
     tags(
         (
         name = "QPosit",
-        description = "QPosit provides a number of Application Programming Interfaces (APIs) through HTTP and Websockets (WS)."
+        description = "
+QPosit API.
+
+# Conventions and definitions
+
+## Server Time
+
+The server time is in Coordinated Universal Time (UTC).
+"
         )
     ),
 )]
@@ -80,10 +89,10 @@ impl Modify for SecurityAddon {
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
         .route("/deposit/:id", post(user::deposit))
-        .route("/events/:id", patch(events::patch))
+        .route("/markets/:id", patch(markets::patch))
         .route("/feed", get(feed::get))
-        .route("/markets", get(markets::get))
-        .route("/markets/:slug", post(markets::post))
+        .route("/events", get(events::get))
+        .route("/events/:slug", post(events::post))
         .route(
             "/orders",
             get(orders::get).post(orders::post).delete(orders::delete),
@@ -94,6 +103,7 @@ pub fn router(state: AppState) -> Router {
 
     Router::new()
         .merge(Scalar::with_url("/docs", ApiDoc::openapi()))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1", apiv1)
         .with_state(state)
 }

@@ -4,7 +4,7 @@ use askama::Template;
 use askama_axum::IntoResponse;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Query, State, WebSocketUpgrade};
-use lobster::EventId;
+use lobster::MarketId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -15,7 +15,7 @@ use super::templates::orderbook::OrderBook;
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct EventParams {
     /// The id of the book to get messages for
-    pub events: String,
+    pub markets: String,
 }
 
 pub async fn get(
@@ -27,23 +27,23 @@ pub async fn get(
 }
 
 async fn handle_socket(mut state: AppState, mut socket: WebSocket, params: EventParams) {
-    let Ok(events) = params
-        .events
+    let Ok(markets) = params
+        .markets
         .split(',')
         .map(|x| x.parse())
-        .collect::<Result<HashSet<EventId>, _>>()
+        .collect::<Result<HashSet<MarketId>, _>>()
     else {
         return;
     };
 
     loop {
-        let event = state.book_receive.recv().await.expect("Sender dropped");
+        let market = state.book_receive.recv().await.expect("Sender dropped");
 
-        if !events.contains(&event.event_id) {
+        if !markets.contains(&market.market_id) {
             continue;
         }
 
-        let text = OrderBook::from(&event).render().unwrap();
+        let text = OrderBook::from(&market).render().unwrap();
         if socket.send(Message::Text(text)).await.is_err() {
             return;
         }

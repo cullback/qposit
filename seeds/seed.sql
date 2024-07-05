@@ -17,19 +17,19 @@ INSERT INTO invite(code, created_by, created_at) VALUES
     ('LPNTFXWZAA', 1, 1710007894419934),
     ('2WC3FKEV31', 1, 1710007894419934);
 
-INSERT INTO market(id, slug, title, description, status, created_at, expires_at) VALUES
-(1, 'demo-market', 'Demo Market',
+INSERT INTO event(id, slug, title, description, status, created_at, expires_at) VALUES
+(1, 'demo-event', 'Demo Event',
     '
 ## Resolution criteria
 
-This market will be resolved however I please.',
+This event will be resolved however I please.',
     'active',
     1710007894419934,
     1710008894419934
 );
 
 
-INSERT INTO event(id, market_id, title) VALUES
+INSERT INTO market(id, event_id, title) VALUES
     (1, 1, 'Option A'),
     (2, 1, 'Option B');
 

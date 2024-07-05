@@ -1,5 +1,5 @@
 use super::order_form::OrderForm;
-use crate::{actors::book_service::EventData, models::event::Event, pages::OrderBook};
+use crate::{actors::book_service::MarketData, models::market::Market, pages::OrderBook};
 use askama::Template;
 
 #[derive(Template, Debug, Clone)]
@@ -11,11 +11,11 @@ pub struct BookHtml {
 }
 
 impl BookHtml {
-    pub fn new(book: Event, book_data: &EventData) -> Self {
+    pub fn new(book: Market, book_data: &MarketData) -> Self {
         Self {
             title: book.title,
             book_data: OrderBook::from(book_data),
-            order_form: OrderForm::new(book_data.event_id),
+            order_form: OrderForm::new(book_data.market_id),
         }
     }
 }

@@ -3,7 +3,7 @@
 {% block content %}
 
 <hgroup>
-    <h1>{{market.title}}</h1>
+    <h1>{{event.title}}</h1>
     <p>Closes: {{expires_at}}</p>
 </hgroup>
 
@@ -11,13 +11,13 @@
 
 <hr>
 
-<div hx-ext="ws" ws-connect="/orderbook?events={{events}}">
+<div hx-ext="ws" ws-connect="/orderbook?markets={{markets}}">
     {% for orderbook in orderbooks %}
     {{orderbook|safe}}
     {% endfor %}
 </div>
 
-{{market.description|markdown}}
+{{event.description|markdown}}
 
 <h1>Comments</h1>
 

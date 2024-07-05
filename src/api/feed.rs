@@ -11,16 +11,16 @@ use utoipa::ToSchema;
 
 use crate::app_state::AppState;
 
-/// Book update event.
+/// Book update market.
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct BookUpdate {
-    /// The timestamp this event ocurred at.
+    /// The timestamp this market ocurred at.
     pub time: i64,
-    /// Per-book tick sequence number of this event.
+    /// Per-book tick sequence number of this market.
     pub tick: u32,
-    /// The event associated with this book update.
-    pub event: u32,
-    /// The user that caused the event. 0 implies unknown.
+    /// The market associated with this book update.
+    pub market: u32,
+    /// The user that caused the market. 0 implies unknown.
     pub user: u32,
     /// The type of action that ocurred.
     #[serde(flatten)]
@@ -47,13 +47,13 @@ pub enum Action {
 }
 
 impl From<lobster::BookUpdate> for BookUpdate {
-    fn from(event: lobster::BookUpdate) -> Self {
+    fn from(market: lobster::BookUpdate) -> Self {
         Self {
-            time: event.time,
-            tick: event.tick,
-            event: event.book,
-            user: event.user,
-            action: match event.action {
+            time: market.time,
+            tick: market.tick,
+            market: market.book,
+            user: market.user,
+            action: match market.action {
                 lobster::Action::Add(order) => Action::Add {
                     id: order.id,
                     quantity: order.quantity,
@@ -68,12 +68,12 @@ impl From<lobster::BookUpdate> for BookUpdate {
     }
 }
 
-/// Subscribe to market data feed.
+/// Subscribe to event data feed.
 #[utoipa::path(
     get,
     path = "/api/v1/feed",
     responses(
-        (status = 200, description = "Subscribe to market data feed")
+        (status = 200, description = "Subscribe to event data feed")
     )
 )]
 pub async fn get(State(state): State<AppState>, ws: WebSocketUpgrade) -> Response {

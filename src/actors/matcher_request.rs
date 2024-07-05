@@ -1,4 +1,4 @@
-use lobster::{Balance, EventId, MatcherResult, OrderRequest, UserId};
+use lobster::{Balance, MarketId, MatcherResult, OrderRequest, UserId};
 use lobster::{OrderId, Price};
 use tokio::sync::oneshot;
 
@@ -19,14 +19,14 @@ pub enum MatcherRequest {
         response: oneshot::Sender<MatcherResult>,
     },
     AddEvent {
-        event_id: EventId,
+        market_id: MarketId,
     },
     Deposit {
         user: UserId,
         amount: Balance,
     },
     Resolve {
-        event_id: EventId,
+        market_id: MarketId,
         price: Price,
         response: oneshot::Sender<MatcherResult>,
     },
@@ -58,10 +58,10 @@ impl MatcherRequest {
         req
     }
 
-    pub fn resolve(event_id: EventId, price: Price) -> (Self, oneshot::Receiver<MatcherResult>) {
+    pub fn resolve(market_id: MarketId, price: Price) -> (Self, oneshot::Receiver<MatcherResult>) {
         let (response, recv) = oneshot::channel();
         let req = Self::Resolve {
-            event_id,
+            market_id,
             price,
             response,
         };

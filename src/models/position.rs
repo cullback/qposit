@@ -1,4 +1,4 @@
-use lobster::EventId;
+use lobster::MarketId;
 use lobster::UserId;
 use serde::Deserialize;
 use serde::Serialize;
@@ -12,14 +12,14 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]
 pub struct PositionParams {
-    pub event_id: Option<u32>,
+    pub market_id: Option<u32>,
     pub user_id: Option<u32>,
 }
 
 #[derive(sqlx::FromRow, Debug, ToSchema, Serialize)]
 pub struct Position {
-    pub user_id: UserId,
-    pub event_id: EventId,
+    pub user_id: u32,
+    pub market_id: u32,
     /// The position. Positive is long, negative is short.
     pub position: i32,
 }
@@ -33,12 +33,12 @@ impl Position {
 
     pub async fn delete_for_event<E>(
         pool: &mut E,
-        event_id: EventId,
+        market_id: MarketId,
     ) -> Result<SqliteQueryResult, sqlx::Error>
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
-        sqlx::query!("DELETE FROM position WHERE event_id = ?", event_id)
+        sqlx::query!("DELETE FROM position WHERE market_id = ?", market_id)
             .execute(pool)
             .await
     }
@@ -49,9 +49,9 @@ impl Position {
     ) -> Result<Vec<Position>, sqlx::Error> {
         let mut query = QueryBuilder::new("SELECT * from position WHERE position != 0");
 
-        if let Some(event_id) = params.event_id {
-            query.push(" AND event_id = ");
-            query.push_bind(event_id);
+        if let Some(market_id) = params.market_id {
+            query.push(" AND market_id = ");
+            query.push_bind(market_id);
         }
         if let Some(user_id) = params.user_id {
             query.push(" AND user_id = ");

@@ -11,8 +11,8 @@ pub struct Trade {
     /// The timestamp of when the trade was created.
     pub created_at: i64,
     pub tick: u32,
-    /// The event ID.
-    pub event_id: u32,
+    /// The market ID.
+    pub market_id: u32,
     /// The taker's user ID.
     pub taker_id: u32,
     /// The maker's user ID.
@@ -35,7 +35,7 @@ const fn default_limit() -> u32 {
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]
 pub struct TradeParams {
-    pub event_id: Option<u32>,
+    pub market_id: Option<u32>,
     pub user_id: Option<u32>,
     pub before: Option<i64>,
     #[serde(default = "default_limit")]
@@ -49,12 +49,12 @@ impl Trade {
     {
         sqlx::query!(
         "
-        INSERT INTO trade (created_at, tick, event_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
+        INSERT INTO trade (created_at, tick, market_id, taker_id, maker_id, taker_oid, maker_oid, quantity, price, is_buy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ",
         self.created_at,
         self.tick,
-        self.event_id,
+        self.market_id,
         self.taker_id,
         self.maker_id,
         self.taker_oid,
@@ -73,9 +73,9 @@ impl Trade {
     ) -> Result<Vec<Trade>, sqlx::Error> {
         let mut query = QueryBuilder::new("SELECT * from trade WHERE 1=1");
 
-        if let Some(event_id) = params.event_id {
-            query.push(" AND event_id = ");
-            query.push_bind(event_id);
+        if let Some(market_id) = params.market_id {
+            query.push(" AND market_id = ");
+            query.push_bind(market_id);
         }
         if let Some(user_id) = params.user_id {
             query.push(" AND (taker_id = ");

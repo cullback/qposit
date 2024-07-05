@@ -5,7 +5,7 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use lobster::{Action, BookUpdate, EventId, RejectReason};
+use lobster::{Action, BookUpdate, MarketId, RejectReason};
 use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
@@ -24,9 +24,9 @@ pub enum OrderType {
 
 #[derive(Debug, Deserialize)]
 pub struct PostOrder {
-    book: EventId,
+    market: MarketId,
     quantity: String,
-    // may be empty on market orders
+    // may be empty on event orders
     #[serde(default)]
     price: String,
     is_buy: bool,
@@ -38,10 +38,10 @@ pub async fn post(
     SessionExtractor(user): SessionExtractor,
     Form(form): Form<PostOrder>,
 ) -> impl IntoResponse {
-    let book = form.book;
+    let market_id = form.market;
     let Some(user) = user else {
         return OrderForm::with_messages(
-            form.book,
+            form.market,
             form.quantity,
             form.price,
             String::new(),
@@ -69,7 +69,7 @@ pub async fn post(
 
     let (Ok(quantity), Ok(price)) = (quantity, price) else {
         return OrderForm::with_messages(
-            form.book,
+            form.market,
             form.quantity,
             form.price,
             quantity.err().unwrap_or_default().to_owned(),
@@ -80,7 +80,7 @@ pub async fn post(
     };
 
     let req = lobster::OrderRequest {
-        event: form.book,
+        market: form.market,
         quantity,
         price,
         side: Side::new(form.is_buy),
@@ -99,7 +99,7 @@ pub async fn post(
             action: Action::Add(order),
             ..
         }) => OrderForm::with_messages(
-            book,
+            market_id,
             form.quantity,
             form.price,
             String::new(),
@@ -118,7 +118,7 @@ pub async fn post(
                 RejectReason::BookAlreadyExists => "Error: Book already exists",
             };
             OrderForm::with_messages(
-                book,
+                market_id,
                 form.quantity,
                 form.price,
                 String::new(),

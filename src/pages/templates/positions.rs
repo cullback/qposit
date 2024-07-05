@@ -49,20 +49,20 @@ impl Positions {
            "
                 SELECT
                     (
-                        SELECT market.title FROM market WHERE market.id = (
-                            SELECT event.market_id FROM event WHERE event.id = position.event_id
+                        SELECT event.title FROM event WHERE event.id = (
+                            SELECT market.event_id FROM market WHERE market.id = position.market_id
                         )
                     ) as market_title,
                     (
-                        SELECT event.title FROM event WHERE event.id = position.event_id
+                        SELECT market.title FROM market WHERE market.id = position.market_id
                     ) as event_title,
                     position.position,
                     (
-                        SELECT trade.price FROM trade WHERE trade.event_id = position.event_id ORDER BY trade.id DESC LIMIT 1
+                        SELECT trade.price FROM trade WHERE trade.market_id = position.market_id ORDER BY trade.id DESC LIMIT 1
                     ) AS last_price,
                     (
                         SELECT trade.price * ABS(position.position)
-                        FROM trade WHERE trade.event_id = position.event_id ORDER BY trade.id DESC LIMIT 1
+                        FROM trade WHERE trade.market_id = position.market_id ORDER BY trade.id DESC LIMIT 1
                     ) AS market_value
                 FROM position WHERE user_id = ? AND position.position != 0
                 ",

@@ -3,13 +3,13 @@
         <summary>
             <h3 style="display:inline-block;">{{title}}</h3>
             <div style="float: right;">
-                <kbd id="mid_price-{{book_data.event_id}}">{{book_data.mid_price}}</kbd>
+                <kbd id="mid_price-{{book_data.market_id}}">{{book_data.mid_price}}</kbd>
             </div>
             <br>
-            <small id="volume-{{book_data.event_id}}">${{book_data.volume}} Bet</small>
+            <small id="volume-{{book_data.market_id}}">${{book_data.volume}} Bet</small>
         </summary>
         
-        <table id="orderbook-{{book_data.event_id}}">
+        <table id="orderbook-{{book_data.market_id}}">
             <thead>
                 <tr>
                     <th scope="col">Price</th>

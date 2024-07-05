@@ -1,12 +1,12 @@
-<div id="order_form{{event_id}}">
+<div id="order_form{{market_id}}">
     <form>
         <fieldset>
-            <div hx-preserve id="order_type{{event_id}}">
+            <div hx-preserve id="order_type{{market_id}}">
                 <legend>Order type</legend>
                 <label><input type="radio" name="order_type" value="Limit" checked
-                        onclick="document.getElementById('price_field{{event_id}}').disabled = false" />Limit</label>
+                        onclick="document.getElementById('price_field{{market_id}}').disabled = false" />Limit</label>
                 <label><input type="radio" name="order_type" value="Market"
-                        onclick="document.getElementById('price_field{{event_id}}').disabled = true" />Market</label>
+                        onclick="document.getElementById('price_field{{market_id}}').disabled = true" />Market</label>
             </div>
             <div class="grid">
                 <label>Quantity
@@ -21,21 +21,21 @@
                 </label>
                 <label>Price
                     {% if price_message.len() == 0 %}
-                    <input type="number" id="price_field{{event_id}}" name="price" placeholder="Price" aria-label="Number"
+                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price" aria-label="Number"
                         value="{{price}}" required />
                     {% else %}
-                    <input type="number" id="price_field{{event_id}}" name="price" placeholder="Price" aria-label="Number"
+                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price" aria-label="Number"
                         value="{{price}}" required aria-invalid="true" />
                     <small>{{price_message}}</small>
                     {% endif %}
                 </label>
             </div>
             <div class="grid">
-                <input type="submit" value="Yes" hx-vals='{"is_buy":true,"book":{{event_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{event_id}}" hx-post="/orders" class="pico-background-green-450"
+                <input type="submit" value="Yes" hx-vals='{"is_buy":true,"market":{{market_id}}}' hx-swap="innerHTML"
+                    hx-target="#order_form{{market_id}}" hx-post="/orders" class="pico-background-green-450"
                     hx-disabled-elt="this">
-                <input type="submit" value="No" hx-vals='{"is_buy":false,"book":{{event_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{event_id}}" hx-post="/orders" class="pico-background-red-450"
+                <input type="submit" value="No" hx-vals='{"is_buy":false,"market":{{market_id}}}' hx-swap="innerHTML"
+                    hx-target="#order_form{{market_id}}" hx-post="/orders" class="pico-background-red-450"
                     hx-disabled-elt="this">
             </div>
         </fieldset>

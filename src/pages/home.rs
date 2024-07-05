@@ -10,18 +10,18 @@ pub async fn get(
     SessionExtractor(user): SessionExtractor,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let active_markets = Market::get_active_markets(&state.pool).await.unwrap();
+    let active_events = Event::get_active_events(&state.pool).await.unwrap();
 
-    let mut markets = Vec::new();
-    for market in active_markets {
-        let events = Event::get_all_for_market(&state.pool, market.id)
+    let mut events = Vec::new();
+    for event in active_events {
+        let markets = Market::get_all_for_event(&state.pool, event.id)
             .await
             .unwrap();
-        markets.push((market, events));
+        events.push((event, markets));
     }
 
     match user {
-        Some(user) => HomePage::new(user.username, markets),
-        None => HomePage::new(String::new(), markets),
+        Some(user) => HomePage::new(user.username, events),
+        None => HomePage::new(String::new(), events),
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use lobster::{Balance, Side, UserId};
-use lobster::{BookUpdate, EventId, Exchange};
+use lobster::{BookUpdate, Exchange, MarketId};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -10,7 +10,7 @@ use crate::app_state::current_time_micros;
 
 use super::matcher_request::MatcherRequest;
 
-use crate::models::{event::Event, order::Order, position::Position, user::User};
+use crate::models::{market::Market, order::Order, position::Position, user::User};
 
 /// Initializes the in-memory exchange data from the database.
 async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
@@ -21,17 +21,17 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
         balances.insert(user.id, user.balance);
     }
 
-    let mut events: Vec<EventId> = Vec::new();
-    for event in Event::get_active(db).await.unwrap() {
-        events.push(event.id);
+    let mut markets: Vec<MarketId> = Vec::new();
+    for market in Market::get_active(db).await.unwrap() {
+        markets.push(market.id);
     }
 
-    let mut positions: HashMap<(UserId, EventId), i32> = HashMap::new();
+    let mut positions: HashMap<(UserId, MarketId), i32> = HashMap::new();
     for position in Position::get_non_zero(db).await.unwrap() {
-        positions.insert((position.user_id, position.event_id), position.position);
+        positions.insert((position.user_id, position.market_id), position.position);
     }
 
-    let mut orders: Vec<(UserId, EventId, lobster::Order)> = Vec::new();
+    let mut orders: Vec<(UserId, MarketId, lobster::Order)> = Vec::new();
     for order_record in Order::get_open_orders(db).await.unwrap() {
         let order = lobster::Order::new(
             order_record.id,
@@ -39,7 +39,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
             order_record.price,
             Side::new(order_record.is_buy),
         );
-        orders.push((order_record.user_id, order_record.event_id, order));
+        orders.push((order_record.user_id, order_record.market_id, order));
     }
 
     let engine = lobster::Exchange::from_state(
@@ -47,7 +47,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
         &balances,
         &positions,
         orders.as_slice(),
-        events.as_slice(),
+        markets.as_slice(),
     );
 
     engine
@@ -73,8 +73,8 @@ pub fn start_matcher_service(
                         response,
                     } => {
                         let res = exchange.submit_order(timestamp, user, order);
-                        if let Ok(event) = res.clone() {
-                            market_data.send(event).expect("Receiver dropped");
+                        if let Ok(market) = res.clone() {
+                            market_data.send(market).expect("Receiver dropped");
                         }
                         response.send(res).expect("Receiver dropped");
                     }
@@ -84,28 +84,28 @@ pub fn start_matcher_service(
                         response,
                     } => {
                         let res = exchange.cancel_order(timestamp, user, order);
-                        if let Ok(event) = res.clone() {
-                            market_data.send(event).expect("Receiver dropped");
+                        if let Ok(market) = res.clone() {
+                            market_data.send(market).expect("Receiver dropped");
                         }
                         response.send(res).expect("Receiver dropped");
                     }
-                    MatcherRequest::AddEvent { event_id } => {
-                        let event = exchange.add_event(timestamp, event_id).unwrap();
-                        market_data.send(event).expect("Receiver dropped");
+                    MatcherRequest::AddEvent { market_id } => {
+                        let market = exchange.add_event(timestamp, market_id).unwrap();
+                        market_data.send(market).expect("Receiver dropped");
                     }
                     MatcherRequest::Deposit { user, amount } => {
                         exchange.deposit(user, amount);
                     }
                     MatcherRequest::Resolve {
-                        event_id,
+                        market_id,
                         price,
                         response,
                     } => {
-                        let event = exchange.resolve(timestamp, event_id, price);
-                        if let Ok(event) = event.clone() {
-                            market_data.send(event).expect("Receiver dropped");
+                        let market = exchange.resolve(timestamp, market_id, price);
+                        if let Ok(market) = market.clone() {
+                            market_data.send(market).expect("Receiver dropped");
                         }
-                        response.send(event).expect("Receiver dropped");
+                        response.send(market).expect("Receiver dropped");
                     }
                 }
             }

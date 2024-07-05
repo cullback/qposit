@@ -1,4 +1,4 @@
-use lobster::{EventId, Timestamp, UserId};
+use lobster::{MarketId, Timestamp, UserId};
 use lobster::{OrderId, Side};
 use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 pub struct Order {
     pub id: i64,
     pub created_at: i64,
-    pub event_id: u32,
+    pub market_id: u32,
     pub user_id: u32,
     pub quantity: u32,
     pub remaining: u32,
@@ -34,7 +34,7 @@ impl Order {
     pub async fn new<E>(
         db: &mut E,
         created_at: Timestamp,
-        event_id: EventId,
+        market_id: MarketId,
         user_id: UserId,
         order: lobster::Order,
     ) -> Result<i64, sqlx::Error>
@@ -43,11 +43,11 @@ impl Order {
     {
         let is_buy = order.side.is_buy();
         sqlx::query!(
-            "INSERT INTO 'order' (id, created_at, event_id, user_id, quantity, remaining, price, is_buy, status)
+            "INSERT INTO 'order' (id, created_at, market_id, user_id, quantity, remaining, price, is_buy, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open')",
             order.id,
             created_at,
-            event_id,
+            market_id,
             user_id,
             order.quantity,
             order.quantity,
@@ -85,15 +85,15 @@ impl Order {
         .await
     }
 
-    /// Returns the open orders of an event from lowest price to highest price.
+    /// Returns the open orders of an market from lowest price to highest price.
     pub async fn get_open_for_event(
         db: &SqlitePool,
-        event_id: EventId,
+        market_id: MarketId,
     ) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as::<_, Self>(
-            "SELECT * FROM 'order' WHERE status = 'open' and event_id = ? ORDER BY price ASC, created_at ASC",
+            "SELECT * FROM 'order' WHERE status = 'open' and market_id = ? ORDER BY price ASC, created_at ASC",
         )
-        .bind(event_id)
+        .bind(market_id)
         .fetch_all(db)
         .await
     }
@@ -110,14 +110,14 @@ impl Order {
 
     pub async fn cancel_for_event<E>(
         db: &mut E,
-        event_id: EventId,
+        market_id: MarketId,
     ) -> Result<SqliteQueryResult, sqlx::Error>
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
         sqlx::query!(
-            "UPDATE 'order' SET status = 'cancelled' WHERE event_id = ? and status = 'open'",
-            event_id
+            "UPDATE 'order' SET status = 'cancelled' WHERE market_id = ? and status = 'open'",
+            market_id
         )
         .execute(db)
         .await
@@ -125,9 +125,9 @@ impl Order {
 
     pub async fn build_orderbook(
         db: &SqlitePool,
-        event_id: EventId,
+        market_id: MarketId,
     ) -> Result<lobster::OrderBook, sqlx::Error> {
-        let orders = Order::get_open_for_event(db, event_id).await?;
+        let orders = Order::get_open_for_event(db, market_id).await?;
         let orderbook = build_from_orders(&orders);
         Ok(orderbook)
     }

@@ -2,15 +2,15 @@ use lobster::{BookUpdate, Timestamp};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::actors::{book_service::EventData, matcher_request::MatcherRequest};
+use crate::actors::{book_service::MarketData, matcher_request::MatcherRequest};
 
 pub struct AppState {
     pub pool: SqlitePool,
     /// Sending requests to matching engine.
     pub cmd_send: mpsc::Sender<MatcherRequest>,
-    /// Receiving market data events.
+    /// Receiving event data markets.
     pub feed_receive: broadcast::Receiver<BookUpdate>,
-    pub book_receive: broadcast::Receiver<EventData>,
+    pub book_receive: broadcast::Receiver<MarketData>,
 }
 
 impl Clone for AppState {
@@ -29,7 +29,7 @@ impl AppState {
         pool: SqlitePool,
         cmd_send: mpsc::Sender<MatcherRequest>,
         feed_receive: broadcast::Receiver<BookUpdate>,
-        book_receive: broadcast::Receiver<EventData>,
+        book_receive: broadcast::Receiver<MarketData>,
     ) -> Self {
         Self {
             pool,

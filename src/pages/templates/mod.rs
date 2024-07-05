@@ -6,9 +6,9 @@ use time::{
 
 pub mod about_page;
 pub mod book;
+pub mod event;
 pub mod home_page;
 pub mod login;
-pub mod market;
 pub mod open_orders;
 pub mod order_form;
 pub mod orderbook;

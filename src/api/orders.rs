@@ -31,7 +31,7 @@ const fn default_limit() -> u32 {
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]
 pub struct GetOrderParams {
-    pub event_id: Option<u32>,
+    pub market_id: Option<u32>,
     pub user_id: Option<u32>,
     pub before: Option<i64>,
     #[serde(default = "default_limit")]
@@ -60,9 +60,9 @@ pub async fn get(
 ) -> Response {
     let mut query = QueryBuilder::new("SELECT * from 'order' WHERE status = 'open'");
 
-    if let Some(event_id) = params.event_id {
-        query.push(" AND event_id = ");
-        query.push_bind(event_id);
+    if let Some(market_id) = params.market_id {
+        query.push(" AND market_id = ");
+        query.push_bind(market_id);
     }
     if let Some(user_id) = params.user_id {
         query.push(" AND user_id = ");
@@ -127,7 +127,7 @@ pub async fn post(
         .map_err(|err| ApiError::MatcherRequest(err));
 
     match response {
-        Ok(event) => Json(BookUpdate::from(event)).into_response(),
+        Ok(market) => Json(BookUpdate::from(market)).into_response(),
         Err(err) => err.into_response(),
     }
 }
