@@ -1,5 +1,4 @@
 use lobster::MarketId;
-use lobster::UserId;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
