@@ -17,13 +17,12 @@ INSERT INTO invite(code, created_by, created_at) VALUES
     ('LPNTFXWZAA', 1, 1710007894419934),
     ('2WC3FKEV31', 1, 1710007894419934);
 
-INSERT INTO event(id, slug, title, description, status, created_at, expires_at) VALUES
+INSERT INTO event(id, slug, title, description, created_at, expires_at) VALUES
 (1, 'demo-event', 'Demo Event',
     '
 ## Resolution criteria
 
 This event will be resolved however I please.',
-    'active',
     1710007894419934,
     1710008894419934
 );
