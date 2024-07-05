@@ -110,12 +110,12 @@ pub async fn post(
         Err(err) => {
             let msg = match err {
                 RejectReason::InvalidPrice => "Error: Invalid price",
-                RejectReason::BookNotFound => "Error: Invalid book",
+                RejectReason::MarketNotFound => "Error: Invalid market",
                 RejectReason::IOCNotMarketable => "Error: Order not marketable",
                 RejectReason::InvalidQuantity => "Error: Invalid quantity",
                 RejectReason::InsufficientFunds => "Error: Insufficient funds",
                 RejectReason::OrderNotFound => "Error: Order not found",
-                RejectReason::BookAlreadyExists => "Error: Book already exists",
+                RejectReason::MarketAlreadyExists => "Error: Market already exists",
             };
             OrderForm::with_messages(
                 market_id,

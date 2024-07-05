@@ -80,26 +80,26 @@ impl State {
         }
     }
 
-    async fn on_event(&mut self, market: BookUpdate) {
-        info!(?market);
+    async fn on_event(&mut self, update: BookUpdate) {
+        info!(?update);
 
         let mut tx = self.db.begin().await.unwrap();
-        match market.action {
+        match update.action {
             Action::Add(order) => {
                 self.on_add(
                     &mut *tx,
-                    market.time,
-                    market.tick,
-                    market.user,
-                    market.book,
+                    update.time,
+                    update.tick,
+                    update.user,
+                    update.book,
                     order,
                 )
                 .await
             }
-            Action::Remove { id } => self.on_remove(&mut *tx, market.book, id).await,
-            Action::Resolve { price } => self.on_resolve(&mut *tx, market.book, price).await,
+            Action::Remove { id } => self.on_remove(&mut *tx, update.book, id).await,
+            Action::Resolve { price } => self.on_resolve(&mut *tx, update.book, price).await,
             Action::AddMarket {} => {
-                self.orderbooks.insert(market.book, OrderBook::default());
+                self.orderbooks.insert(update.book, OrderBook::default());
             }
         }
         tx.commit().await.unwrap();
@@ -263,6 +263,10 @@ impl State {
     where
         for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
     {
+        models::market::Market::resolve(transaction, market_id, price)
+            .await
+            .unwrap();
+
         self.orderbooks.remove(&market_id).unwrap();
         self.order_owner
             .retain(|_, order| order.market_id != market_id);

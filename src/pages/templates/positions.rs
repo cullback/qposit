@@ -15,8 +15,8 @@ struct Position {
 }
 
 struct PositionAsHtml {
-    market_title: String,
     event_title: String,
+    market_title: String,
     side: String,
     position: String,
     last_price: String,
@@ -27,8 +27,8 @@ impl From<Position> for PositionAsHtml {
     fn from(position: Position) -> Self {
         let side = if position.position >= 0 { "Yes" } else { "No" }.to_string();
         Self {
-            market_title: position.market_title,
             event_title: position.event_title,
+            market_title: position.market_title,
             side,
             position: format!("{}", position.position.abs()),
             last_price: format_price_to_string(position.last_price),
@@ -52,10 +52,10 @@ impl Positions {
                         SELECT event.title FROM event WHERE event.id = (
                             SELECT market.event_id FROM market WHERE market.id = position.market_id
                         )
-                    ) as market_title,
+                    ) as event_title,
                     (
                         SELECT market.title FROM market WHERE market.id = position.market_id
-                    ) as event_title,
+                    ) as market_title,
                     position.position,
                     (
                         SELECT trade.price FROM trade WHERE trade.market_id = position.market_id ORDER BY trade.id DESC LIMIT 1

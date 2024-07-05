@@ -1,6 +1,6 @@
 use lobster::MarketId;
 use serde::Serialize;
-use sqlx::{prelude::FromRow, Executor, Sqlite, SqlitePool};
+use sqlx::{prelude::FromRow, sqlite::SqliteQueryResult, Executor, Sqlite, SqlitePool};
 use utoipa::ToSchema;
 
 #[derive(Debug, FromRow, Serialize, ToSchema)]
@@ -98,9 +98,27 @@ impl Market {
                     SELECT SUM(quantity * price) FROM trade WHERE market.id = trade.market_id
                 ) AS volume
             FROM market
+            WHERE market.outcome IS NULL
             ",
         )
         .fetch_all(db)
+        .await
+    }
+
+    pub async fn resolve<E>(
+        db: &mut E,
+        market_id: MarketId,
+        outcome: u16,
+    ) -> Result<SqliteQueryResult, sqlx::Error>
+    where
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
+    {
+        sqlx::query!(
+            "UPDATE market SET outcome = ? WHERE id = ?",
+            outcome,
+            market_id
+        )
+        .execute(db)
         .await
     }
 }
