@@ -32,6 +32,12 @@ async fn get_pico_colors() -> impl IntoResponse {
         include_str!("../../static/pico.colors.css"),
     )
 }
+async fn get_main_css() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/css")],
+        include_str!("../../static/main.css"),
+    )
+}
 async fn get_htmx() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/javascript")],
@@ -49,6 +55,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/pico.min.css", get(get_pico_css))
         .route("/pico.colors.min.css", get(get_pico_colors))
+        .route("/main.css", get(get_main_css))
         .route("/htmx.min.js", get(get_htmx))
         .route("/htmx.ws.js", get(get_htmx_ws))
         .route("/", get(home::get))
