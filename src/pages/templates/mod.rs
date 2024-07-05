@@ -42,14 +42,20 @@ pub fn display_price(
     outcome: Option<Price>,
 ) -> String {
     if let Some(outcome) = outcome {
-        return format_price_to_string(outcome);
+        let price = format_price_to_string(outcome);
+        if outcome == 0 {
+            return format!("<kbd class=\"pico-background-red-350\">{price}</kbd>");
+        }
+        return format!("<kbd class=\"pico-background-green-350\">{price}</kbd>");
     }
-    match (bid, ask, last) {
+    let output = match (bid, ask, last) {
         // if two sided quote, use mid price rounded down
         (Some(bid), Some(ask), _) => format_price_to_string(midpoint(bid, ask)),
         (None, None, Some(price)) => format_price_to_string(price),
         _ => "N/A".to_string(),
-    }
+    };
+
+    format!("<kbd>{}</kbd>", output)
 }
 
 /// Pretty prints a timestamp as a string.
