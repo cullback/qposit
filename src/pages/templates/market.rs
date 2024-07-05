@@ -11,11 +11,11 @@ pub struct BookHtml {
 }
 
 impl BookHtml {
-    pub fn new(book: Market, book_data: &MarketData) -> Self {
+    pub fn new(market: Market, market_data: &MarketData) -> Self {
         Self {
-            title: book.title,
-            update: MarketUpdate::from(book_data),
-            order_form: OrderForm::new(book_data.market_id),
+            title: market.title,
+            update: MarketUpdate::from(market_data),
+            order_form: OrderForm::new(market_data.market_id),
         }
     }
 }

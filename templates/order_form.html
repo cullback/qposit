@@ -1,7 +1,7 @@
-<div id="order_form{{market_id}}">
+<div id="order-form-{{market_id}}">
     <form>
         <fieldset>
-            <div hx-preserve id="order_type{{market_id}}">
+            <div hx-preserve id="order-type-{{market_id}}">
                 <legend>Order type</legend>
                 <label><input type="radio" name="order_type" value="Limit" checked
                         onclick="document.getElementById('price_field{{market_id}}').disabled = false" />Limit</label>
@@ -32,10 +32,10 @@
             </div>
             <div class="grid">
                 <input type="submit" value="Yes" hx-vals='{"is_buy":true,"market":{{market_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{market_id}}" hx-post="/orders" class="pico-background-green-450"
+                    hx-target="#order-form-{{market_id}}" hx-post="/orders" class="pico-background-green-450"
                     hx-disabled-elt="this">
                 <input type="submit" value="No" hx-vals='{"is_buy":false,"market":{{market_id}}}' hx-swap="innerHTML"
-                    hx-target="#order_form{{market_id}}" hx-post="/orders" class="pico-background-red-450"
+                    hx-target="#order-form-{{market_id}}" hx-post="/orders" class="pico-background-red-450"
                     hx-disabled-elt="this">
             </div>
         </fieldset>

@@ -23,4 +23,26 @@
 
 <p>Comments coming soon...</p>
 
+<script>
+    document.body.addEventListener('htmx:beforeOnLoad', (evt) => {
+        const id = evt.detail.target.id;
+        const marketId = id.match(/(\d+)$/)[0];
+        const orderbook = document.getElementById(`orderbook-${marketId}`);
+        const tbody = orderbook.querySelector('tbody');
+        const scrollPosition = tbody.scrollTop;
+
+        localStorage.setItem(`scrollPosition-${marketId}`, scrollPosition);
+    });
+
+    document.body.addEventListener('htmx:afterSettle', (evt) => {
+        const id = evt.detail.target.id;
+        const marketId = id.match(/(\d+)$/)[0];
+        const orderbook = document.getElementById(`orderbook-${marketId}`);
+        const tbody = orderbook.querySelector('tbody');
+        const scrollPosition = parseInt(localStorage.getItem(`scrollPosition-${marketId}`), 10);
+
+        tbody.scrollTop = scrollPosition;
+    });
+</script>
+
 {% endblock %}
