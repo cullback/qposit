@@ -41,7 +41,7 @@ impl MarketData {
             best_bid: orderbook.best_bid().map(|x| x.price),
             best_ask: orderbook.best_ask().map(|x| x.price),
             book: orderbook,
-            last_price: market.last_trade_price,
+            last_price: market.last_price,
             outcome: market.outcome,
             volume: market.volume,
         }

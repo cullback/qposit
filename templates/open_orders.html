@@ -3,8 +3,8 @@
 <table>
     <thead>
         <tr>
-            <th scope="col">Event7</th>
-            <th scope="col">Book</th>
+            <th scope="col">Event</th>
+            <th scope="col">Market</th>
             <th scope="col">Quantity filled</th>
             <th scope="col">Price</th>
             <th scope="col">Type</th>
@@ -14,8 +14,8 @@
     <tbody hx-target="closest tr" hx-swap="outerHTML">
         {% for order in orders %}
         <tr>
-            <td>{{ order.market_title }}</td>
             <td>{{ order.event_title }} </td>
+            <td>{{ order.market_title }}</td>
             <td>{{ order.quantity - order.remaining }}/{{order.quantity}}</td>
             <td>{{ order.price }}</td>
             <td>{{ order.side }}</td>

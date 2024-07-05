@@ -24,6 +24,9 @@ pub enum ApiError {
     JsonRejection(JsonRejection),
     MatcherRequest(lobster::RejectReason),
     Authentication,
+    InternalServerError,
+    EventAlreadyExists,
+    Authorization,
 }
 
 impl IntoResponse for ApiError {
@@ -43,6 +46,17 @@ impl IntoResponse for ApiError {
             ApiError::Authentication => {
                 (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())
             }
+            ApiError::InternalServerError => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ),
+            ApiError::EventAlreadyExists => {
+                (StatusCode::CONFLICT, "Event already exists".to_string())
+            }
+            ApiError::Authorization => (
+                StatusCode::FORBIDDEN,
+                "You are not authorized to perform this action".to_string(),
+            ),
         };
         (status, ApiJson(ErrorResponse { error: message })).into_response()
     }

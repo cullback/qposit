@@ -20,8 +20,8 @@ struct Order {
 }
 
 struct OrderAsHtml {
-    market_title: String,
     event_title: String,
+    market_title: String,
     id: OrderId,
     quantity: Quantity,
     remaining: Quantity,
@@ -34,8 +34,8 @@ struct OrderAsHtml {
 impl From<Order> for OrderAsHtml {
     fn from(order: Order) -> Self {
         Self {
-            market_title: order.market_title,
             event_title: order.event_title,
+            market_title: order.market_title,
             id: order.id,
             quantity: order.quantity,
             remaining: order.remaining,
@@ -61,10 +61,10 @@ impl OpenOrders {
                         SELECT event.title FROM event WHERE event.id = (
                             SELECT market.event_id FROM market WHERE market.id = 'order'.market_id
                         )
-                    ) as market_title,
+                    ) as event_title,
                     (
                         SELECT market.title FROM market WHERE market.id = 'order'.market_id
-                    ) as event_title,
+                    ) as market_title,
                     id,
                     market_id,
                     quantity,

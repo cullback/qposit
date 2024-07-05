@@ -27,12 +27,8 @@ pub fn format_balance_to_dollars(balance: Balance) -> String {
 }
 
 /// Computes the midpoint of two prices, rounding.
-const fn midpoint(a: Price, b: Price) -> Price {
-    if a > b {
-        a.wrapping_add(a.wrapping_sub(b) / 2)
-    } else {
-        a.wrapping_sub(b.wrapping_sub(a) / 2)
-    }
+const fn average_round_half_up(a: Price, b: Price) -> Price {
+    (a + b + 1) / 2
 }
 
 pub fn display_price(
@@ -50,7 +46,7 @@ pub fn display_price(
     }
     let output = match (bid, ask, last) {
         // if two sided quote, use mid price rounded down
-        (Some(bid), Some(ask), _) => format_price_to_string(midpoint(bid, ask)),
+        (Some(bid), Some(ask), _) => format_price_to_string(average_round_half_up(bid, ask)),
         (None, None, Some(price)) => format_price_to_string(price),
         _ => "N/A".to_string(),
     };
@@ -73,6 +69,8 @@ pub fn format_timestamp_as_string(timestamp: Timestamp) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::pages::templates::average_round_half_up;
+
     use super::format_price_to_string;
     use super::format_timestamp_as_string;
 
@@ -91,5 +89,14 @@ mod tests {
         let timestamp = 1730829600_000000;
         let formatted = format_timestamp_as_string(timestamp);
         assert_eq!(formatted, "Tuesday, November 5, 2024 at 13:00:00");
+    }
+
+    #[test]
+    fn test_midopint() {
+        assert_eq!(average_round_half_up(0, 0), 0);
+        assert_eq!(average_round_half_up(0, 1), 1);
+        assert_eq!(average_round_half_up(1, 0), 1);
+        assert_eq!(average_round_half_up(1, 1), 1);
+        assert_eq!(average_round_half_up(5100, 4900), 5000);
     }
 }

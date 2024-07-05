@@ -1,4 +1,4 @@
-use lobster::{MarketId, Price};
+use lobster::MarketId;
 use serde::Serialize;
 use sqlx::{prelude::FromRow, sqlite::SqliteQueryResult, Executor, Sqlite, SqlitePool};
 use utoipa::ToSchema;
@@ -8,10 +8,15 @@ pub struct Market {
     pub id: u32,
     pub event_id: i64,
     pub title: String,
+    /// The resolution price of this market, if it has been resolved.
     pub outcome: Option<u16>,
-    pub last_trade_price: Option<u16>,
-    pub best_bid_price: Option<u16>,
-    pub best_ask_price: Option<u16>,
+    /// The price of the last trade that ocurred in this market.
+    pub last_price: Option<u16>,
+    /// The best bid price.
+    pub best_bid: Option<u16>,
+    /// The best ask price.
+    pub best_ask: Option<u16>,
+    /// The total volume traded in this market.
     pub volume: i64,
 }
 
@@ -46,17 +51,17 @@ impl Market {
                     WHERE trade.market_id = market.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
-                ) AS last_trade_price,
+                ) AS last_price,
                 (
                     SELECT MAX(price)
                     FROM 'order'
                     WHERE 'order'.market_id = market.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
-                ) AS best_bid_price,
+                ) AS best_bid,
                 (
                     SELECT MIN(price)
                     FROM 'order'
                     WHERE 'order'.market_id = market.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
-                ) AS best_ask_price,
+                ) AS best_ask,
                 (
                     SELECT SUM(quantity * price) FROM trade WHERE market.id = trade.market_id
                 ) AS volume
@@ -83,17 +88,17 @@ impl Market {
                     WHERE trade.market_id = market.id
                     ORDER BY trade.created_at DESC, trade.tick DESC
                     LIMIT 1
-                ) as last_trade_price,
+                ) as last_price,
                 (
                     SELECT MAX(price)
                     FROM 'order'
                     WHERE 'order'.market_id = market.id AND 'order'.is_buy = 1 AND 'order'.status = 'open'
-                ) AS best_bid_price,
+                ) AS best_bid,
                 (
                     SELECT MIN(price)
                     FROM 'order'
                     WHERE 'order'.market_id = market.id AND 'order'.is_buy = 0 AND 'order'.status = 'open'
-                ) AS best_ask_price,
+                ) AS best_ask,
                 (
                     SELECT SUM(quantity * price) FROM trade WHERE market.id = trade.market_id
                 ) AS volume

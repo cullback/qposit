@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use tracing::error;
 use utoipa::ToSchema;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     models::{event::Event, market::Market},
 };
 
-use super::auth::BasicAuthExtractor;
+use super::{api_error::ApiError, auth::BasicAuthExtractor};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct EventResponse {
@@ -27,7 +27,7 @@ pub struct EventResponse {
     get,
     path = "/api/v1/events",
     responses(
-        (status = 200, description = "Event7 successfully created", body = [EventResponse])
+        (status = 200, description = "Event successfully created", body = [EventResponse])
     )
 )]
 pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
@@ -75,10 +75,9 @@ pub async fn post(
     Path(slug): Path<String>,
     Json(event): Json<EventPost>,
 ) -> impl IntoResponse {
-    // TODO: make this a transaction
+    // TODO: make this a transaction, and solve admin check
     if user.username != "admin" {
-        // TODO
-        return StatusCode::FORBIDDEN.into_response();
+        return ApiError::Authorization.into_response();
     }
 
     let record = Event {
@@ -93,10 +92,11 @@ pub async fn post(
     let event_id = match record.insert(&state.pool).await {
         Ok(row_id) => row_id,
         Err(sqlx::Error::Database(x)) if x.is_unique_violation() => {
-            return Json(json!({"error": "Event7 already exists"})).into_response();
+            return ApiError::EventAlreadyExists.into_response();
         }
-        Err(_) => {
-            return Json(json!({"error": "internal server error"})).into_response();
+        Err(err) => {
+            error!("Failed to insert event: {:?}", err);
+            return ApiError::InternalServerError.into_response();
         }
     };
 

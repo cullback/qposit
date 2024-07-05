@@ -21,9 +21,9 @@ impl From<Market> for BookView {
             event_id: market.event_id,
             title: market.title,
             display_price: display_price(
-                market.best_bid_price,
-                market.best_ask_price,
-                market.last_trade_price,
+                market.best_bid,
+                market.best_ask,
+                market.last_price,
                 market.outcome,
             ),
             is_resolved: market.outcome.is_some(),
