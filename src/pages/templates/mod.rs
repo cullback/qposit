@@ -5,10 +5,10 @@ use time::{
 };
 
 pub mod about_page;
-pub mod book;
 pub mod event;
 pub mod home_page;
 pub mod login;
+pub mod market;
 pub mod open_orders;
 pub mod order_form;
 pub mod orderbook;
@@ -26,11 +26,28 @@ pub fn format_balance_to_dollars(balance: Balance) -> String {
     format!("${:.2}", balance as f32 / 10000.0)
 }
 
-pub fn mid_to_string(bid: Option<Price>, ask: Option<Price>) -> String {
-    match (bid, ask) {
-        (Some(bid), Some(ask)) => format_price_to_string((bid + ask) / 2),
-        (Some(bid), None) => format_price_to_string(bid),
-        (None, Some(ask)) => format_price_to_string(ask),
+/// Computes the midpoint of two prices, rounding.
+const fn midpoint(a: Price, b: Price) -> Price {
+    if a > b {
+        a.wrapping_add(a.wrapping_sub(b) / 2)
+    } else {
+        a.wrapping_sub(b.wrapping_sub(a) / 2)
+    }
+}
+
+pub fn display_price(
+    bid: Option<Price>,
+    ask: Option<Price>,
+    last: Option<Price>,
+    outcome: Option<Price>,
+) -> String {
+    if let Some(outcome) = outcome {
+        return format_price_to_string(outcome);
+    }
+    match (bid, ask, last) {
+        // if two sided quote, use mid price rounded down
+        (Some(bid), Some(ask), _) => format_price_to_string(midpoint(bid, ask)),
+        (None, None, Some(price)) => format_price_to_string(price),
         _ => "N/A".to_string(),
     }
 }

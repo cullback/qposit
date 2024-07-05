@@ -1,4 +1,4 @@
-use lobster::MarketId;
+use lobster::{MarketId, Price};
 use serde::Serialize;
 use sqlx::{prelude::FromRow, sqlite::SqliteQueryResult, Executor, Sqlite, SqlitePool};
 use utoipa::ToSchema;

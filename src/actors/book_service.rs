@@ -27,9 +27,10 @@ use crate::models;
 pub struct MarketData {
     pub market_id: MarketId,
     pub book: lobster::OrderBook,
-    pub best_bid_price: Option<Price>,
-    pub best_ask_price: Option<Price>,
+    pub best_bid: Option<Price>,
+    pub best_ask: Option<Price>,
     pub last_price: Option<Price>,
+    pub outcome: Option<Price>,
     pub volume: Balance,
 }
 
@@ -37,10 +38,11 @@ impl MarketData {
     pub fn new(market: &models::market::Market, orderbook: lobster::OrderBook) -> Self {
         Self {
             market_id: market.id,
-            best_bid_price: orderbook.best_bid().map(|x| x.price),
-            best_ask_price: orderbook.best_ask().map(|x| x.price),
+            best_bid: orderbook.best_bid().map(|x| x.price),
+            best_ask: orderbook.best_ask().map(|x| x.price),
             book: orderbook,
             last_price: market.last_trade_price,
+            outcome: market.outcome,
             volume: market.volume,
         }
     }
@@ -49,9 +51,10 @@ impl MarketData {
         Self {
             market_id,
             book: lobster::OrderBook::default(),
-            best_bid_price: None,
-            best_ask_price: None,
+            best_bid: None,
+            best_ask: None,
             last_price: None,
+            outcome: None,
             volume: 0,
         }
     }
@@ -64,18 +67,18 @@ impl MarketData {
                     self.volume += Balance::from(fill.quantity) * Balance::from(fill.price);
                     self.last_price = Some(fill.price);
                 }
-                self.best_bid_price = self.book.best_bid().map(|x| x.price);
-                self.best_ask_price = self.book.best_ask().map(|x| x.price);
+                self.best_bid = self.book.best_bid().map(|x| x.price);
+                self.best_ask = self.book.best_ask().map(|x| x.price);
             }
             Action::Remove { id } => {
                 assert!(self.book.remove(id).is_some());
-                self.best_bid_price = self.book.best_bid().map(|x| x.price);
-                self.best_ask_price = self.book.best_ask().map(|x| x.price);
+                self.best_bid = self.book.best_bid().map(|x| x.price);
+                self.best_ask = self.book.best_ask().map(|x| x.price);
             }
             Action::Resolve { price } => {
-                self.last_price = Some(price);
+                self.outcome = Some(price);
             }
-            Action::AddMarket => { }, // nothing to do here
+            _ => {}
         }
     }
 }

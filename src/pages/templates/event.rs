@@ -5,7 +5,7 @@ use crate::{
     models::{event::Event, market::Market},
 };
 
-use super::{book::BookHtml, format_timestamp_as_string};
+use super::{format_timestamp_as_string, market::BookHtml};
 
 #[derive(Template)]
 #[template(path = "event.html")]

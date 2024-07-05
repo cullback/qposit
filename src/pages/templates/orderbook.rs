@@ -4,7 +4,7 @@ use lobster::{Order, Price, Quantity};
 
 use crate::actors::book_service::MarketData;
 
-use super::{format_price_to_string, mid_to_string};
+use super::{display_price, format_balance_to_dollars, format_price_to_string};
 
 #[derive(Debug, Clone)]
 pub struct PriceLevel {
@@ -58,11 +58,9 @@ pub fn do_side(orders: impl IntoIterator<Item = Order>) -> Vec<PriceLevel> {
 /// Needs to be applied against an already rendered book.
 #[derive(Template, Debug, Clone)]
 #[template(path = "orderbook.html")]
-#[allow(dead_code)]
 pub struct OrderBook {
     pub market_id: MarketId,
-    pub last_price: String,
-    pub mid_price: String,
+    pub display_price: String,
     pub volume: String,
     pub bids: Vec<PriceLevel>,
     pub asks: Vec<PriceLevel>,
@@ -70,13 +68,16 @@ pub struct OrderBook {
 
 impl From<&MarketData> for OrderBook {
     fn from(market: &MarketData) -> Self {
-        let last_price = format_price_to_string(market.last_price.unwrap_or(0));
-        let volume = format!("{:.2}", market.volume as f32 / 10000.0);
-        let mid_price = mid_to_string(market.best_bid_price, market.best_ask_price);
+        let volume = format_balance_to_dollars(market.volume);
+        let display_price = display_price(
+            market.best_bid,
+            market.best_ask,
+            market.last_price,
+            market.outcome,
+        );
         Self {
             market_id: market.market_id,
-            last_price,
-            mid_price,
+            display_price,
             volume,
             bids: do_side(market.book.bids()),
             asks: do_side(market.book.asks()),

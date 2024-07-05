@@ -3,10 +3,10 @@ use crate::{actors::book_service::MarketData, models::market::Market, pages::Ord
 use askama::Template;
 
 #[derive(Template, Debug, Clone)]
-#[template(path = "book.html")]
+#[template(path = "market.html")]
 pub struct BookHtml {
     pub title: String,
-    pub book_data: OrderBook,
+    pub orderbook: OrderBook,
     pub order_form: OrderForm,
 }
 
@@ -14,7 +14,7 @@ impl BookHtml {
     pub fn new(book: Market, book_data: &MarketData) -> Self {
         Self {
             title: book.title,
-            book_data: OrderBook::from(book_data),
+            orderbook: OrderBook::from(book_data),
             order_form: OrderForm::new(book_data.market_id),
         }
     }

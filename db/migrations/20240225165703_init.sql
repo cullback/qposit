@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS market(
 CREATE TABLE IF NOT EXISTS "order"(
     id          INTEGER PRIMARY KEY,
     created_at  INTEGER NOT NULL,
-    market_id     INTEGER NOT NULL,
+    market_id   INTEGER NOT NULL,
     user_id     INTEGER NOT NULL,
     quantity    INTEGER NOT NULL CHECK (quantity > 0),
     remaining   INTEGER NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS trade(
 
 
 CREATE TABLE IF NOT EXISTS position(
-    market_id     INTEGER NOT NULL,
+    market_id   INTEGER NOT NULL,
     user_id     INTEGER NOT NULL,
     position    INTEGER NOT NULL,
     FOREIGN KEY (market_id) REFERENCES market(id),
