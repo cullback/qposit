@@ -21,22 +21,24 @@
                 </label>
                 <label>Price
                     {% if price_message.len() == 0 %}
-                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price" aria-label="Number"
-                        value="{{price}}" required />
+                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price"
+                        aria-label="Number" value="{{price}}" required />
                     {% else %}
-                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price" aria-label="Number"
-                        value="{{price}}" required aria-invalid="true" />
+                    <input type="number" id="price_field{{market_id}}" name="price" placeholder="Price"
+                        aria-label="Number" value="{{price}}" required aria-invalid="true" />
                     <small>{{price_message}}</small>
                     {% endif %}
                 </label>
-            </div>
-            <div class="grid">
-                <input type="submit" value="Yes" hx-vals='{"is_buy":true,"market":{{market_id}}}' hx-swap="innerHTML"
-                    hx-target="#order-form-{{market_id}}" hx-post="/orders" class="pico-background-green-450"
-                    hx-disabled-elt="this">
-                <input type="submit" value="No" hx-vals='{"is_buy":false,"market":{{market_id}}}' hx-swap="innerHTML"
-                    hx-target="#order-form-{{market_id}}" hx-post="/orders" class="pico-background-red-450"
-                    hx-disabled-elt="this">
+                <label>&nbsp;
+                    <input type="submit" value="Yes" hx-vals='{"is_buy":true,"market":{{market_id}}}'
+                        hx-swap="innerHTML" hx-target="#order-form-{{market_id}}" hx-post="/orders"
+                        class="pico-background-green-450" hx-disabled-elt="this">
+                </label>
+                <label>&nbsp;
+                    <input type="submit" value="No" hx-vals='{"is_buy":false,"market":{{market_id}}}'
+                        hx-swap="innerHTML" hx-target="#order-form-{{market_id}}" hx-post="/orders"
+                        class="pico-background-red-450" hx-disabled-elt="this">
+                </label>
             </div>
         </fieldset>
     </form>

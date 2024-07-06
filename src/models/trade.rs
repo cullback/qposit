@@ -88,7 +88,7 @@ impl Trade {
             query.push(" AND created_at < ");
             query.push_bind(after);
         }
-        query.push(" ORDER BY created_at DESC LIMIT ");
+        query.push(" ORDER BY id DESC LIMIT ");
         query.push_bind(params.limit);
 
         query.build_query_as::<Trade>().fetch_all(db).await

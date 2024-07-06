@@ -48,7 +48,7 @@ pub fn display_price(
     let output = match (bid, ask, last) {
         // if two sided quote, use mid price rounded down
         (Some(bid), Some(ask), _) => format_price_to_string(average_round_half_up(bid, ask)),
-        (None, None, Some(price)) => format_price_to_string(price),
+        (_, _, Some(price)) => format_price_to_string(price),
         _ => "N/A".to_string(),
     };
 
