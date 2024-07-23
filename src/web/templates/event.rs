@@ -1,7 +1,7 @@
 use askama::Template;
 
 use crate::{
-    actors::book_service::MarketData,
+    services::book_service::MarketData,
     models::{event::Event, market::Market},
 };
 

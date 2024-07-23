@@ -1,5 +1,5 @@
 use super::order_form::OrderForm;
-use crate::{actors::book_service::MarketData, models::market::Market, pages::MarketUpdate};
+use crate::{services::book_service::MarketData, models::market::Market, web::MarketUpdate};
 use askama::Template;
 
 #[derive(Template, Debug, Clone)]

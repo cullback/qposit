@@ -10,7 +10,7 @@ use serde_json::json;
 use tracing::error;
 use utoipa::ToSchema;
 
-use crate::{actors::matcher_request::MatcherRequest, app_state::AppState, models::user::User};
+use crate::{services::matcher_request::MatcherRequest, app_state::AppState, models::user::User};
 
 use super::auth::BasicAuthExtractor;
 

@@ -3,6 +3,7 @@ use sqlx::SqlitePool;
 
 use utoipa::ToSchema;
 
+/// An event is a collection of markets.
 #[derive(sqlx::FromRow, Debug, Deserialize, Serialize, ToSchema)]
 pub struct Event {
     pub id: i64,

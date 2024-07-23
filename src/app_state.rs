@@ -2,7 +2,7 @@ use lobster::{BookUpdate, Timestamp};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::actors::{book_service::MarketData, matcher_request::MatcherRequest};
+use crate::services::{book_service::MarketData, matcher_request::MatcherRequest};
 
 pub struct AppState {
     pub pool: SqlitePool,

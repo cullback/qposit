@@ -70,7 +70,7 @@ pub fn format_timestamp_as_string(timestamp: Timestamp) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::pages::templates::average_round_half_up;
+    use crate::web::templates::average_round_half_up;
 
     use super::format_price_to_string;
     use super::format_timestamp_as_string;

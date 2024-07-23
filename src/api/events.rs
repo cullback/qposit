@@ -9,7 +9,7 @@ use tracing::error;
 use utoipa::ToSchema;
 
 use crate::{
-    actors::matcher_request::MatcherRequest,
+    services::matcher_request::MatcherRequest,
     app_state::AppState,
     models::{event::Event, market::Market},
 };

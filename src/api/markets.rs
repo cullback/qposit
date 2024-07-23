@@ -8,7 +8,7 @@ use lobster::MarketId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
-use crate::actors::matcher_request::MatcherRequest;
+use crate::services::matcher_request::MatcherRequest;
 use crate::api::feed::BookUpdate;
 use crate::app_state::AppState;
 

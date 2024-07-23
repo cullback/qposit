@@ -1,7 +1,7 @@
 use askama::Template;
 use lobster::MarketId;
 
-use crate::actors::book_service::MarketData;
+use crate::services::book_service::MarketData;
 
 use super::orderbook::OrderBook;
 use super::{display_price, format_balance_to_dollars};

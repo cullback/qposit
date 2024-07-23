@@ -15,7 +15,7 @@ use tracing::{error, warn};
 
 use super::auth::{self, SessionExtractor};
 use super::templates::signup;
-use crate::actors::matcher_request::MatcherRequest;
+use crate::services::matcher_request::MatcherRequest;
 use crate::app_state::{current_time_micros, AppState};
 use crate::models;
 use crate::models::invite::Invite;

@@ -3,7 +3,7 @@
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
 use super::auth::SessionExtractor;
 use super::templates::event::EventPage;
-use crate::actors::book_service::MarketData;
+use crate::services::book_service::MarketData;
 use crate::app_state::AppState;
 use crate::models;
 use crate::models::event::Event;
