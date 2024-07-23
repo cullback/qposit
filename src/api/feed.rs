@@ -46,8 +46,8 @@ pub enum Action {
     AddMarket,
 }
 
-impl From<lobster::BookUpdate> for BookUpdate {
-    fn from(market: lobster::BookUpdate) -> Self {
+impl From<lobster::MarketUpdate> for BookUpdate {
+    fn from(market: lobster::MarketUpdate) -> Self {
         Self {
             time: market.time,
             tick: market.tick,

@@ -5,12 +5,14 @@
 //! Gets to do less work than the matching engine because all feed markets
 //! are validated.
 use lobster::{
-    Action, Balance, BookUpdate, MarketId, Order, OrderBook, PortfolioManager, Side, Tick,
+    Action, Balance, MarketUpdate, MarketId, Order, OrderBook, PortfolioManager, Side, Tick,
     Timestamp, UserId,
 };
 use lobster::{OrderId, Price};
 use sqlx::{Executor, Sqlite, SqlitePool};
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use std::collections::HashMap;
+use std::io::Write;
 use tokio::sync::broadcast;
 use tracing::info;
 
@@ -28,10 +30,13 @@ struct State {
     orderbooks: HashMap<MarketId, OrderBook>,
     order_owner: HashMap<OrderId, OrderOwner>,
     manager: PortfolioManager,
+    log: RollingFileAppender,
 }
 
 impl State {
     pub async fn new(db: SqlitePool) -> Self {
+        let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "market_data_feed.log");
+
         let mut balances: HashMap<UserId, Balance> = HashMap::new();
         for user in models::user::User::get_with_nonzero_balances(&db)
             .await
@@ -77,10 +82,11 @@ impl State {
             orderbooks,
             order_owner,
             manager,
+            log: file_appender,
         }
     }
 
-    async fn on_event(&mut self, update: BookUpdate) {
+    async fn on_event(&mut self, update: MarketUpdate) {
         info!(?update);
 
         let mut tx = self.db.begin().await.unwrap();
@@ -103,6 +109,7 @@ impl State {
             }
         }
         tx.commit().await.unwrap();
+        self.log.write_fmt(format_args!("{:?}\n", update)).unwrap();
     }
 
     /// This logic is mostly copy-pasted from the matching engine.
@@ -295,7 +302,7 @@ impl State {
     }
 }
 
-pub fn start_writer_service(db: SqlitePool, mut feed: broadcast::Receiver<BookUpdate>) {
+pub fn start_writer_service(db: SqlitePool, mut feed: broadcast::Receiver<MarketUpdate>) {
     tokio::spawn({
         async move {
             info!("Starting writer service...");

@@ -156,7 +156,7 @@ pub async fn delete(
         let (req, recv) = MatcherRequest::cancel(user.id, order.id);
         state.cmd_send.send(req).await.expect("Receiver dropped");
         let resp = recv.await.expect("Sender dropped");
-        if let Ok(lobster::BookUpdate {
+        if let Ok(lobster::MarketUpdate {
             time: _,
             tick: _,
             book: _,
@@ -198,7 +198,7 @@ pub async fn delete_by_id(
     state.cmd_send.send(req).await.expect("Receiver dropped");
     let resp = recv.await.expect("Sender dropped");
 
-    if let Ok(lobster::BookUpdate {
+    if let Ok(lobster::MarketUpdate {
         time: _,
         tick: _,
         book: _,

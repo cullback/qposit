@@ -1,4 +1,4 @@
-use lobster::{BookUpdate, Timestamp};
+use lobster::{MarketUpdate, Timestamp};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 
@@ -9,7 +9,7 @@ pub struct AppState {
     /// Sending requests to matching engine.
     pub cmd_send: mpsc::Sender<MatcherRequest>,
     /// Receiving event data markets.
-    pub feed_receive: broadcast::Receiver<BookUpdate>,
+    pub feed_receive: broadcast::Receiver<MarketUpdate>,
     pub book_receive: broadcast::Receiver<MarketData>,
 }
 
@@ -28,7 +28,7 @@ impl AppState {
     pub fn new(
         pool: SqlitePool,
         cmd_send: mpsc::Sender<MatcherRequest>,
-        feed_receive: broadcast::Receiver<BookUpdate>,
+        feed_receive: broadcast::Receiver<MarketUpdate>,
         book_receive: broadcast::Receiver<MarketData>,
     ) -> Self {
         Self {

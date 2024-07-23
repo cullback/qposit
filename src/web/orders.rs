@@ -5,7 +5,7 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use lobster::{Action, BookUpdate, MarketId, RejectReason};
+use lobster::{Action, MarketUpdate, MarketId, RejectReason};
 use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
@@ -95,7 +95,7 @@ pub async fn post(
     let response = recv.await.expect("Sender dropped");
 
     match response {
-        Ok(BookUpdate {
+        Ok(MarketUpdate {
             action: Action::Add(order),
             ..
         }) => OrderForm::with_messages(

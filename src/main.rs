@@ -8,7 +8,7 @@ mod web;
 
 use crate::services::book_service::MarketData;
 use app_state::AppState;
-use lobster::BookUpdate;
+use lobster::MarketUpdate;
 use std::net::SocketAddr;
 use tokio::{
     net::TcpListener,
@@ -38,7 +38,7 @@ async fn main() {
     let pool = connect_to_database().await;
 
     let (cmd_send, cmd_receive) = mpsc::channel(32);
-    let (feed_send, feed_receive) = broadcast::channel::<BookUpdate>(32);
+    let (feed_send, feed_receive) = broadcast::channel::<MarketUpdate>(32);
     let (book_send, book_receive) = broadcast::channel::<MarketData>(32);
 
     services::writer::start_writer_service(pool.clone(), feed_receive.resubscribe());

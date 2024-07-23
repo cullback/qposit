@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use lobster::{Balance, Side, UserId};
-use lobster::{BookUpdate, Exchange, MarketId};
+use lobster::{MarketUpdate, Exchange, MarketId};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -56,7 +56,7 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
 pub fn start_matcher_service(
     db: SqlitePool,
     mut recv: mpsc::Receiver<MatcherRequest>,
-    market_data: broadcast::Sender<BookUpdate>,
+    market_data: broadcast::Sender<MarketUpdate>,
 ) {
     tokio::spawn({
         async move {

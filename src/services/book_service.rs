@@ -14,7 +14,7 @@
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every market.
 use lobster::Price;
-use lobster::{Action, Balance, BookUpdate, MarketId};
+use lobster::{Action, Balance, MarketUpdate, MarketId};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -59,7 +59,7 @@ impl MarketData {
         }
     }
 
-    pub fn on_event(&mut self, market: BookUpdate) {
+    pub fn on_event(&mut self, market: MarketUpdate) {
         match market.action {
             Action::Add(order) => {
                 let fills = self.book.add(order);
@@ -102,7 +102,7 @@ impl EventService {
         Self { markets }
     }
 
-    fn on_event(&mut self, market: BookUpdate) -> MarketData {
+    fn on_event(&mut self, market: MarketUpdate) -> MarketData {
         if matches!(market.action, Action::AddMarket) {
             self.markets
                 .insert(market.book, MarketData::new_default(market.book));
@@ -115,7 +115,7 @@ impl EventService {
 
 pub fn start_book_service(
     db: SqlitePool,
-    mut feed: broadcast::Receiver<BookUpdate>,
+    mut feed: broadcast::Receiver<MarketUpdate>,
     book_stream: broadcast::Sender<MarketData>,
 ) {
     tokio::spawn({
