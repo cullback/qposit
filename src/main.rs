@@ -3,39 +3,23 @@ mod api;
 mod app_state;
 mod models;
 mod services;
+mod util;
 mod web;
 
 use crate::services::book_service::MarketData;
 use app_state::AppState;
 use lobster::BookUpdate;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
 use tokio::{
     net::TcpListener,
     sync::{broadcast, mpsc},
 };
 use tracing::info;
-
-async fn connect_to_database() -> SqlitePool {
-    let url = dotenvy::var("DATABASE_URL").expect("DATABASE_URL not set");
-    SqlitePoolOptions::new()
-        .connect(&url)
-        .await
-        .expect("Failed to connect to database")
-}
-
-/// Crashes the whole application if any task panics.
-fn exit_on_panic() {
-    let default_panic = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |info| {
-        default_panic(info);
-        std::process::exit(1);
-    }));
-}
+use util::{connect_to_database, register_panic_hook};
 
 #[tokio::main]
 async fn main() {
-    exit_on_panic();
+    register_panic_hook();
 
     tracing_subscriber::fmt().init();
 
