@@ -1,5 +1,20 @@
 qposit.com {
   reverse_proxy qposit:3000
+
+  @api path /api/*
+
+  rate_limit @api {
+      zone api_zone {
+          events 30
+          window 10s
+      }
+      log_key
+  }
+
+  log @api {
+      output file caddy.log
+      level DEBUG
+  }
 }
 
 www.qposit.com {
