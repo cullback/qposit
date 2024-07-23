@@ -22,7 +22,7 @@ time = { version = "0.3.36", features = ["formatting"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 argon2 = "0.5.3"
-lobster = { path = "../lobster" }
+lobster = { path = "./lobster" }
 
 utoipa = { version = "4", features = ["axum_extras", "preserve_path_order", "preserve_order", "non_strict_integers"] }
 utoipa-swagger-ui = { version = "*", features = ["axum"] }

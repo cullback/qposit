@@ -65,13 +65,13 @@ pub fn start_matcher_service(
 
             while let Some(msg) = recv.recv().await {
                 let timestamp = current_time_micros();
-                info!("REQUEST: {timestamp} request: {msg:?}");
                 match msg {
                     MatcherRequest::SubmitOrder {
                         user,
                         order,
                         response,
                     } => {
+                        info!("REQUEST time={timestamp} user={user} post order={order:?}");
                         let res = exchange.submit_order(timestamp, user, order);
                         if let Ok(market) = res.clone() {
                             market_data.send(market).expect("Receiver dropped");
@@ -83,13 +83,15 @@ pub fn start_matcher_service(
                         order,
                         response,
                     } => {
+                        info!("REQUEST time={timestamp} user={user} delete order={order:?}");
                         let res = exchange.cancel_order(timestamp, user, order);
                         if let Ok(market) = res.clone() {
                             market_data.send(market).expect("Receiver dropped");
                         }
                         response.send(res).expect("Receiver dropped");
                     }
-                    MatcherRequest::AddEvent { market_id } => {
+                    MatcherRequest::AddMarket { market_id } => {
+                        info!("REQUEST time={timestamp} add market={market_id:?}");
                         let market = exchange.add_event(timestamp, market_id).unwrap();
                         market_data.send(market).expect("Receiver dropped");
                     }
@@ -101,6 +103,7 @@ pub fn start_matcher_service(
                         price,
                         response,
                     } => {
+                        info!("REQUEST time={timestamp} resolve={market_id:?} to price={price}");
                         let market = exchange.resolve(timestamp, market_id, price);
                         if let Ok(market) = market.clone() {
                             market_data.send(market).expect("Receiver dropped");

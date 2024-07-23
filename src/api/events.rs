@@ -27,13 +27,13 @@ pub struct EventResponse {
     get,
     path = "/api/v1/events",
     responses(
-        (status = 200, description = "Event successfully created", body = [EventResponse])
+        (status = 200, description = "List of events", body = [EventResponse])
     )
 )]
 pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
-    let markets = Event::get_active_events(&state.pool).await.unwrap();
+    let events = Event::get_active_events(&state.pool).await.unwrap();
     let mut resp = vec![];
-    for event in markets {
+    for event in events {
         let markets = Market::get_all_for_event(&state.pool, event.id)
             .await
             .unwrap();
@@ -42,6 +42,26 @@ pub async fn get(State(state): State<AppState>) -> impl IntoResponse {
         resp.push(event);
     }
     Json(resp).into_response()
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/:slug",
+    responses(
+        (status = 200, description = "Event", body = EventResponse)
+    )
+)]
+pub async fn get_by_slug(
+    Path(slug): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let event = Event::get_by_slug(&state.pool, &slug).await.unwrap();
+
+    let markets = Market::get_all_for_event(&state.pool, event.id)
+        .await
+        .unwrap();
+
+    Json(EventResponse { event, markets }).into_response()
 }
 
 #[derive(Deserialize, ToSchema, Serialize)]
@@ -102,7 +122,7 @@ pub async fn post(
 
     for market in event.markets {
         let market_id = Market::new(&state.pool, event_id, market).await.unwrap();
-        let req = MatcherRequest::AddEvent { market_id };
+        let req = MatcherRequest::AddMarket { market_id };
         state.cmd_send.send(req).await.unwrap();
     }
 

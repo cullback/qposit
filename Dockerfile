@@ -7,7 +7,7 @@ WORKDIR /qposit
 
 # Copy our manifests
 COPY ./Cargo.toml ./Cargo.toml
-COPY ./matcher ./matcher
+COPY ./lobster ./lobster
 
 # This trick will cache our dependencies
 RUN cargo build --release
@@ -15,7 +15,7 @@ RUN rm src/*.rs
 
 # Copy our source code
 COPY ./src ./src
-COPY ./matcher ./matcher
+COPY ./lobster ./lobster
 COPY ./static ./static
 COPY ./db/migrations ./db/migrations
 COPY ./templates ./templates

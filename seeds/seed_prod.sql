@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = ON;
 
-INSERT INTO user(id, username, created_at, balance, password_hash) VALUES
+INSERT INTO user(id, username, created_at, balance, available, password_hash) VALUES
     (1, 'admin', 1710007894419934, 10000 * 10000, 10000 * 10000, '$argon2id$v=19$m=19456,t=2,p=1$xiP9HtGCRNu4qIOQVhj/og$cV9Wjt9ytLYtWqOUOJembuR9hQdp2mihcYBQN/I+oC4');
 
 INSERT INTO invite(code, created_by, created_at) VALUES

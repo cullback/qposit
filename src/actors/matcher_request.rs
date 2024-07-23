@@ -18,7 +18,7 @@ pub enum MatcherRequest {
         /// Response to the client
         response: oneshot::Sender<MatcherResult>,
     },
-    AddEvent {
+    AddMarket {
         market_id: MarketId,
     },
     Deposit {

@@ -66,7 +66,8 @@ impl Market {
                     SELECT SUM(quantity * price) FROM trade WHERE market.id = trade.market_id
                 ) AS volume
             FROM market
-            WHERE market.event_id = ?;
+            WHERE market.event_id = ?
+            ORDER BY last_price DESC;
             ",
         )
         .bind(event)

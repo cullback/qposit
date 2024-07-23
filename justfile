@@ -25,3 +25,6 @@ build-server:
 
 dev-server:
 	cargo watch --no-dot-ignores -w src -w templates -x run
+
+caddy-dev-server:
+  ./caddy start --config Caddyfile.dev

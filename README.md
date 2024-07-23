@@ -19,6 +19,9 @@ QPosit is a prediction event platform.
 ```shell
 sqlx migrate add --source db/migrations init
 cargo run --release
+
+# optional, run with caddy, to test https and rate limiting
+caddy run --config Caddyfile-local
 ```
 
 ## Deploy

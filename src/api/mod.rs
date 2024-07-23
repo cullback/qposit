@@ -92,6 +92,7 @@ pub fn router(state: AppState) -> Router {
         .route("/markets/:id", patch(markets::patch))
         .route("/feed", get(feed::get))
         .route("/events", get(events::get))
+        .route("/events/:slug", get(events::get_by_slug))
         .route("/events/:slug", post(events::post))
         .route(
             "/orders",
