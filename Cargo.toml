@@ -21,6 +21,7 @@ time = { version = "0.3.36", features = ["formatting"] }
 
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+tracing-appender = "0.2.3"
 argon2 = "0.5.3"
 lobster = { path = "./lobster" }
 

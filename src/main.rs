@@ -15,13 +15,25 @@ use tokio::{
     sync::{broadcast, mpsc},
 };
 use tracing::info;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use util::{connect_to_database, register_panic_hook};
+
+fn configure_logging() {
+    let file_appender = RollingFileAppender::new(Rotation::HOURLY, "logs", "qposit.log");
+
+    let subscriber = tracing_subscriber::fmt()
+        .with_writer(file_appender)
+        .with_ansi(false)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+}
 
 #[tokio::main]
 async fn main() {
     register_panic_hook();
 
-    tracing_subscriber::fmt().init();
+    configure_logging();
 
     let pool = connect_to_database().await;
 
