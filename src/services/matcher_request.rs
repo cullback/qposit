@@ -2,8 +2,7 @@ use lobster::{Balance, MarketId, MatcherResult, OrderRequest, UserId};
 use lobster::{OrderId, Price};
 use tokio::sync::oneshot;
 
-/// A request to the database engine.
-/// These messages are used to communicate from the endpoints to the matching engine service.
+/// A message sent from a controller to the matching engine service.
 #[derive(Debug)]
 pub enum MatcherRequest {
     SubmitOrder {

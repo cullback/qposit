@@ -1,4 +1,4 @@
-//! The writer actor subscribes to the event data feed and records
+//! The writer service subscribes to the market feed and records
 //! all markets to the database.
 //! This could be split into a separate microservice, or be duplicated
 //! for redundancy.
