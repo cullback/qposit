@@ -75,7 +75,7 @@ pub async fn get(
     query.push(" ORDER BY created_at DESC LIMIT ");
     query.push_bind(params.limit);
 
-    let orders = match query.build_query_as::<Order>().fetch_all(&state.pool).await {
+    let orders: Vec<Order> = match query.build_query_as::<Order>().fetch_all(&state.pool).await {
         Ok(orders) => orders,
         Err(err) => {
             error!(?err);
