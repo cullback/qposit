@@ -5,8 +5,8 @@
 //! Gets to do less work than the matching engine because all feed markets
 //! are validated.
 use lobster::{
-    Action, Balance, MarketId, MarketUpdate, Order, OrderBook, PortfolioManager, Side, Tick,
-    Timestamp, UserId,
+    Balance, MarketId, MarketUpdate, Order, OrderBook, PortfolioManager, Side, Tick, Timestamp,
+    UserId,
 };
 use lobster::{OrderId, Price};
 use sqlx::{Executor, Sqlite, SqlitePool};
@@ -91,27 +91,32 @@ impl State {
         info!(?update);
 
         let mut tx = self.db.begin().await.unwrap();
-        match update.action {
-            Action::Add(order) => {
-                self.on_add(
-                    &mut *tx,
-                    update.time,
-                    update.tick,
-                    update.user,
-                    update.book,
-                    order,
-                )
-                .await
+
+        match update {
+            MarketUpdate::AddOrder {
+                timestamp,
+                tick,
+                market,
+                user,
+                order,
+            } => {
+                self.on_add(&mut *tx, timestamp, tick, user, market, order)
+                    .await
             }
-            Action::Remove { id } => self.on_remove(&mut *tx, update.book, id).await,
-            Action::Resolve { price } => self.on_resolve(&mut *tx, update.book, price).await,
-            Action::AddMarket {} => {
-                self.orderbooks.insert(update.book, OrderBook::default());
+            MarketUpdate::RemoveOrder { market, id, .. } => {
+                self.on_remove(&mut *tx, market, id).await
             }
-            Action::Deposit { amount } => {
-                self.on_deposit(&mut *tx, update.user, amount).await;
+            MarketUpdate::ResolveMarket { market, price, .. } => {
+                self.on_resolve(&mut *tx, market, price).await
+            }
+            MarketUpdate::AddMarket { market, .. } => {
+                self.orderbooks.insert(market, OrderBook::default());
+            }
+            MarketUpdate::Deposit { user, amount, .. } => {
+                self.on_deposit(&mut *tx, user, amount).await;
             }
         }
+
         tx.commit().await.unwrap();
         self.log.write_fmt(format_args!("{:?}\n", update)).unwrap();
     }

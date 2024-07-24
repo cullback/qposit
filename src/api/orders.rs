@@ -4,7 +4,6 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use lobster::Action;
 use lobster::OrderId;
 use serde::Deserialize;
 use serde_json::json;
@@ -22,7 +21,7 @@ use crate::{
 use super::{
     api_error::{ApiError, ApiJson},
     auth::{BasicAuthExtractor, OptionalBasicAuth},
-    feed::BookUpdate,
+    feed::MarketUpdate,
 };
 
 const fn default_limit() -> u32 {
@@ -108,7 +107,7 @@ pub enum TimeInForce {
     path = "/api/v1/orders",
     request_body = OrderRequest,
     responses(
-        (status = 200, description = "Order successfully submitted", body = BookUpdate)
+        (status = 200, description = "Order successfully submitted", body = MarketUpdate)
     ),
     security(
         ("basic_auth" = [])
@@ -127,7 +126,7 @@ pub async fn post(
         .map_err(|err| ApiError::MatcherRequest(err));
 
     match response {
-        Ok(market) => Json(BookUpdate::from(market)).into_response(),
+        Ok(market) => Json(MarketUpdate::from(market)).into_response(),
         Err(err) => err.into_response(),
     }
 }
@@ -156,14 +155,7 @@ pub async fn delete(
         let (req, recv) = MatcherRequest::cancel(user.id, order.id);
         state.cmd_send.send(req).await.expect("Receiver dropped");
         let resp = recv.await.expect("Sender dropped");
-        if let Ok(lobster::MarketUpdate {
-            time: _,
-            tick: _,
-            book: _,
-            user: _,
-            action: Action::Remove { id },
-        }) = resp
-        {
+        if let Ok(lobster::MarketUpdate::RemoveOrder { id, .. }) = resp {
             deleted.push(id);
         };
     }
@@ -198,14 +190,7 @@ pub async fn delete_by_id(
     state.cmd_send.send(req).await.expect("Receiver dropped");
     let resp = recv.await.expect("Sender dropped");
 
-    if let Ok(lobster::MarketUpdate {
-        time: _,
-        tick: _,
-        book: _,
-        user: _,
-        action: Action::Remove { id },
-    }) = resp
-    {
+    if let Ok(lobster::MarketUpdate::RemoveOrder { id, .. }) = resp {
         deleted.push(id);
     };
 

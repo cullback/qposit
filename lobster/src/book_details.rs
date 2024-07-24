@@ -1,6 +1,5 @@
 use crate::{
-    Action, MarketUpdate, MarketId, Fill, Order, OrderBook, OrderId, Price, Side, Tick, Timestamp,
-    UserId,
+    Fill, Order, OrderBook, OrderId, Price, Side, Tick,
 };
 
 #[derive(Debug, Default)]
@@ -10,7 +9,7 @@ pub struct BookDetails {
 }
 
 impl BookDetails {
-    fn get_next_tick(&mut self) -> Tick {
+    pub fn get_next_tick(&mut self) -> Tick {
         let tick = self.next_tick;
         self.next_tick = self.next_tick.wrapping_add(1);
         tick
@@ -30,34 +29,5 @@ impl BookDetails {
 
     pub fn remove(&mut self, id: OrderId) -> Option<Order> {
         self.inner.remove(id)
-    }
-
-    pub fn add_event(
-        &mut self,
-        time: Timestamp,
-        user: UserId,
-        book: MarketId,
-        order: Order,
-    ) -> MarketUpdate {
-        MarketUpdate {
-            time,
-            tick: self.get_next_tick(),
-            book,
-            user,
-            action: Action::Add(order),
-        }
-    }
-    pub fn cancel_event(
-        &mut self,
-        time: Timestamp,
-        book: MarketId,
-        user: UserId,
-        id: OrderId,
-    ) -> MarketUpdate {
-        MarketUpdate::remove(time, self.get_next_tick(), book, user, id)
-    }
-
-    pub fn resolve_event(&mut self, time: Timestamp, book: MarketId, price: Price) -> MarketUpdate {
-        MarketUpdate::resolve(time, self.get_next_tick(), book, 0, price)
     }
 }

@@ -14,7 +14,7 @@
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every market.
 use lobster::Price;
-use lobster::{Action, Balance, MarketId, MarketUpdate};
+use lobster::{Balance, MarketId, MarketUpdate};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -59,35 +59,32 @@ impl MarketData {
         }
     }
 
-    pub fn on_event(&mut self, market: MarketUpdate) {
-        match market.action {
-            Action::Add(order) => {
-                let fills = self.book.add(order);
-                for fill in fills {
-                    self.volume += Balance::from(fill.quantity) * Balance::from(fill.price);
-                    self.last_price = Some(fill.price);
-                }
-                self.best_bid = self.book.best_bid().map(|x| x.price);
-                self.best_ask = self.book.best_ask().map(|x| x.price);
-            }
-            Action::Remove { id } => {
-                assert!(self.book.remove(id).is_some());
-                self.best_bid = self.book.best_bid().map(|x| x.price);
-                self.best_ask = self.book.best_ask().map(|x| x.price);
-            }
-            Action::Resolve { price } => {
-                self.outcome = Some(price);
-            }
-            _ => {}
+    fn add_order(&mut self, order: lobster::Order) {
+        let fills = self.book.add(order);
+        for fill in fills {
+            self.volume += Balance::from(fill.quantity) * Balance::from(fill.price);
+            self.last_price = Some(fill.price);
         }
+        self.best_bid = self.book.best_bid().map(|x| x.price);
+        self.best_ask = self.book.best_ask().map(|x| x.price);
+    }
+
+    fn remove_order(&mut self, id: lobster::OrderId) {
+        assert!(self.book.remove(id).is_some());
+        self.best_bid = self.book.best_bid().map(|x| x.price);
+        self.best_ask = self.book.best_ask().map(|x| x.price);
+    }
+
+    fn resolve(&mut self, price: lobster::Price) {
+        self.outcome = Some(price);
     }
 }
 
-struct EventService {
+struct MarketDataService {
     markets: HashMap<MarketId, MarketData>,
 }
 
-impl EventService {
+impl MarketDataService {
     pub async fn new(db: &SqlitePool) -> Self {
         let mut markets = HashMap::new();
         for market in models::market::Market::get_active(db).await.unwrap() {
@@ -102,14 +99,32 @@ impl EventService {
         Self { markets }
     }
 
-    fn on_event(&mut self, market: MarketUpdate) -> MarketData {
-        if matches!(market.action, Action::AddMarket) {
-            self.markets
-                .insert(market.book, MarketData::new_default(market.book));
+    fn on_event(&mut self, update: MarketUpdate) -> Option<MarketData> {
+        match update {
+            MarketUpdate::AddOrder { market, order, .. } => {
+                let market = self.markets.get_mut(&market).unwrap();
+                market.add_order(order);
+                return Some(market.clone());
+            }
+            MarketUpdate::RemoveOrder { market, id, .. } => {
+                let market = self.markets.get_mut(&market).unwrap();
+                market.remove_order(id);
+                return Some(market.clone());
+            }
+            MarketUpdate::ResolveMarket { market, price, .. } => {
+                let market = self.markets.get_mut(&market).unwrap();
+                market.resolve(price);
+                return Some(market.clone());
+            }
+            MarketUpdate::AddMarket { market, .. } => {
+                let market_data = MarketData::new_default(market);
+                self.markets.insert(market, market_data.clone());
+                return Some(market_data);
+            }
+            MarketUpdate::Deposit { .. } => {
+                return None;
+            }
         }
-        let book = self.markets.get_mut(&market.book).unwrap();
-        book.on_event(market);
-        book.clone()
     }
 }
 
@@ -121,14 +136,13 @@ pub fn start_book_service(
     tokio::spawn({
         async move {
             info!("Starting book service...");
-            let mut state = EventService::new(&db).await;
+            let mut state = MarketDataService::new(&db).await;
 
             while let Ok(market) = feed.recv().await {
-                if matches!(market.action, Action::Deposit { .. }) {
-                    continue; // TODO
-                }
-                let orderbook = state.on_event(market);
-                book_stream.send(orderbook).unwrap();
+                let Some(market_data) = state.on_event(market) else {
+                    continue;
+                };
+                book_stream.send(market_data).unwrap();
             }
         }
     });

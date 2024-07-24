@@ -8,7 +8,7 @@ use lobster::MarketId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
-use crate::api::feed::BookUpdate;
+use crate::api::feed::MarketUpdate;
 use crate::app_state::AppState;
 use crate::services::matcher_request::MatcherRequest;
 
@@ -28,7 +28,7 @@ pub struct MarketPatchPayload {
     path = "/api/v1/markets/:id",
     request_body = MarketPatchPayload,
     responses(
-        (status = 200, description = "Market modified successfully", body = BookUpdate)
+        (status = 200, description = "Market modified successfully", body = MarketUpdate)
     )
 )]
 pub async fn patch(
@@ -50,7 +50,7 @@ pub async fn patch(
             .unwrap()
             .map_err(|err| ApiError::MatcherRequest(err));
         return match response {
-            Ok(market) => Json(BookUpdate::from(market)).into_response(),
+            Ok(market) => Json(MarketUpdate::from(market)).into_response(),
             Err(err) => err.into_response(),
         };
     }

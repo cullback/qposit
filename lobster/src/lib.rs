@@ -20,7 +20,7 @@ mod reject_reason;
 use std::collections::{hash_map::Entry, HashMap};
 
 use book_details::BookDetails;
-pub use market_update::{Action, MarketUpdate};
+pub use market_update::MarketUpdate;
 
 pub use order_request::{OrderRequest, TimeInForce};
 pub use reject_reason::RejectReason;
@@ -52,7 +52,7 @@ pub type MatcherResult = Result<MarketUpdate, RejectReason>;
 #[derive(Debug)]
 struct OrderOwner {
     user_id: UserId,
-    event_id: MarketId,
+    market_id: MarketId,
 }
 
 #[derive(Debug, Default)]
@@ -82,7 +82,11 @@ impl Exchange {
     ) -> MatcherResult {
         self.manager.deposit(user, amount);
 
-        Ok(MarketUpdate::deposit(timestamp, user, amount))
+        Ok(MarketUpdate::Deposit {
+            timestamp,
+            user,
+            amount,
+        })
     }
 
     /// Constructs an exchange from an initial state.
@@ -109,7 +113,7 @@ impl Exchange {
         let mut order_owner = HashMap::new();
         for &(user_id, event_id, order) in orders {
             tracker.add_resting_order(user_id, event_id, order);
-            order_owner.insert(order.id, OrderOwner { user_id, event_id });
+            order_owner.insert(order.id, OrderOwner { user_id, market_id: event_id });
             assert!(orderbooks
                 .get_mut(&event_id)
                 .expect("Expected book to exist")
@@ -130,13 +134,17 @@ impl Exchange {
     /// # Errors
     ///
     /// - Returns `Err(RejectReason::BookAlreadyExists)` if the book already exists.
-    pub fn add_event(&mut self, timestamp: Timestamp, event_id: MarketId) -> MatcherResult {
+    pub fn add_event(&mut self, timestamp: Timestamp, market: MarketId) -> MatcherResult {
         let book = BookDetails::default();
-        match self.orderbooks.entry(event_id) {
+        match self.orderbooks.entry(market) {
             Entry::Occupied(_) => Err(RejectReason::MarketAlreadyExists),
             Entry::Vacant(entry) => {
                 entry.insert(book);
-                Ok(MarketUpdate::add_book(timestamp, event_id))
+                Ok(MarketUpdate::AddMarket {
+                    timestamp,
+                    tick: 0,
+                    market,
+                })
             }
         }
     }
@@ -152,21 +160,28 @@ impl Exchange {
     pub fn resolve(
         &mut self,
         timestamp: Timestamp,
-        event_id: MarketId,
+        market_id: MarketId,
         price: Price,
     ) -> MatcherResult {
         if price > RESOLVE_PRICE {
             return Err(RejectReason::InvalidPrice);
         }
-        let Some(mut book) = self.orderbooks.remove(&event_id) else {
+        let Some(mut book) = self.orderbooks.remove(&market_id) else {
             return Err(RejectReason::MarketNotFound);
         };
 
         self.order_owner
-            .retain(|_, order| order.event_id != event_id);
-        self.manager.resolve(event_id, price);
-        let event = book.resolve_event(timestamp, event_id, price);
-        Ok(event)
+            .retain(|_, order| order.market_id != market_id);
+        self.manager.resolve(market_id, price);
+        
+        let update = MarketUpdate::ResolveMarket {
+            timestamp,
+            tick: book.get_next_tick(),
+            market: market_id,
+            price,
+        };
+
+        Ok(update)
     }
 
     /// Submits a new order to the exchange.
@@ -229,12 +244,19 @@ impl Exchange {
             self.manager
                 .add_resting_order(user_id, order_request.market, order);
             self.order_owner
-                .insert(order.id, OrderOwner { user_id, event_id });
+                .insert(order.id, OrderOwner { user_id, market_id: event_id });
         }
 
         let order = Order::new(order.id, quantity, order.price, order.side);
-        let event = book.add_event(timestamp, user_id, order_request.market, order);
-        Ok(event)
+
+        let update = MarketUpdate::AddOrder {
+            timestamp,
+            tick: book.get_next_tick(),
+            market: order_request.market,
+            user: user_id,
+            order,
+        };
+        Ok(update)
     }
 
     /// Cancels an order.
@@ -250,7 +272,7 @@ impl Exchange {
         id: OrderId,
     ) -> MatcherResult {
         let event_id = match self.order_owner.entry(id) {
-            Entry::Occupied(entry) if entry.get().user_id == user => entry.remove().event_id,
+            Entry::Occupied(entry) if entry.get().user_id == user => entry.remove().market_id,
             _ => return Err(RejectReason::OrderNotFound),
         };
 
@@ -261,8 +283,16 @@ impl Exchange {
         let order = book.remove(id).ok_or(RejectReason::OrderNotFound)?; // infallible
 
         self.manager.remove_order(user, event_id, order);
-        let event = book.cancel_event(timestamp, event_id, user, id);
-        Ok(event)
+        
+        let update = MarketUpdate::RemoveOrder {
+            timestamp,
+            tick: book.get_next_tick(),
+            market: event_id,
+            user,
+            id,
+        };
+
+        Ok(update)
     }
 
     fn check_order(&self, user: UserId, order: OrderRequest) -> Result<(), RejectReason> {
@@ -310,8 +340,10 @@ mod tests {
     fn setup_default_scenario() -> Exchange {
         let mut exch = Exchange::default();
         exch.add_event(TIME, EVENT).unwrap();
-        exch.deposit(TIME, TAKER, 10 * i64::from(RESOLVE_PRICE)).unwrap();
-        exch.deposit(TIME, MAKER, 10 * i64::from(RESOLVE_PRICE)).unwrap();
+        exch.deposit(TIME, TAKER, 10 * i64::from(RESOLVE_PRICE))
+            .unwrap();
+        exch.deposit(TIME, MAKER, 10 * i64::from(RESOLVE_PRICE))
+            .unwrap();
         exch
     }
 
