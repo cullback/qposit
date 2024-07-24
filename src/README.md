@@ -1,6 +1,7 @@
 # Architecture
 
 - No calls to database in the matching engine hot loop.
+- Requires duplication of state, need to keep at least two copies of order books.
 
 ## Services
 
