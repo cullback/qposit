@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use lobster::{Balance, Side, UserId};
-use lobster::{MarketUpdate, Exchange, MarketId};
+use lobster::{Exchange, MarketId, MarketUpdate};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, mpsc};
 use tracing::info;
@@ -53,6 +53,9 @@ async fn bootstrap_exchange(db: &SqlitePool) -> Exchange {
     engine
 }
 
+/// The matching engine takes queued requests and applies them to
+/// the matching engine. If the request is valid, a market update is
+/// emitted. Else an error is returned to the caller.
 pub fn start_matcher_service(
     db: SqlitePool,
     mut recv: mpsc::Receiver<MatcherRequest>,
@@ -74,9 +77,9 @@ pub fn start_matcher_service(
                         info!("REQUEST time={timestamp} user={user} post order={order:?}");
                         let res = exchange.submit_order(timestamp, user, order);
                         if let Ok(market) = res.clone() {
-                            market_data.send(market).expect("Receiver dropped");
+                            market_data.send(market).unwrap();
                         }
-                        response.send(res).expect("Receiver dropped");
+                        response.send(res).unwrap();
                     }
                     MatcherRequest::CancelOrder {
                         user,
@@ -86,17 +89,19 @@ pub fn start_matcher_service(
                         info!("REQUEST time={timestamp} user={user} delete order={order:?}");
                         let res = exchange.cancel_order(timestamp, user, order);
                         if let Ok(market) = res.clone() {
-                            market_data.send(market).expect("Receiver dropped");
+                            market_data.send(market).unwrap();
                         }
-                        response.send(res).expect("Receiver dropped");
+                        response.send(res).unwrap();
                     }
                     MatcherRequest::AddMarket { market_id } => {
                         info!("REQUEST time={timestamp} add market={market_id:?}");
                         let market = exchange.add_event(timestamp, market_id).unwrap();
-                        market_data.send(market).expect("Receiver dropped");
+                        market_data.send(market).unwrap();
                     }
                     MatcherRequest::Deposit { user, amount } => {
-                        exchange.deposit(user, amount);
+                        info!("REQUEST time={timestamp} deposit={amount} to user={user}");
+                        let market_update = exchange.deposit(timestamp, user, amount).unwrap();
+                        market_data.send(market_update).unwrap();
                     }
                     MatcherRequest::Resolve {
                         market_id,
@@ -106,9 +111,9 @@ pub fn start_matcher_service(
                         info!("REQUEST time={timestamp} resolve={market_id:?} to price={price}");
                         let market = exchange.resolve(timestamp, market_id, price);
                         if let Ok(market) = market.clone() {
-                            market_data.send(market).expect("Receiver dropped");
+                            market_data.send(market).unwrap();
                         }
-                        response.send(market).expect("Receiver dropped");
+                        response.send(market).unwrap();
                     }
                 }
             }

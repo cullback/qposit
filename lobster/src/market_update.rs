@@ -1,4 +1,4 @@
-use crate::{Order, OrderId, Price, Quantity, Side};
+use crate::{Balance, Order, OrderId, Price, Quantity, Side};
 
 use crate::{MarketId, Tick, Timestamp, UserId};
 
@@ -31,6 +31,7 @@ pub enum Action {
     },
     /// A new event was added.
     AddMarket,
+    Deposit { amount: Balance },
 }
 
 impl MarketUpdate {
@@ -116,6 +117,17 @@ impl MarketUpdate {
             book,
             user: 0,
             action: Action::AddMarket,
+        }
+    }
+
+    #[must_use]
+    pub const fn deposit(time: Timestamp, user: UserId, amount: Balance) -> Self {
+        Self {
+            time,
+            tick: 0,
+            book: 0,
+            user,
+            action: Action::Deposit { amount },
         }
     }
 }

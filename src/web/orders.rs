@@ -5,12 +5,12 @@ use axum::{
     response::{Html, IntoResponse},
     Form,
 };
-use lobster::{Action, MarketUpdate, MarketId, RejectReason};
+use lobster::{Action, MarketId, MarketUpdate, RejectReason};
 use lobster::{OrderId, Price, Quantity, Side};
 use serde::Deserialize;
 
 use crate::{
-    services::matcher_request::MatcherRequest, app_state::AppState,
+    app_state::AppState, services::matcher_request::MatcherRequest,
     web::templates::order_form::OrderForm,
 };
 

@@ -74,8 +74,15 @@ impl Exchange {
 
     /// Deposits an amount into a users account.
     /// If the user is not present, they are added.
-    pub fn deposit(&mut self, user: UserId, amount: Balance) {
+    pub fn deposit(
+        &mut self,
+        timestamp: Timestamp,
+        user: UserId,
+        amount: Balance,
+    ) -> MatcherResult {
         self.manager.deposit(user, amount);
+
+        Ok(MarketUpdate::deposit(timestamp, user, amount))
     }
 
     /// Constructs an exchange from an initial state.
@@ -123,11 +130,7 @@ impl Exchange {
     /// # Errors
     ///
     /// - Returns `Err(RejectReason::BookAlreadyExists)` if the book already exists.
-    pub fn add_event(
-        &mut self,
-        timestamp: Timestamp,
-        event_id: MarketId,
-    ) -> MatcherResult {
+    pub fn add_event(&mut self, timestamp: Timestamp, event_id: MarketId) -> MatcherResult {
         let book = BookDetails::default();
         match self.orderbooks.entry(event_id) {
             Entry::Occupied(_) => Err(RejectReason::MarketAlreadyExists),
@@ -159,7 +162,8 @@ impl Exchange {
             return Err(RejectReason::MarketNotFound);
         };
 
-        self.order_owner.retain(|_, order| order.event_id != event_id);
+        self.order_owner
+            .retain(|_, order| order.event_id != event_id);
         self.manager.resolve(event_id, price);
         let event = book.resolve_event(timestamp, event_id, price);
         Ok(event)
@@ -291,8 +295,8 @@ impl Exchange {
 #[cfg(test)]
 mod tests {
     use crate::{
-        MarketUpdate, MarketId, Exchange, OrderBook, OrderRequest, Price, RejectReason, TimeInForce,
-        Timestamp, UserId, RESOLVE_PRICE,
+        Exchange, MarketId, MarketUpdate, OrderBook, OrderRequest, Price, RejectReason,
+        TimeInForce, Timestamp, UserId, RESOLVE_PRICE,
     };
 
     const EVENT: MarketId = 1;
@@ -306,8 +310,8 @@ mod tests {
     fn setup_default_scenario() -> Exchange {
         let mut exch = Exchange::default();
         exch.add_event(TIME, EVENT).unwrap();
-        exch.deposit(TAKER, 10 * i64::from(RESOLVE_PRICE));
-        exch.deposit(MAKER, 10 * i64::from(RESOLVE_PRICE));
+        exch.deposit(TIME, TAKER, 10 * i64::from(RESOLVE_PRICE)).unwrap();
+        exch.deposit(TIME, MAKER, 10 * i64::from(RESOLVE_PRICE)).unwrap();
         exch
     }
 
@@ -382,11 +386,17 @@ mod tests {
         // this order should trade first
         let order = OrderRequest::sell(book, 3, 4000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000))
+        );
 
         let order = OrderRequest::sell(book, 3, 4000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 1, book, bob, 1, 3, 4000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 1, book, bob, 1, 3, 4000))
+        );
 
         let order = OrderRequest::buy(book, 5, 4000, TimeInForce::GTC);
         assert!(exch.submit_order(time, cat, order).is_ok());
@@ -403,7 +413,10 @@ mod tests {
         let user = 1;
         let order = OrderRequest::sell(book, 1, 5500, TimeInForce::GTC);
         let event = exch.submit_order(time, user, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, user, 0, 1, 5500)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, user, 0, 1, 5500))
+        );
 
         let order = OrderRequest::buy(book, 1, 5400, TimeInForce::IOC);
         let event = exch.submit_order(time, user, order);
@@ -419,7 +432,10 @@ mod tests {
 
         let order = OrderRequest::sell(book, 5, 4000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 4000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 4000))
+        );
 
         assert_eq!(exch.manager.get_available(bob), 70000);
 
@@ -444,15 +460,27 @@ mod tests {
 
         let order = OrderRequest::sell(book, 3, 4000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000))
+        );
         let order = OrderRequest::sell(book, 3, 4200, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 1, book, bob, 1, 3, 4200)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 1, book, bob, 1, 3, 4200))
+        );
         let order = OrderRequest::sell(book, 3, 4100, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 2, book, bob, 2, 3, 4100)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 2, book, bob, 2, 3, 4100))
+        );
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 3, book, bob, 3, 3, 4100)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 3, book, bob, 3, 3, 4100))
+        );
 
         assert_eq!(exch.manager.get_available(bob), 100000 - 70800);
         assert_eq!(exch.manager.get_balance(bob), 100000);
@@ -535,7 +563,10 @@ mod tests {
 
         let order = OrderRequest::sell(book, 3, 4000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 3, 4000))
+        );
 
         let order = OrderRequest::buy(book, 5, 4000, TimeInForce::IOC);
         let event = exch.submit_order(time, cat, order);
@@ -565,7 +596,10 @@ mod tests {
         // bob places resting order
         let order = OrderRequest::sell(book, 10, 5250, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 10, 5250)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 10, 5250))
+        );
 
         // cat submits order
         let order = OrderRequest::buy(book, 1, 5250, TimeInForce::IOC);
@@ -575,12 +609,18 @@ mod tests {
         // bob places resting order
         let order = OrderRequest::buy(book, 10, 4750, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::buy(time, 2, book, bob, 2, 10, 4750)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::buy(time, 2, book, bob, 2, 10, 4750))
+        );
 
         // cat submits order
         let order = OrderRequest::sell(book, 1, 4750, TimeInForce::IOC);
         let event = exch.submit_order(time, cat, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 3, book, cat, 3, 1, 4750)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 3, book, cat, 3, 1, 4750))
+        );
 
         assert_eq!(exch.manager.get_balance(bob), 100500);
         assert_eq!(exch.manager.get_balance(cat), 99500);
@@ -640,7 +680,10 @@ mod tests {
         // bob places resting order
         let order = OrderRequest::sell(book, 5, 7000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 7000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 7000))
+        );
 
         assert_eq!(exch.manager.get_available(bob), 85000); // 100000 - 15000
 
@@ -699,7 +742,10 @@ mod tests {
         // bob places resting order
         let order = OrderRequest::sell(book, 5, 6000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);
-        assert_eq!(event, Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 6000)));
+        assert_eq!(
+            event,
+            Ok(MarketUpdate::sell(time, 0, book, bob, 0, 5, 6000))
+        );
 
         let order = OrderRequest::buy(book, 5, 5000, TimeInForce::GTC);
         let event = exch.submit_order(time, bob, order);

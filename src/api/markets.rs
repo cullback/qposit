@@ -8,9 +8,9 @@ use lobster::MarketId;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
-use crate::services::matcher_request::MatcherRequest;
 use crate::api::feed::BookUpdate;
 use crate::app_state::AppState;
+use crate::services::matcher_request::MatcherRequest;
 
 use super::api_error::ApiError;
 use super::auth::BasicAuthExtractor;

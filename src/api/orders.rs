@@ -14,9 +14,9 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::api::order_request::OrderRequest;
 use crate::{
-    services::matcher_request::MatcherRequest,
     app_state::AppState,
     models::{self, order::Order},
+    services::matcher_request::MatcherRequest,
 };
 
 use super::{

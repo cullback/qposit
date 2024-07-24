@@ -3,11 +3,11 @@
 //! We load an initial snapshot of the page and then the websocket feed continuously updates it.
 use super::auth::SessionExtractor;
 use super::templates::event::EventPage;
-use crate::services::book_service::MarketData;
 use crate::app_state::AppState;
 use crate::models;
 use crate::models::event::Event;
 use crate::models::market::Market;
+use crate::services::book_service::MarketData;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;

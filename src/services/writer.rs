@@ -5,16 +5,16 @@
 //! Gets to do less work than the matching engine because all feed markets
 //! are validated.
 use lobster::{
-    Action, Balance, MarketUpdate, MarketId, Order, OrderBook, PortfolioManager, Side, Tick,
+    Action, Balance, MarketId, MarketUpdate, Order, OrderBook, PortfolioManager, Side, Tick,
     Timestamp, UserId,
 };
 use lobster::{OrderId, Price};
 use sqlx::{Executor, Sqlite, SqlitePool};
-use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use std::collections::HashMap;
 use std::io::Write;
 use tokio::sync::broadcast;
 use tracing::info;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
 
 use crate::models;
 use crate::models::trade::Trade;
@@ -35,7 +35,8 @@ struct State {
 
 impl State {
     pub async fn new(db: SqlitePool) -> Self {
-        let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "market_data_feed.log");
+        let file_appender =
+            RollingFileAppender::new(Rotation::DAILY, "logs", "market_data_feed.log");
 
         let mut balances: HashMap<UserId, Balance> = HashMap::new();
         for user in models::user::User::get_with_nonzero_balances(&db)
@@ -107,9 +108,34 @@ impl State {
             Action::AddMarket {} => {
                 self.orderbooks.insert(update.book, OrderBook::default());
             }
+            Action::Deposit { amount } => {
+                self.on_deposit(&mut *tx, update.user, amount).await;
+            }
         }
         tx.commit().await.unwrap();
         self.log.write_fmt(format_args!("{:?}\n", update)).unwrap();
+    }
+
+    async fn on_deposit<E>(&mut self, transaction: &mut E, user_id: UserId, amount: Balance)
+    where
+        for<'c> &'c mut E: Executor<'c, Database = Sqlite>,
+    {
+        self.manager.deposit(user_id, amount);
+        let balance = self.manager.get_balance(user_id);
+        let available = self.manager.get_available(user_id);
+        let result = sqlx::query!(
+            "UPDATE user SET balance = ?, available = ? WHERE id = ?",
+            balance,
+            available,
+            user_id
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+        if result.rows_affected() == 0 {
+            panic!("User not found for deposit: {user_id}");
+        };
     }
 
     /// This logic is mostly copy-pasted from the matching engine.

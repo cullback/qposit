@@ -15,11 +15,11 @@ use tracing::{error, warn};
 
 use super::auth::{self, SessionExtractor};
 use super::templates::signup;
-use crate::services::matcher_request::MatcherRequest;
 use crate::app_state::{current_time_micros, AppState};
 use crate::models;
 use crate::models::invite::Invite;
-use crate::models::user::User;
+use crate::services::matcher;
+use crate::services::matcher_request::MatcherRequest;
 
 /// Get the signup page, or redirect to the home page if the user is already logged in.
 pub async fn get(SessionExtractor(user): SessionExtractor) -> impl IntoResponse {
@@ -83,11 +83,9 @@ pub async fn post(
             .await;
 
             let initial_amount = 10000 * 500; // TODO
-            User::deposit(&state.pool, user_id, initial_amount)
-                .await
-                .unwrap();
             let req = MatcherRequest::deposit(user_id, initial_amount);
             state.cmd_send.send(req).await.unwrap();
+
             ([("HX-Redirect", "/")], jar.add(cookie)).into_response()
         }
         Ok(None) => signup::SignupForm::new(

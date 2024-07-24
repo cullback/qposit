@@ -8,7 +8,6 @@ pub async fn connect_to_database() -> SqlitePool {
         .expect("Failed to connect to database")
 }
 
-
 /// Crashes the whole application if any task panics.
 pub fn register_panic_hook() {
     let default_panic = std::panic::take_hook();

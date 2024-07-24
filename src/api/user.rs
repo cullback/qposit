@@ -1,7 +1,6 @@
 use askama_axum::IntoResponse;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Json,
 };
 use lobster::UserId;
@@ -10,8 +9,9 @@ use serde_json::json;
 use tracing::error;
 use utoipa::ToSchema;
 
-use crate::{services::matcher_request::MatcherRequest, app_state::AppState, models::user::User};
+use crate::{app_state::AppState, models::user::User, services::matcher_request::MatcherRequest};
 
+use super::api_error::ApiError;
 use super::auth::BasicAuthExtractor;
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -37,28 +37,29 @@ pub async fn deposit(
 ) -> impl IntoResponse {
     // this is a post request because it creates a new entry in transactions table.
     if user.username != "admin" {
-        return Json(json!({"error": "not authorized"})).into_response();
+        return ApiError::Authorization.into_response();
     }
 
     if payload.amount <= 0 {
         return Json(json!({"error": "amount must be positive"})).into_response();
     }
 
-    // deposit to database first
-    match User::deposit(&state.pool, user_id, payload.amount).await {
-        Ok(_) => {} // success
+    let mut user = match User::get_by_id(&state.pool, user_id).await {
+        Ok(user) => user,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(json!({"error": "user not found"})).into_response()
+            return ApiError::UserNotFound.into_response();
         }
         Err(e) => {
             error!("Failed to deposit: {:?}", e);
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+            return ApiError::InternalServerError.into_response();
         }
     };
+
     let req = MatcherRequest::deposit(user_id, payload.amount);
-    state.cmd_send.send(req).await.expect("Receiver dropped");
+    state.cmd_send.send(req).await.unwrap();
 
-    let user = User::get_by_id(&state.pool, user_id).await.unwrap();
+    user.balance += payload.amount;
+    user.available += payload.amount;
 
-    Json(json!({"balance": user.balance + payload.amount})).into_response()
+    return Json(user).into_response();
 }

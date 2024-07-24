@@ -1,8 +1,8 @@
 use askama::Template;
 
 use crate::{
-    services::book_service::MarketData,
     models::{event::Event, market::Market},
+    services::book_service::MarketData,
 };
 
 use super::{format_timestamp_as_string, market::BookHtml};

@@ -10,6 +10,10 @@
 ## API
 
 - models to json
+- submit order
+- cancel order
+- modify order
+
 
 ## Models
 

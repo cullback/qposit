@@ -4,15 +4,17 @@ use argon2::PasswordVerifier;
 use lobster::Balance;
 use lobster::Timestamp;
 use lobster::UserId;
+use serde::Serialize;
 use sqlx::Executor;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
 use tracing::error;
 
-#[derive(sqlx::FromRow, Debug)]
+#[derive(sqlx::FromRow, Debug, Serialize)]
 pub struct User {
     pub id: UserId,
     pub username: String,
+    #[serde(skip)]
     pub password_hash: String,
     pub created_at: Timestamp,
     pub balance: Balance,
@@ -56,30 +58,6 @@ impl User {
         sqlx::query_as::<_, Self>("SELECT * FROM user WHERE balance != 0")
             .fetch_all(db)
             .await
-    }
-
-    /// Deposits the given amount into the user's account.
-    pub async fn deposit<'c, E: Executor<'c, Database = Sqlite>>(
-        db: E,
-        user_id: UserId,
-        amount: Balance,
-    ) -> Result<(), sqlx::Error> {
-        let result = sqlx::query!(
-            "
-            UPDATE user SET balance = balance + ?, available = available + ? WHERE id = ?
-            ",
-            amount,
-            amount,
-            user_id
-        )
-        .execute(db)
-        .await?;
-
-        if result.rows_affected() == 0 {
-            return Err(sqlx::Error::RowNotFound);
-        };
-
-        Ok(())
     }
 
     /// Checks a usernames+password combination using the database and returns the user if it is valid.

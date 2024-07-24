@@ -44,6 +44,9 @@ pub enum Action {
         price: u16,
     },
     AddMarket,
+    Deposit {
+        amount: i64,
+    },
 }
 
 impl From<lobster::MarketUpdate> for BookUpdate {
@@ -63,6 +66,7 @@ impl From<lobster::MarketUpdate> for BookUpdate {
                 lobster::Action::Remove { id } => Action::Remove { id },
                 lobster::Action::Resolve { price } => Action::Resolve { price },
                 lobster::Action::AddMarket => Action::AddMarket,
+                lobster::Action::Deposit { amount } => Action::Deposit { amount },
             },
         }
     }

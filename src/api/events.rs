@@ -9,9 +9,9 @@ use tracing::error;
 use utoipa::ToSchema;
 
 use crate::{
-    services::matcher_request::MatcherRequest,
     app_state::AppState,
     models::{event::Event, market::Market},
+    services::matcher_request::MatcherRequest,
 };
 
 use super::{api_error::ApiError, auth::BasicAuthExtractor};

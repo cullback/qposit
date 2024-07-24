@@ -14,7 +14,7 @@
 //! TODO: update state more efficiently
 //! - track price levels individually instead of updating everything on every market.
 use lobster::Price;
-use lobster::{Action, Balance, MarketUpdate, MarketId};
+use lobster::{Action, Balance, MarketId, MarketUpdate};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -124,6 +124,9 @@ pub fn start_book_service(
             let mut state = EventService::new(&db).await;
 
             while let Ok(market) = feed.recv().await {
+                if matches!(market.action, Action::Deposit { .. }) {
+                    continue; // TODO
+                }
                 let orderbook = state.on_event(market);
                 book_stream.send(orderbook).unwrap();
             }

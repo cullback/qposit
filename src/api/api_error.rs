@@ -27,6 +27,7 @@ pub enum ApiError {
     InternalServerError,
     EventAlreadyExists,
     Authorization,
+    UserNotFound,
 }
 
 impl IntoResponse for ApiError {
@@ -57,6 +58,7 @@ impl IntoResponse for ApiError {
                 StatusCode::FORBIDDEN,
                 "You are not authorized to perform this action".to_string(),
             ),
+            ApiError::UserNotFound => (StatusCode::BAD_REQUEST, "User not found".to_string()),
         };
         (status, ApiJson(ErrorResponse { error: message })).into_response()
     }

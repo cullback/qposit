@@ -19,7 +19,7 @@ use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use util::{connect_to_database, register_panic_hook};
 
 fn configure_logging() {
-    let file_appender = RollingFileAppender::new(Rotation::HOURLY, "logs", "qposit.log");
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "qposit.log");
 
     let subscriber = tracing_subscriber::fmt()
         .with_writer(file_appender)
