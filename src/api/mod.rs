@@ -26,6 +26,8 @@ use utoipa::{
     Modify, OpenApi,
 };
 
+pub use feed::MarketUpdate;
+
 #[derive(OpenApi)]
 #[openapi(
     paths(

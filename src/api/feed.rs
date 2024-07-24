@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 
 use crate::app_state::AppState;
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, ToSchema)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum MarketUpdate {

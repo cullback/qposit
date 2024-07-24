@@ -16,8 +16,8 @@ use tokio::sync::broadcast;
 use tracing::info;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 
-use crate::models;
 use crate::models::trade::Trade;
+use crate::{api, models};
 
 #[derive(Debug)]
 struct OrderOwner {
@@ -118,7 +118,10 @@ impl State {
         }
 
         tx.commit().await.unwrap();
-        self.log.write_fmt(format_args!("{:?}\n", update)).unwrap();
+
+        let msg = serde_json::to_string(&api::MarketUpdate::from(update)).unwrap();
+        self.log.write(msg.as_bytes()).unwrap();
+        self.log.write(b"\n").unwrap();
     }
 
     async fn on_deposit<E>(&mut self, transaction: &mut E, user_id: UserId, amount: Balance)

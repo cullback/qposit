@@ -2,7 +2,7 @@ use crate::{Balance, Order, OrderId, Price};
 
 use crate::{MarketId, Tick, Timestamp, UserId};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MarketUpdate {
     AddOrder {
         timestamp: Timestamp,
