@@ -11,7 +11,7 @@ use super::{format_timestamp_as_string, market::BookHtml};
 #[template(path = "event.html")]
 pub struct EventPage {
     username: String,
-    expires_at: String,
+    event_time: String,
     event: Event,
     /// Comma-separated list of market IDs TODO
     markets: String,
@@ -22,7 +22,7 @@ impl EventPage {
     pub fn new(username: String, event: Event, markets: Vec<(Market, MarketData)>) -> Self {
         Self {
             username,
-            expires_at: format_timestamp_as_string(event.expires_at),
+            event_time: format_timestamp_as_string(event.event_time),
             event,
             markets: markets
                 .iter()

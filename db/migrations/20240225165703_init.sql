@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS event(
     title       TEXT NOT NULL CHECK (length(title) <= 50),
     description TEXT NOT NULL,
     created_at  INTEGER NOT NULL,
-    expires_at  INTEGER NOT NULL
+    event_time  INTEGER NOT NULL
 );
 
 

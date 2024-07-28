@@ -73,7 +73,7 @@ pub struct EventPost {
     /// The time at which the event was created.
     created_at: i64,
     /// The time at which the event will expire.
-    expires_at: i64,
+    event_time: i64,
     /// The titles for the markets.
     markets: Vec<String>,
 }
@@ -106,7 +106,7 @@ pub async fn post(
         title: event.title,
         description: event.description,
         created_at: event.created_at,
-        expires_at: event.expires_at,
+        event_time: event.event_time,
     };
 
     let event_id = match record.insert(&state.pool).await {

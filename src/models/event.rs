@@ -11,7 +11,7 @@ pub struct Event {
     pub title: String,
     pub description: String,
     pub created_at: i64,
-    pub expires_at: i64,
+    pub event_time: i64,
 }
 
 impl Event {
@@ -29,13 +29,13 @@ impl Event {
 
     pub async fn insert(&self, db: &SqlitePool) -> Result<i64, sqlx::Error> {
         sqlx::query!(
-            "INSERT INTO event (slug, title, description, created_at, expires_at)
+            "INSERT INTO event (slug, title, description, created_at, event_time)
             VALUES (?, ?, ?, ?, ?)",
             self.slug,
             self.title,
             self.description,
             self.created_at,
-            self.expires_at,
+            self.event_time,
         )
         .execute(db)
         .await
