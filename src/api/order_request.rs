@@ -11,7 +11,7 @@ pub struct OrderRequest {
     /// The number of contracts to buy or sell.
     #[schema(minimum = 1)]
     pub quantity: u32,
-    /// The price to buy or sell at. If not present, order will be a event order.
+    /// The price to buy or sell at. If not present, order will be a market order.
     #[schema(minimum = 1, maximum = 9999)]
     pub price: u16,
     /// Whether to buy or sell.
