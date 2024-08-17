@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 
 use crate::{app_state::AppState, models::user::User, services::matcher_request::MatcherRequest};
 
-use super::api_error::ApiError;
+use super::{api_error::ApiError, auth::OptionalBasicAuth};
 use super::auth::BasicAuthExtractor;
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -60,6 +60,27 @@ pub async fn deposit(
 
     user.balance += payload.amount;
     user.available += payload.amount;
+
+    return Json(user).into_response();
+}
+
+
+pub async fn get(
+    State(state): State<AppState>,
+    OptionalBasicAuth(_user): OptionalBasicAuth,
+    Path(username): Path<String>,
+) -> impl IntoResponse {
+
+    let user = match User::get_by_username(&state.pool, &username).await {
+        Ok(user) => user,
+        Err(sqlx::Error::RowNotFound) => {
+            return ApiError::UserNotFound.into_response();
+        }
+        Err(e) => {
+            error!("Failed to get user: {:?}", e);
+            return ApiError::InternalServerError.into_response();
+        }
+    };
 
     return Json(user).into_response();
 }

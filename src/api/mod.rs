@@ -90,6 +90,7 @@ impl Modify for SecurityAddon {
 pub fn router(state: AppState) -> Router {
     let apiv1 = Router::new()
         .route("/deposit/:id", post(user::deposit))
+        .route("/users/:username", get(user::get))
         .route("/markets/:id", patch(markets::patch))
         .route("/feed", get(feed::get))
         .route("/events", get(events::get))
