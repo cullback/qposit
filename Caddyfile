@@ -1,22 +1,8 @@
 qposit.com {
-  reverse_proxy qposit:3000
-
-  @api path /api/*
-
-  rate_limit @api {
-      zone api_zone {
-          events 30
-          window 10s
-      }
-      log_key
-  }
-
-  log @api {
-      output file caddy.log
-      level DEBUG
-  }
+    reverse_proxy localhost:3001
 }
 
 www.qposit.com {
-  redir https://qposit.com{uri}
+    redir https://qposit.com{uri} permanent
 }
+

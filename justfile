@@ -1,5 +1,8 @@
 set dotenv-load
 
+DOMAIN := "qposit.com"
+APP_NAME := "qposit"
+
 build:
     cargo build
 
@@ -35,15 +38,15 @@ db-init:
 # Deploy to production server
 deploy:
     @echo "📦 Syncing files..."
-    rsync -av --delete --exclude-from='.gitignore' --exclude '.git' . root@revv.reviews:/root/revv/
+    rsync -av --delete --exclude-from='.gitignore' --exclude '.git' . root@{{DOMAIN}}:/root/{{APP_NAME}}/
     @echo "🚀 Running deployment..."
-    ssh root@revv.reviews 'bash /root/revv/launch.bash'
+    ssh root@{{DOMAIN}} 'bash /root/{{APP_NAME}}/launch.bash'
     @echo "✅ Deployment complete!"
 
 # View production logs
 logs:
-    ssh root@revv.reviews 'journalctl -u revv -f'
+    ssh root@{{DOMAIN}} 'journalctl -u {{APP_NAME}} -f'
 
 # Check production status
 status:
-    ssh root@revv.reviews 'systemctl status revv'
+    ssh root@{{DOMAIN}} 'systemctl status {{APP_NAME}}'
