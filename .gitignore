@@ -1,6 +1,6 @@
-/target
+.claude/
+.sqlx/
+*.sqlite3*
 .env
-*.db*
-*.log
-caddy
+target/
 logs/

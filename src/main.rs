@@ -15,16 +15,10 @@ use tokio::{
     sync::{broadcast, mpsc},
 };
 use tracing::info;
-use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use util::{connect_to_database, register_panic_hook};
 
 fn configure_logging() {
-    let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "qposit.log");
-
-    let subscriber = tracing_subscriber::fmt()
-        .with_writer(file_appender)
-        .with_ansi(false)
-        .finish();
+    let subscriber = tracing_subscriber::fmt().finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 }
@@ -41,15 +35,26 @@ async fn main() {
     let (feed_send, feed_receive) = broadcast::channel::<MarketUpdate>(32);
     let (book_send, book_receive) = broadcast::channel::<MarketData>(32);
 
-    services::writer::start_writer_service(pool.clone(), feed_receive.resubscribe());
-    services::matcher::start_matcher_service(pool.clone(), cmd_receive, feed_send);
-    services::book_service::start_book_service(pool.clone(), feed_receive.resubscribe(), book_send);
+    services::writer::start_writer_service(
+        pool.clone(),
+        feed_receive.resubscribe(),
+    );
+    services::matcher::start_matcher_service(
+        pool.clone(),
+        cmd_receive,
+        feed_send,
+    );
+    services::book_service::start_book_service(
+        pool.clone(),
+        feed_receive.resubscribe(),
+        book_send,
+    );
 
     let state = AppState::new(pool, cmd_send, feed_receive, book_receive);
 
     let app = web::router(state.clone()).merge(api::router(state));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
     let listener = TcpListener::bind(addr)
         .await
         .expect("Failed to bind address");

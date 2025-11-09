@@ -1,30 +1,49 @@
 set dotenv-load
 
-init:
-  cargo install cargo-watch
-  cargo install sqlx-cli
-  sqlx database create
-  just db-migrate
+build:
+    cargo build
 
-db-migrate:
-  echo "Migrating..."
-  sqlx migrate run --source $MIGRATIONS_PATH;
+run:
+    cargo run
 
-db-reset:
-  echo "Resetting..."
-  sqlx database drop && sqlx database create && sqlx migrate run --source $MIGRATIONS_PATH
-  sqlite3 $DATABASE_PATH < seeds/seed.sql
+watch:
+    watchexec -r -e rs,html,css,js -- cargo run
 
-db-reset-prod:
-  echo "Resetting..."
-  sqlx database drop && sqlx database create && sqlx migrate run --source $MIGRATIONS_PATH
-  sqlite3 $DATABASE_PATH < seeds/seed_prod.sql
+check:
+    #!/usr/bin/env fish
+    set status_flag 0
+    dprint check --config ~/.config/dprint/dprint.json; or set status_flag 1
+    cargo fmt --check; or set status_flag 1
+    cargo clippy; or set status_flag 1
+    fd -e nix | xargs -r nixfmt --check; or set status_flag 1
+    ! rg -l '[^\n]\z' --multiline; or set status_flag 1
+    exit $status_flag
 
-build-server:
-  cargo build --release
+format:
+    dprint fmt --config ~/.config/dprint/dprint.json
+    cargo fmt
+    fd -e nix | xargs -r nixfmt
+    rg -l '[^\n]\z' --multiline | xargs -r sed -i -e '$a\\'
 
-dev-server:
-	cargo watch --no-dot-ignores -w src -w templates -x run
+db-init:
+    sqlx database drop
+    sqlx database create
+    sqlx migrate run
+    sqlite3 $DATABASE_PATH < seeds/seed.sql
+    rm -f storage/*
 
-caddy-dev-server:
-  ./caddy start --config Caddyfile.dev
+# Deploy to production server
+deploy:
+    @echo "📦 Syncing files..."
+    rsync -av --delete --exclude-from='.gitignore' --exclude '.git' . root@revv.reviews:/root/revv/
+    @echo "🚀 Running deployment..."
+    ssh root@revv.reviews 'bash /root/revv/launch.bash'
+    @echo "✅ Deployment complete!"
+
+# View production logs
+logs:
+    ssh root@revv.reviews 'journalctl -u revv -f'
+
+# Check production status
+status:
+    ssh root@revv.reviews 'systemctl status revv'
